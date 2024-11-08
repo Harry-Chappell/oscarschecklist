@@ -1,1 +1,4 @@
-[]
+{
+  "activeCategory": 123,
+  "winnerIDs": [1, 2, 3, 4]  // Array of nomination IDs that are winners
+}
