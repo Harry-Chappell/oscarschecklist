@@ -24,9 +24,20 @@ function show_nominations_by_cat_shortcode($atts) {
 
     // Loop through each friend's ID
     foreach ($friend_ids as $friend_id) {
-        // Get watched films of the friend
-        $friend_watched = get_user_meta($friend_id, 'watched_' . $post->ID, true);
-        // Add watched films to the array
+        $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $friend_id . '.json';
+        $friend_watched = false;
+        if (file_exists($json_path)) {
+            $json_data = file_get_contents($json_path);
+            $user_meta = json_decode($json_data, true);
+            if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                foreach ($user_meta['watched'] as $watched_film) {
+                    if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post->ID) {
+                        $friend_watched = true;
+                        break;
+                    }
+                }
+            }
+        }
         if ($friend_watched) {
             $friend_watched_films[$friend_id] = $post->ID;
         }
@@ -116,16 +127,40 @@ function show_nominations_by_cat_shortcode($atts) {
 
                             if (is_user_logged_in()) {
                                 $nomination_id = get_the_ID();
-                                // Original line to get user's fav status
-                                $user_fav = get_user_meta(get_current_user_id(), 'fav_' . $nomination_id, true);
-
-                                // Original line to get user's predict status
-                                $user_predict = get_user_meta(get_current_user_id(), 'predict_' . $nomination_id, true);
+                                $user_id = get_current_user_id();
+                                $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                                $user_fav = false;
+                                $user_predict = false;
+                                if (file_exists($json_path)) {
+                                    $json_data = file_get_contents($json_path);
+                                    $user_meta = json_decode($json_data, true);
+                                    // Favourites
+                                    if (isset($user_meta['favourites']) && is_array($user_meta['favourites'])) {
+                                        $user_fav = in_array($nomination_id, $user_meta['favourites']);
+                                    }
+                                    // Predictions
+                                    if (isset($user_meta['predictions']) && is_array($user_meta['predictions'])) {
+                                        $user_predict = in_array($nomination_id, $user_meta['predictions']);
+                                    }
+                                }
                             }
                             if (is_user_logged_in()) {
                                 $post_id = $film->term_id;
-                                // Original line to get user's watched status
-                                $user_watched = get_user_meta(get_current_user_id(), 'watched_' . $post_id, true);
+                                $user_id = get_current_user_id();
+                                $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                                $user_watched = false;
+                                if (file_exists($json_path)) {
+                                    $json_data = file_get_contents($json_path);
+                                    $user_meta = json_decode($json_data, true);
+                                    if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                                        foreach ($user_meta['watched'] as $watched_film) {
+                                            if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post_id) {
+                                                $user_watched = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
                             $winner = '';
@@ -292,40 +327,51 @@ function show_nominations_by_cat_shortcode($atts) {
                             }
 
                             $output .= '<div class="friends-watched">';
-                                
-                                // Get watched films by friends for this specific film
-                                foreach ($friend_ids as $friend_id) {
-                                    $friend_watched = get_user_meta($friend_id, 'watched_' . $post_id, true);
-                                    
-                                    if ($friend_watched) {
-                                        $friend_user = get_userdata($friend_id);
-                                        $friend_avatar = get_avatar($friend_id, 32); // Change size as needed
-                                        $friend_profile_link = bp_members_get_user_url($friend_id);
-
-                                        // Get user details to calculate random color number
-                                        $first_name = $friend_user->user_firstname;
-                                        $last_name = $friend_user->user_lastname;
-                                        $user_login = $friend_user->user_login;
-                                        $user_email = $friend_user->user_email;
-
-                                        // Calculate lengths
-                                        $id_length = strlen($friend_id);
-                                        $login_length = strlen($user_login);
-                                        $first_name_length = strlen($first_name);
-                                        $last_name_length = strlen($last_name);
-                                        $email_length = strlen($user_email);
-
-                                        // Calculate product of lengths and get last 3 digits
-                                        $randomcolornum = $id_length * $login_length * $first_name_length * $last_name_length * $email_length;
-                                        $randomcolornum = substr($randomcolornum, -3);
-
-                                        // Get initials
-                                        $initials = strtoupper(substr($first_name, 0, 1) . substr($last_name, 0, 1));
-                                        
-                                        // Output the avatar with the friend id and random color number in the class
-                                        $output .= '<div class="friend-avatar friend-id-' . $friend_id . '" style="--randomcolornum:' . $randomcolornum . '">' . $friend_avatar . '<div class="friend-initials" title="' . $friend_user->display_name . '">' . $initials . '</div></div>';
+                            // Get watched films by friends for this specific film
+                            foreach ($friend_ids as $friend_id) {
+                                $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $friend_id . '.json';
+                                $friend_watched = false;
+                                if (file_exists($json_path)) {
+                                    $json_data = file_get_contents($json_path);
+                                    $user_meta = json_decode($json_data, true);
+                                    if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                                        foreach ($user_meta['watched'] as $watched_film) {
+                                            if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post_id) {
+                                                $friend_watched = true;
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
+                                if ($friend_watched) {
+                                    $friend_user = get_userdata($friend_id);
+                                    $friend_avatar = get_avatar($friend_id, 32); // Change size as needed
+                                    $friend_profile_link = bp_members_get_user_url($friend_id);
+
+                                    // Get user details to calculate random color number
+                                    $first_name = $friend_user->user_firstname;
+                                    $last_name = $friend_user->user_lastname;
+                                    $user_login = $friend_user->user_login;
+                                    $user_email = $friend_user->user_email;
+
+                                    // Calculate lengths
+                                    $id_length = strlen($friend_id);
+                                    $login_length = strlen($user_login);
+                                    $first_name_length = strlen($first_name);
+                                    $last_name_length = strlen($last_name);
+                                    $email_length = strlen($user_email);
+
+                                    // Calculate product of lengths and get last 3 digits
+                                    $randomcolornum = $id_length * $login_length * $first_name_length * $last_name_length * $email_length;
+                                    $randomcolornum = substr($randomcolornum, -3);
+
+                                    // Get initials
+                                    $initials = strtoupper(substr($first_name, 0, 1) . substr($last_name, 0, 1));
+                                    
+                                    // Output the avatar with the friend id and random color number in the class
+                                    $output .= '<div class="friend-avatar friend-id-' . $friend_id . '" style="--randomcolornum:' . $randomcolornum . '">' . $friend_avatar . '<div class="friend-initials" title="' . $friend_user->display_name . '">' . $initials . '</div></div>';
+                                }
+                            }
 
                             $output .= '</li>';
                         }

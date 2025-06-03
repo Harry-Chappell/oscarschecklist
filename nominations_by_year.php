@@ -26,9 +26,20 @@ function show_nominations_by_year_shortcode($atts) {
 
         // Loop through each friend's ID
         foreach ($friend_ids as $friend_id) {
-            // Get watched films of the friend
-            $friend_watched = get_user_meta($friend_id, 'watched_' . $post->ID, true);
-            // Add watched films to the array
+            $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $friend_id . '.json';
+            $friend_watched = false;
+            if (file_exists($json_path)) {
+                $json_data = file_get_contents($json_path);
+                $user_meta = json_decode($json_data, true);
+                if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                    foreach ($user_meta['watched'] as $watched_film) {
+                        if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post->ID) {
+                            $friend_watched = true;
+                            break;
+                        }
+                    }
+                }
+            }
             if ($friend_watched) {
                 $friend_watched_films[$friend_id] = $post->ID;
             }
@@ -135,11 +146,24 @@ function show_nominations_by_year_shortcode($atts) {
 
                             if (is_user_logged_in()) {
                                 $nomination_id = get_the_ID();
-                                // Original line to get user's fav status
-                                $user_fav = get_user_meta(get_current_user_id(), 'fav_' . $nomination_id, true);
+                                $user_id = get_current_user_id();
+                                $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                                $user_fav = false;
+                                $user_predict = false;
 
-                                // Original line to get user's predict status
-                                $user_predict = get_user_meta(get_current_user_id(), 'predict_' . $nomination_id, true);
+                                if (file_exists($json_path)) {
+                                    $json_data = file_get_contents($json_path);
+                                    $user_meta = json_decode($json_data, true);
+
+                                    // Favourites
+                                    if (isset($user_meta['favourites']) && is_array($user_meta['favourites'])) {
+                                        $user_fav = in_array($nomination_id, $user_meta['favourites']);
+                                    }
+                                    // Predictions
+                                    if (isset($user_meta['predictions']) && is_array($user_meta['predictions'])) {
+                                        $user_predict = in_array($nomination_id, $user_meta['predictions']);
+                                    }
+                                }
                             }
 
                             $films = get_the_terms(get_the_ID(), 'films');
@@ -231,34 +255,59 @@ function show_nominations_by_year_shortcode($atts) {
                                 $output .= '<div class="buttons-cntr">';
                                 if (is_user_logged_in()) {
                                     $film_id = $film->term_id;
-                                    $user_watched = get_user_meta(get_current_user_id(), 'watched_' . $film_id, true);
-                                    
+                                    $nomination_id = get_the_ID();
+                                    $user_id = get_current_user_id();
+                                    $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                                    $user_watched = false;
+                                    $user_fav = false;
+                                    $user_predict = false;
+                                
+                                    if (file_exists($json_path)) {
+                                        $json_data = file_get_contents($json_path);
+                                        $user_meta = json_decode($json_data, true);
+                                
+                                        // Watched
+                                        if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                                            foreach ($user_meta['watched'] as $watched_film) {
+                                                if (isset($watched_film['film-id']) && $watched_film['film-id'] == $film_id) {
+                                                    $user_watched = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        // Favourites
+                                        if (isset($user_meta['favourites']) && is_array($user_meta['favourites'])) {
+                                            $user_fav = in_array($nomination_id, $user_meta['favourites']);
+                                        }
+                                        // Predictions
+                                        if (isset($user_meta['predictions']) && is_array($user_meta['predictions'])) {
+                                            $user_predict = in_array($nomination_id, $user_meta['predictions']);
+                                        }
+                                    }
+                                
                                     $watched_button_class = $user_watched ? 'mark-as-unwatched-button' : 'mark-as-watched-button';
                                     $button_text = $user_watched ? 'Watched' : 'Unwatched';
                                     $watched_action = $user_watched ? 'unwatched' : 'watched';
-                                    
+                                
                                     $output .= '<button title="Watched" class="' . $watched_button_class . '" data-film-id="' . $film_id . '" data-action="' . $watched_action . '">';
-                                    $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
+                                    $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
                                     $output .= '</button>';
-                                    
-                                    
-                                    $user_fav = get_user_meta(get_current_user_id(), 'fav_' . $nomination_id, true);
+                                
                                     $fav_button_class = $user_fav ? 'mark-as-unfav-button' : 'mark-as-fav-button';
                                     $fav_button_text = $user_fav ? 'Unmark as Favourite' : 'Mark as Favourite';
                                     $fav_action = $user_fav ? 'unfav' : 'fav';
-                                    
+                                
                                     $output .= '<button title="Favourite" class="' . $fav_button_class . '" data-nomination-id="' . $nomination_id . '" data-action="' . $fav_action . '">';
-                                    $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"/></svg>';
+                                    $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome--><path d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"/></svg>';
                                     $output .= '</button>';
-                                    
+                                
                                     if (!$has_winner) {
-                                        $user_predict = get_user_meta(get_current_user_id(), 'predict_' . $nomination_id, true);
                                         $predict_button_class = $user_predict ? 'mark-as-unpredict-button' : 'mark-as-predict-button';
                                         $predict_button_text = $user_predict ? 'Unpredict' : 'Predict';
                                         $predict_action = $user_predict ? 'unpredict' : 'predict';
-                                        
+                                
                                         $output .= '<button title="Prediction" class="' . $predict_button_class . '" data-nomination-id="' . $nomination_id . '" data-action="' . $predict_action . '">';
-                                        $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M400 0L176 0c-26.5 0-48.1 21.8-47.1 48.2c.2 5.3 .4 10.6 .7 15.8L24 64C10.7 64 0 74.7 0 88c0 92.6 33.5 157 78.5 200.7c44.3 43.1 98.3 64.8 138.1 75.8c23.4 6.5 39.4 26 39.4 45.6c0 20.9-17 37.9-37.9 37.9L192 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l192 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-26.1 0C337 448 320 431 320 410.1c0-19.6 15.9-39.2 39.4-45.6c39.9-11 93.9-32.7 138.2-75.8C542.5 245 576 180.6 576 88c0-13.3-10.7-24-24-24L446.4 64c.3-5.2 .5-10.4 .7-15.8C448.1 21.8 426.5 0 400 0zM48.9 112l84.4 0c9.1 90.1 29.2 150.3 51.9 190.6c-24.9-11-50.8-26.5-73.2-48.3c-32-31.1-58-76-63-142.3zM464.1 254.3c-22.4 21.8-48.3 37.3-73.2 48.3c22.7-40.3 42.8-100.5 51.9-190.6l84.4 0c-5.1 66.3-31.1 111.2-63 142.3z"/></svg>';
+                                        $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.7.2 by @fontawesome--><path d="M400 0L176 0c-26.5 0-48.1 21.8-47.1 48.2c.2 5.3 .4 10.6 .7 15.8L24 64C10.7 64 0 74.7 0 88c0 92.6 33.5 157 78.5 200.7c44.3 43.1 98.3 64.8 138.1 75.8c23.4 6.5 39.4 26 39.4 45.6c0 20.9-17 37.9-37.9 37.9L192 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l192 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-26.1 0C337 448 320 431 320 410.1c0-19.6 15.9-39.2 39.4-45.6c39.9-11 93.9-32.7 138.2-75.8C542.5 245 576 180.6 576 88c0-13.3-10.7-24-24-24L446.4 64c.3-5.2 .5-10.4 .7-15.8C448.1 21.8 426.5 0 400 0zM48.9 112l84.4 0c9.1 90.1 29.2 150.3 51.9 190.6c-24.9-11-50.8-26.5-73.2-48.3c-32-31.1-58-76-63-142.3zM464.1 254.3c-22.4 21.8-48.3 37.3-73.2 48.3c22.7-40.3 42.8-100.5 51.9-190.6l84.4 0c-5.1 66.3-31.1 111.2-63 142.3z"/></svg>';
                                         $output .= '</button>';
                                     }
                                 } else {
@@ -339,8 +388,20 @@ function show_nominations_by_year_shortcode($atts) {
                                 
                                 // Get watched films by friends for this specific film
                                 foreach ($friend_ids as $friend_id) {
-                                    $friend_watched = get_user_meta($friend_id, 'watched_' . $film_id, true);
-                                    
+                                    $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $friend_id . '.json';
+                                    $friend_watched = false;
+                                    if (file_exists($json_path)) {
+                                        $json_data = file_get_contents($json_path);
+                                        $user_meta = json_decode($json_data, true);
+                                        if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                                            foreach ($user_meta['watched'] as $watched_film) {
+                                                if (isset($watched_film['film-id']) && $watched_film['film-id'] == $film_id) {
+                                                    $friend_watched = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }                                    
                                     if ($friend_watched) {
                                         $friend_user = get_userdata($friend_id);
                                         $friend_avatar = get_avatar($friend_id, 32); // Change size as needed
