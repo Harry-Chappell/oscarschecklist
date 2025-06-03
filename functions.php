@@ -41,9 +41,45 @@ if (!current_user_can('edit_posts')) {
 
 
 
+function get_user_meta_json_path($user_id) {
+    $upload_dir = wp_upload_dir();
+    $user_dir   = $upload_dir['basedir'] . '/user_meta';
+    if ( ! file_exists( $user_dir ) ) {
+        wp_mkdir_p( $user_dir );
+    }
+    return $user_dir . "/user_{$user_id}.json";
+}
+
+function load_user_meta_json($user_id) {
+    $file_path = get_user_meta_json_path($user_id);
+    if (!file_exists($file_path)) {
+        return [
+            'watched' => [],
+            'favourites' => [],
+            'predictions' => [],
+            'watchlist' => [],
+            'favourite-categories' => [],
+            'hidden-categories' => [],
+        ];
+    }
+    $json = file_get_contents($file_path);
+    return json_decode($json, true) ?: [
+        'watched' => [],
+        'favourites' => [],
+        'predictions' => [],
+        'watchlist' => [],
+        'favourite-categories' => [],
+        'hidden-categories' => [],
+    ];
+}
+
+function save_user_meta_json($user_id, $data) {
+    $file_path = get_user_meta_json_path($user_id);
+    file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
+}
+
 function markAsWatched()
 {
-
     $post_id = $_POST['watched_post_id'] ?? null;
     $action = $_POST['watched_action'] ?? null;
 
@@ -51,21 +87,68 @@ function markAsWatched()
         return;
     }
 
+    $user_id = get_current_user_id();
+
+    // Update user meta (legacy, for now)
     if ($action === 'watched') {
-        update_user_meta(
-            get_current_user_id(),
-            'watched_' . $post_id,
-            'y'
-        );
+        update_user_meta($user_id, 'watched_' . $post_id, 'y');
     } elseif ($action === 'unwatched') {
-        delete_user_meta(
-            get_current_user_id(),
-            'watched_' . $post_id
-        );
+        delete_user_meta($user_id, 'watched_' . $post_id);
+    }
+
+    // Incrementally update the JSON file
+    $json = load_user_meta_json($user_id);
+
+    if ($action === 'watched') {
+        // Only add if not already present
+        $already = false;
+        foreach ($json['watched'] as $film) {
+            if ($film['film-id'] == $post_id) {
+                $already = true;
+                break;
+            }
+        }
+        if (!$already) {
+            // Gather film info
+            $film_term = get_term($post_id, 'films');
+            $film_name = ($film_term && !is_wp_error($film_term)) ? $film_term->name : '';
+            $film_slug = ($film_term && !is_wp_error($film_term)) ? $film_term->slug : '';
+            $film_year = null;
+            $nomination_query = new WP_Query([
+                'post_type' => 'nominations',
+                'posts_per_page' => 1,
+                'tax_query' => [[
+                    'taxonomy' => 'films',
+                    'field'    => 'term_id',
+                    'terms'    => $post_id,
+                ]],
+                'orderby' => 'date',
+                'order' => 'ASC',
+            ]);
+            if ($nomination_query->have_posts()) {
+                $nomination = $nomination_query->posts[0];
+                $film_year = (int) date('Y', strtotime($nomination->post_date));
+            }
+            wp_reset_postdata();
+
+            if ($film_name && $film_year) {
+                $json['watched'][] = [
+                    'film-id'   => (int)$post_id,
+                    'film-name' => $film_name,
+                    'film-year' => $film_year,
+                    'film-url'  => $film_slug,
+                ];
+                save_user_meta_json($user_id, $json);
+            }
+        }
+    } elseif ($action === 'unwatched') {
+        // Remove from watched array
+        $json['watched'] = array_values(array_filter($json['watched'], function($film) use ($post_id) {
+            return $film['film-id'] != $post_id;
+        }));
+        save_user_meta_json($user_id, $json);
     }
 }
-
-add_action('init', 'markAsWatched');
 
 
 
@@ -275,7 +358,7 @@ function get_friends_list() {
 
         $output .= '</ul></div>';
     } else {
-        $output .= '<a class="add-friends-link" href="https://oscarschecklist.com/members/"><p>Add friends to compare</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
+        $output .= '<a class="add-friends-link" href="https://stage.oscarschecklist.com/members/"><p>Add friends to compare</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
     }
     return $output;
 }
@@ -294,7 +377,7 @@ function oscars_year_dropdown_shortcode() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('oscarsYearDropdown').addEventListener('change', function() {
         var year = this.value;
-        window.location.href = 'https://oscarschecklist.com/years/nominations-' + year + '/';
+        window.location.href = 'https://stage.oscarschecklist.com/years/nominations-' + year + '/';
     });
 });
 </script>
@@ -344,7 +427,7 @@ function oscar_nominations_navigation() {
 
     // Add the previous link if it's within the allowed range
     if ($prev_year >= $min_year) {
-        $prev_link = "https://oscarschecklist.com/years/nominations-$prev_year/";
+        $prev_link = "https://stage.oscarschecklist.com/years/nominations-$prev_year/";
         $output .= '<a title="Nominations ' . $prev_year . '" href="' . esc_url($prev_link) . '" class="nominations-nav-button">← ' . $prev_year . '</a>';
     }
 
@@ -358,7 +441,7 @@ function oscar_nominations_navigation() {
 
     // Add the next link if it's within the allowed range
     if ($next_year <= $max_year) {
-        $next_link = "https://oscarschecklist.com/years/nominations-$next_year/";
+        $next_link = "https://stage.oscarschecklist.com/years/nominations-$next_year/";
         $output .= '<a title="Nominations ' . $next_year . '" href="' . esc_url($next_link) . '" class="nominations-nav-button">' . $next_year . ' →</a>';
     }
 
@@ -370,7 +453,7 @@ function oscar_nominations_navigation() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('oscarsYearDropdown').addEventListener('change', function() {
         var year = this.value;
-        window.location.href = 'https://oscarschecklist.com/years/nominations-' + year + '/';
+        window.location.href = 'https://stage.oscarschecklist.com/years/nominations-' + year + '/';
     });
 });
 </script>
@@ -575,7 +658,7 @@ function wpb_login_logo() {
 ?>
     <style type="text/css">
         #login h1 a, .login h1 a {
-            background-image: url(https://oscarschecklist.com/wp-content/uploads/2024/08/oscars-checklist-logo.png);
+            background-image: url(https://stage.oscarschecklist.com/wp-content/uploads/2024/08/oscars-checklist-logo.png);
         height:100px;
         width:300px;
         background-size: 300px 100px;
@@ -1278,3 +1361,7 @@ function prediction_count_shortcode() {
     return ob_get_clean();
 }
 add_shortcode('prediction_count', 'prediction_count_shortcode');
+
+
+
+require_once get_stylesheet_directory() . '/update_meta.php';

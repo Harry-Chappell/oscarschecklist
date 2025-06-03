@@ -99,7 +99,7 @@ function show_nominations_by_cat_shortcode($atts) {
 
                 $output .= '<div class="awards-category category-' . $category_slug . '">';
                 $output .= '<div class="category-title"><h2>' . $current_year . '</h2>';
-                $output .= '<a class="category-link" title="' . $current_year . '" href="https://oscarschecklist.com/nominations-' . $current_year . '"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
+                $output .= '<a class="category-link" title="' . $current_year . '" href="https://stage.oscarschecklist.com/nominations-' . $current_year . '"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
                 $output .= '<div class="circular-progress-container"><div class="circular-progress"></div><span class="progress"></span><span class="total"></span></div></div>';
                 $output .= '<ul class="nominations-list year-' . $current_year . ' nominee_visibility-' . $nominee_visibility . '">';
             }
@@ -168,7 +168,7 @@ function show_nominations_by_cat_shortcode($atts) {
                                 $output .= '<a class="film-name" href="' . get_term_link($film) . '"><h3>' . $film->name . '</h3></a>';
                             }
                             $output .= '<span class="film-poster">';
-                                $poster = get_field('poster', "films_" . $film->term_id);
+                                // $poster = get_field('poster', "films_" . $film->term_id);
 
                                 // if (is_array($poster) && isset($poster['id'])) {
                                 //     $output .= wp_get_attachment_image($poster['id'], 'medium');
@@ -177,11 +177,11 @@ function show_nominations_by_cat_shortcode($atts) {
                                 //     // For example, you might set a default image or leave $output unchanged
                                 //     // $output .= '<img src="' . get_template_directory_uri() . '/images/default-poster.jpg" alt="Default Poster">';
                                 // }    
-                                if ($poster) {
-                                    $output .= '<img src="' . $poster . '" alt="' . $film->name . '">';                     
-                                } else {
+                                // if ($poster) {
+                                //     $output .= '<img src="' . $poster . '" alt="' . $film->name . '">';                     
+                                // } else {
                                     $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M0 96C0 60.7 28.7 32 64 32l384 0c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM48 368l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 240l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 112l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16L64 96c-8.8 0-16 7.2-16 16zM416 96c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM160 128l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L192 96c-17.7 0-32 14.3-32 32zm32 160c-17.7 0-32 14.3-32 32l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32l-128 0z"/></svg>';
-                                }
+                                // }
                             $output .= '</span>';
 
                             $output .= '<div class="buttons-cntr">';
@@ -276,15 +276,15 @@ function show_nominations_by_cat_shortcode($atts) {
                                 if (is_array($nominees)) {
                                     foreach ($nominees as $nominee) {
                                         $output .= '<a class="nominee-photo" href="' . get_term_link($nominee) . '">';
-                                            $photo = get_field('photo', "nominees_" . $nominee->term_id);
+                                            // $photo = get_field('photo', "nominees_" . $nominee->term_id);
 
-                                            if (is_array($photo) && isset($photo['id'])) {
-                                                $output .= wp_get_attachment_image($photo['id'], 'medium');
-                                            } else {
+                                            // if (is_array($photo) && isset($photo['id'])) {
+                                            //     $output .= wp_get_attachment_image($photo['id'], 'medium');
+                                            // } else {
                                                 // Optionally handle the case where there's no valid photo
                                                 // For example, you might set a default image or leave $output unchanged
                                                 $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></svg>';
-                                            }
+                                            // }
                                         $output .= '</a>';
                                     }
                                 }

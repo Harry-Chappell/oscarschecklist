@@ -16,7 +16,7 @@ get_header(); ?>
 
     <div class="empty">
         <h3>Add Friends to Compete</h3>
-        <p>Oscars Scoreboard is better as a competition, get the people you're watching with to create accounts and cast their predictions on the homepage, and don't forget to <a href="https://oscarschecklist.com/members/">add them as friends</a> to see them here!</p>
+        <p>Oscars Scoreboard is better as a competition, get the people you're watching with to create accounts and cast their predictions on the homepage, and don't forget to <a href="https://stage.oscarschecklist.com/members/">add them as friends</a> to see them here!</p>
     </div>
 
     <a class="btn-unhide">Unhide All</a>
