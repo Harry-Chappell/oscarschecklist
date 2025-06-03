@@ -150,8 +150,25 @@ function show_nominations_by_year_shortcode($atts) {
 
                                 if (is_user_logged_in()) {
                                     $film_id = $film->term_id;
-                                    // Original line to get user's watched status
-                                    $user_watched = get_user_meta(get_current_user_id(), 'watched_' . $film_id, true);
+                                
+                                    // Load watched films from JSON file
+                                    $user_id = get_current_user_id();
+                                    $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                                    $user_watched = false;
+                                
+                                    if (file_exists($json_path)) {
+                                        $json_data = file_get_contents($json_path);
+                                        $user_meta = json_decode($json_data, true);
+                                
+                                        if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                                            foreach ($user_meta['watched'] as $watched_film) {
+                                                if (isset($watched_film['film-id']) && $watched_film['film-id'] == $film_id) {
+                                                    $user_watched = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
 
                                 $winner = '';
