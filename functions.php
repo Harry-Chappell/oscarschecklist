@@ -88,15 +88,6 @@ function markAsWatched()
     }
 
     $user_id = get_current_user_id();
-
-    // Update user meta (legacy, for now)
-    if ($action === 'watched') {
-        update_user_meta($user_id, 'watched_' . $post_id, 'y');
-    } elseif ($action === 'unwatched') {
-        delete_user_meta($user_id, 'watched_' . $post_id);
-    }
-
-    // Incrementally update the JSON file
     $json = load_user_meta_json($user_id);
 
     if ($action === 'watched') {
@@ -123,7 +114,7 @@ function markAsWatched()
                     'terms'    => $post_id,
                 ]],
                 'orderby' => 'date',
-                'order' => 'ASC',
+                'order'   => 'ASC',
             ]);
             if ($nomination_query->have_posts()) {
                 $nomination = $nomination_query->posts[0];
@@ -131,15 +122,13 @@ function markAsWatched()
             }
             wp_reset_postdata();
 
-            if ($film_name && $film_year) {
-                $json['watched'][] = [
-                    'film-id'   => (int)$post_id,
-                    'film-name' => $film_name,
-                    'film-year' => $film_year,
-                    'film-url'  => $film_slug,
-                ];
-                save_user_meta_json($user_id, $json);
-            }
+            // Always add to watched, even if some info is missing
+            $entry = [ 'film-id' => (int)$post_id ];
+            if ($film_name) $entry['film-name'] = $film_name;
+            if ($film_year) $entry['film-year'] = $film_year;
+            if ($film_slug) $entry['film-url'] = $film_slug;
+            $json['watched'][] = $entry;
+            save_user_meta_json($user_id, $json);
         }
     } elseif ($action === 'unwatched') {
         // Remove from watched array
@@ -149,12 +138,10 @@ function markAsWatched()
         save_user_meta_json($user_id, $json);
     }
 }
-
-
+add_action('init', 'markAsWatched');
 
 function markAsFav()
 {
-
     $fav_nom_id = $_POST['fav_nom_id'] ?? null;
     $fav_action = $_POST['fav_action'] ?? null;
 
@@ -162,27 +149,25 @@ function markAsFav()
         return;
     }
 
+    $user_id = get_current_user_id();
+    $json = load_user_meta_json($user_id);
+
     if ($fav_action === 'fav') {
-        update_user_meta(
-            get_current_user_id(),
-            'fav_' . $fav_nom_id,
-            'y'
-        );
+        if (!in_array((int)$fav_nom_id, $json['favourites'])) {
+            $json['favourites'][] = (int)$fav_nom_id;
+            save_user_meta_json($user_id, $json);
+        }
     } elseif ($fav_action === 'unfav') {
-        delete_user_meta(
-            get_current_user_id(),
-            'fav_' . $fav_nom_id
-        );
+        $json['favourites'] = array_values(array_filter($json['favourites'], function($id) use ($fav_nom_id) {
+            return $id != $fav_nom_id;
+        }));
+        save_user_meta_json($user_id, $json);
     }
 }
-
 add_action('init', 'markAsFav');
-
-
 
 function markAspredict()
 {
-
     $predict_nom_id = $_POST['predict_nom_id'] ?? null;
     $predict_action = $_POST['predict_action'] ?? null;
 
@@ -190,23 +175,22 @@ function markAspredict()
         return;
     }
 
+    $user_id = get_current_user_id();
+    $json = load_user_meta_json($user_id);
+
     if ($predict_action === 'predict') {
-        update_user_meta(
-            get_current_user_id(),
-            'predict_' . $predict_nom_id,
-            'y'
-        );
+        if (!in_array((int)$predict_nom_id, $json['predictions'])) {
+            $json['predictions'][] = (int)$predict_nom_id;
+            save_user_meta_json($user_id, $json);
+        }
     } elseif ($predict_action === 'unpredict') {
-        delete_user_meta(
-            get_current_user_id(),
-            'predict_' . $predict_nom_id
-        );
+        $json['predictions'] = array_values(array_filter($json['predictions'], function($id) use ($predict_nom_id) {
+            return $id != $predict_nom_id;
+        }));
+        save_user_meta_json($user_id, $json);
     }
 }
-
 add_action('init', 'markAspredict');
-
-
 
 
 
@@ -808,7 +792,7 @@ function custom_toggle_buttons_shortcode() {
     $winners_only = "";
 
     $show_unique_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M48 256C48 141.1 141.1 48 256 48c63.1 0 119.6 28.1 157.8 72.5c8.6 10.1 23.8 11.2 33.8 2.6s11.2-23.8 2.6-33.8C403.3 34.6 333.7 0 256 0C114.6 0 0 114.6 0 256l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40zm458.5-52.9c-2.7-13-15.5-21.3-28.4-18.5s-21.3 15.5-18.5 28.4c2.9 13.9 4.5 28.3 4.5 43.1l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c0-18.1-1.9-35.8-5.5-52.9zM256 80c-19 0-37.4 3-54.5 8.6c-15.2 5-18.7 23.7-8.3 35.9c7.1 8.3 18.8 10.8 29.4 7.9c10.6-2.9 21.8-4.4 33.4-4.4c70.7 0 128 57.3 128 128l0 24.9c0 25.2-1.5 50.3-4.4 75.3c-1.7 14.6 9.4 27.8 24.2 27.8c11.8 0 21.9-8.6 23.3-20.3c3.3-27.4 5-55 5-82.7l0-24.9c0-97.2-78.8-176-176-176zM150.7 148.7c-9.1-10.6-25.3-11.4-33.9-.4C93.7 178 80 215.4 80 256l0 24.9c0 24.2-2.6 48.4-7.8 71.9C68.8 368.4 80.1 384 96.1 384c10.5 0 19.9-7 22.2-17.3c6.4-28.1 9.7-56.8 9.7-85.8l0-24.9c0-27.2 8.5-52.4 22.9-73.1c7.2-10.4 8-24.6-.2-34.2zM256 160c-53 0-96 43-96 96l0 24.9c0 35.9-4.6 71.5-13.8 106.1c-3.8 14.3 6.7 29 21.5 29c9.5 0 17.9-6.2 20.4-15.4c10.5-39 15.9-79.2 15.9-119.7l0-24.9c0-28.7 23.3-52 52-52s52 23.3 52 52l0 24.9c0 36.3-3.5 72.4-10.4 107.9c-2.7 13.9 7.7 27.2 21.8 27.2c10.2 0 19-7 21-17c7.7-38.8 11.6-78.3 11.6-118.1l0-24.9c0-53-43-96-96-96zm24 96c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 24.9c0 59.9-11 119.3-32.5 175.2l-5.9 15.3c-4.8 12.4 1.4 26.3 13.8 31s26.3-1.4 31-13.8l5.9-15.3C267.9 411.9 280 346.7 280 280.9l0-24.9z"/></svg>';
-    $hide_watched_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"/></svg>';
+    $hide_watched_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M288 32c-26.5 0-48.1 21.8-47.1 48.2c.2 5.3 .4 10.6 .7 15.8L24 64C10.7 64 0 74.7 0 88c0 92.6 33.5 157 78.5 200.7c44.3 43.1 98.3 64.8 138.1 75.8c23.4 6.5 39.4 26 39.4 45.6c0 20.9-17 37.9-37.9 37.9L192 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l192 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-26.1 0C337 448 320 431 320 410.1c0-19.6 15.9-39.2 39.4-45.6c39.9-11 93.9-32.7 138.2-75.8C542.5 245 576 180.6 576 88c0-13.3-10.7-24-24-24L446.4 64c.3-5.2 .5-10.4 .7-15.8C448.1 21.8 426.5 0 400 0zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"/></svg>';
     $winners_only_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M400 0L176 0c-26.5 0-48.1 21.8-47.1 48.2c.2 5.3 .4 10.6 .7 15.8L24 64C10.7 64 0 74.7 0 88c0 92.6 33.5 157 78.5 200.7c44.3 43.1 98.3 64.8 138.1 75.8c23.4 6.5 39.4 26 39.4 45.6c0 20.9-17 37.9-37.9 37.9L192 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l192 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-26.1 0C337 448 320 431 320 410.1c0-19.6 15.9-39.2 39.4-45.6c39.9-11 93.9-32.7 138.2-75.8C542.5 245 576 180.6 576 88c0-13.3-10.7-24-24-24L446.4 64c.3-5.2 .5-10.4 .7-15.8C448.1 21.8 426.5 0 400 0zM48.9 112l84.4 0c9.1 90.1 29.2 150.3 51.9 190.6c-24.9-11-50.8-26.5-73.2-48.3c-32-31.1-58-76-63-142.3zM464.1 254.3c-22.4 21.8-48.3 37.3-73.2 48.3c22.7-40.3 42.8-100.5 51.9-190.6l84.4 0c-5.1 66.3-31.1 111.2-63 142.3z"/></svg>';
     $progress_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M24 32c13.3 0 24 10.7 24 24l0 352c0 13.3 10.7 24 24 24l416 0c13.3 0 24 10.7 24 24s-10.7 24-24 24L72 480c-39.8 0-72-32.2-72-72L0 56C0 42.7 10.7 32 24 32zM128 136c0-13.3 10.7-24 24-24l208 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-208 0c-13.3 0-24-10.7-24-24zm24 72l144 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-144 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 96l272 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-272 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg>';
 
