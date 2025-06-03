@@ -1,4 +1,0 @@
-{
-    "activeCategory": "123",
-    "winnerIDs": ["1", "2", "3", "112131"]
-}
