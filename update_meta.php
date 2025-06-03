@@ -41,16 +41,7 @@ function user_meta_transform_button_shortcode() {
     if ( !is_user_logged_in() ) return '<p>Please log in to view your meta data.</p>';
 
     return '
-        <button id="transform-user-meta" style="padding:10px 20px;cursor:pointer;">Refresh User Meta</button>
-        <div id="meta-timer" style="margin-top:10px;font-weight:bold;"></div>
-        <details style="margin-top:20px;">
-            <summary>View Transformed Meta</summary>
-            <pre id="transformed-meta-output" ></pre>
-        </details>
-
-        <hr style="margin:30px 0;">
-
-        <button id="count-user-meta" style="padding:10px 20px;cursor:pointer;">Count & Show Watched by Year</button>
+        <div><button id="transform-user-meta" style="padding:10px 20px;cursor:pointer;">Refresh User Meta</button></div>
         <div id="meta-count-output" style="margin-top:20px;font-weight:bold;"></div>
         <canvas id="watchedChart" width="100%" height="40" style="margin-top:20px;max-width:100%;"></canvas>
         <div id="watched-by-decade"></div>
