@@ -111,3 +111,44 @@ function oscars_top10_watched_films_list_shortcode() {
     return $output;
 }
 add_shortcode('top10_watched_films', 'oscars_top10_watched_films_list_shortcode');
+
+/**
+ * Compile user stats (last-updated, total-watched, user id) for all users into a single JSON file.
+ */
+function oscars_compile_all_user_stats() {
+    $user_meta_dir = ABSPATH . 'wp-content/uploads/user_meta/';
+    $output = [];
+    if (is_dir($user_meta_dir)) {
+        foreach (glob($user_meta_dir . 'user_*.json') as $file) {
+            if (preg_match('/user_(\d+)\.json$/', $file, $matches)) {
+                $user_id = (int)$matches[1];
+                $json = file_get_contents($file);
+                $data = json_decode($json, true);
+                $output[] = [
+                    'user_id' => $user_id,
+                    'last-updated' => $data['last-updated'] ?? '',
+                    'total-watched' => $data['total-watched'] ?? 0,
+                ];
+            }
+        }
+    }
+    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+    file_put_contents($output_path, json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    return 'All user stats JSON generated!';
+}
+
+/**
+ * Admin button/shortcode to trigger compiling all user stats JSON.
+ */
+function oscars_all_user_stats_button_shortcode() {
+    if (!current_user_can('manage_options')) {
+        return 'You do not have permission.';
+    }
+    $output = '';
+    if (isset($_POST['oscars_all_user_stats_generate'])) {
+        $output .= '<div>' . oscars_compile_all_user_stats() . '</div>';
+    }
+    $output .= '<form method="post"><button type="submit" name="oscars_all_user_stats_generate">Generate All User Stats JSON</button></form>';
+    return $output;
+}
+add_shortcode('all_user_stats_button', 'oscars_all_user_stats_button_shortcode');
