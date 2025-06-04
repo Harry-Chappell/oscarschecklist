@@ -1351,3 +1351,4 @@ add_shortcode('prediction_count', 'prediction_count_shortcode');
 
 
 require_once get_stylesheet_directory() . '/update_meta.php';
+require_once get_stylesheet_directory() . '/film_stats.php';
