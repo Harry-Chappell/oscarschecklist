@@ -191,3 +191,42 @@ function oscars_publicise_data_checkbox_shortcode() {
     return $output;
 }
 add_shortcode('publicise_data_checkbox', 'oscars_publicise_data_checkbox_shortcode');
+
+/**
+ * Shortcode to display a leaderboard of users by total-watched, using all_user_stats.json.
+ */
+function oscars_leaderboard_shortcode() {
+    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+    if (!file_exists($output_path)) {
+        return '<p>No leaderboard data found. Please generate it first.</p>';
+    }
+    $json = file_get_contents($output_path);
+    $users = json_decode($json, true);
+    if (!$users || !is_array($users)) {
+        return '<p>Leaderboard data is invalid.</p>';
+    }
+    // Sort by total-watched descending
+    usort($users, function($a, $b) {
+        return $b['total-watched'] <=> $a['total-watched'];
+    });
+    $output = '<ul class="oscars-leaderboard">';
+    $last_score = null;
+    $rank = 0;
+    $display_rank = 0;
+    foreach ($users as $i => $user) {
+        $rank++;
+        if ($last_score !== $user['total-watched']) {
+            $display_rank = $rank;
+            $last_score = $user['total-watched'];
+        }
+        $suffix = 'th';
+        if ($display_rank % 10 == 1 && $display_rank % 100 != 11) $suffix = 'st';
+        elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
+        elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
+        $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
+        $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . intval($user['total-watched']) . '</li>';
+    }
+    $output .= '</ul>';
+    return $output;
+}
+add_shortcode('oscars_leaderboard', 'oscars_leaderboard_shortcode');
