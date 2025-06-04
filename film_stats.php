@@ -130,6 +130,9 @@ function oscars_compile_all_user_stats() {
                     'total-watched' => $data['total-watched'] ?? 0,
                     'username' => $data['username'] ?? '',
                     'public' => $data['public'] ?? false,
+                    'correct-predictions' => $data['correct-predictions'] ?? '',
+                    'incorrect-predictions' => $data['incorrect-predictions'] ?? '',
+                    'correct-prediction-rate' => $data['correct-prediction-rate'] ?? '',
                 ];
             }
         }
@@ -285,3 +288,52 @@ function oscars_update_all_user_prediction_stats_button_shortcode() {
     return $output;
 }
 add_shortcode('update_all_user_prediction_stats_button', 'oscars_update_all_user_prediction_stats_button_shortcode');
+
+/**
+ * Shortcode to display a leaderboard of users by correct predictions or correct prediction rate.
+ */
+function oscars_predictions_leaderboard_shortcode() {
+    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+    if (!file_exists($output_path)) {
+        return '<p>No leaderboard data found. Please generate it first.</p>';
+    }
+    $json = file_get_contents($output_path);
+    $users = json_decode($json, true);
+    if (!$users || !is_array($users)) {
+        return '<p>Leaderboard data is invalid.</p>';
+    }
+    // Default sort: correct-predictions
+    $sort_by = isset($_POST['oscars_leaderboard_sort']) && $_POST['oscars_leaderboard_sort'] === 'rate' ? 'correct-prediction-rate' : 'correct-predictions';
+    // Sort users
+    usort($users, function($a, $b) use ($sort_by) {
+        $a_val = isset($a[$sort_by]) && $a[$sort_by] !== '' ? $a[$sort_by] : 0;
+        $b_val = isset($b[$sort_by]) && $b[$sort_by] !== '' ? $b[$sort_by] : 0;
+        return $b_val <=> $a_val;
+    });
+    $output = '<form method="post" style="margin-bottom:1em">';
+    $output .= '<label><input type="radio" name="oscars_leaderboard_sort" value="correct"' . ($sort_by === 'correct-predictions' ? ' checked' : '') . ' onchange="this.form.submit()"> Correct Predictions</label> ';
+    $output .= '<label><input type="radio" name="oscars_leaderboard_sort" value="rate"' . ($sort_by === 'correct-prediction-rate' ? ' checked' : '') . ' onchange="this.form.submit()"> Prediction Rate</label>';
+    $output .= '</form>';
+    $last_score = null;
+    $rank = 0;
+    $display_rank = 0;
+    $output .= '<ul class="oscars-leaderboard">';
+    foreach ($users as $i => $user) {
+        $rank++;
+        $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
+        if ($last_score !== $score) {
+            $display_rank = $rank;
+            $last_score = $score;
+        }
+        $suffix = 'th';
+        if ($display_rank % 10 == 1 && $display_rank % 100 != 11) $suffix = 'st';
+        elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
+        elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
+        $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
+        $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($score) ? (100 * $score) . '%' : 'N/A') : intval($score);
+        $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . $display_score . '</li>';
+    }
+    $output .= '</ul>';
+    return $output;
+}
+add_shortcode('oscars_predictions_leaderboard', 'oscars_predictions_leaderboard_shortcode');

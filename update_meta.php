@@ -100,6 +100,9 @@ function ajax_transform_user_meta_to_json() {
         'public'         => false,
         'last-updated'   => '',
         'total-watched'  => 0, // will set below
+        'correct-predictions'   => '',
+        'incorrect-predictions'   => '',
+        'correct-prediction-rate'   => '',
         'predictions'    => [],
         'favourites'     => [],
         'watched'        => [],
@@ -272,6 +275,9 @@ function regenerate_user_json($user_id) {
         'public'         => false,
         'last-updated'   => '',
         'total-watched'  => 0, // will set below
+        'correct-predictions'   => '',
+        'incorrect-predictions'   => '',
+        'correct-prediction-rate'   => '',
         'predictions'    => [],
         'favourites'     => [],
         'watched'        => [],
