@@ -128,15 +128,17 @@ function markAsWatched()
             if ($film_year) $entry['film-year'] = $film_year;
             if ($film_slug) $entry['film-url'] = $film_slug;
             $json['watched'][] = $entry;
-            save_user_meta_json($user_id, $json);
         }
     } elseif ($action === 'unwatched') {
         // Remove from watched array
         $json['watched'] = array_values(array_filter($json['watched'], function($film) use ($post_id) {
             return $film['film-id'] != $post_id;
         }));
-        save_user_meta_json($user_id, $json);
     }
+    // Update stats and last-updated
+    $json['total-watched'] = count($json['watched']);
+    $json['last-updated'] = date('Y-m-d');
+    save_user_meta_json($user_id, $json);
 }
 add_action('init', 'markAsWatched');
 
@@ -155,14 +157,14 @@ function markAsFav()
     if ($fav_action === 'fav') {
         if (!in_array((int)$fav_nom_id, $json['favourites'])) {
             $json['favourites'][] = (int)$fav_nom_id;
-            save_user_meta_json($user_id, $json);
         }
     } elseif ($fav_action === 'unfav') {
         $json['favourites'] = array_values(array_filter($json['favourites'], function($id) use ($fav_nom_id) {
             return $id != $fav_nom_id;
         }));
-        save_user_meta_json($user_id, $json);
     }
+    $json['last-updated'] = date('Y-m-d');
+    save_user_meta_json($user_id, $json);
 }
 add_action('init', 'markAsFav');
 
@@ -181,14 +183,14 @@ function markAspredict()
     if ($predict_action === 'predict') {
         if (!in_array((int)$predict_nom_id, $json['predictions'])) {
             $json['predictions'][] = (int)$predict_nom_id;
-            save_user_meta_json($user_id, $json);
         }
     } elseif ($predict_action === 'unpredict') {
         $json['predictions'] = array_values(array_filter($json['predictions'], function($id) use ($predict_nom_id) {
             return $id != $predict_nom_id;
         }));
-        save_user_meta_json($user_id, $json);
     }
+    $json['last-updated'] = date('Y-m-d');
+    save_user_meta_json($user_id, $json);
 }
 add_action('init', 'markAspredict');
 

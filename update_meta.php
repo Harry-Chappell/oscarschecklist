@@ -92,10 +92,13 @@ function ajax_transform_user_meta_to_json() {
     $user_id = get_current_user_id();
     $meta = get_user_meta( $user_id );
 
+    // Build $transformed in the new order
     $transformed = [
-        'watched'     => [],
-        'favourites'  => [],
-        'predictions' => [],
+        'last-updated'   => '',
+        'total-watched'  => 0, // will set below
+        'predictions'    => [],
+        'favourites'     => [],
+        'watched'        => [],
     ];
 
     foreach ( $meta as $key => $value_array ) {
@@ -173,18 +176,9 @@ function ajax_transform_user_meta_to_json() {
 
             // Debugging: Log the transformed array before saving
             error_log("Transformed data: " . wp_json_encode($transformed));
-        } else {
-            $transformed['meta'][ $key ] = $value_array;
-        }
+        } 
     }
-    if ( isset( $film_term ) && $film_term instanceof WP_Term ) {
-        error_log( "Film Terms: " . print_r( $film_term->name, true ) );
-    }
-
-    if ( isset( $nomination ) && $nomination instanceof WP_Post ) {
-        error_log( "Post ID: " . $nomination->ID );
-        error_log( "Post Date: " . $nomination->post_date );
-    }
+    $transformed['total-watched'] = count($transformed['watched']);
 
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
@@ -266,9 +260,11 @@ function debug_log_time($label, $start_time) {
 function regenerate_user_json($user_id) {
     $meta = get_user_meta( $user_id );
     $transformed = [
-        'watched'     => [],
-        'favourites'  => [],
-        'predictions' => [],
+        'last-updated'   => '',
+        'total-watched'  => 0, // will set below
+        'predictions'    => [],
+        'favourites'     => [],
+        'watched'        => [],
     ];
     foreach ( $meta as $key => $value_array ) {
         if ( preg_match( '/^(watched|fav|predict)_(\d+)$/', $key, $matches ) ) {
@@ -316,16 +312,18 @@ function regenerate_user_json($user_id) {
             } elseif ( $type === 'predict' ) {
                 $transformed['predictions'][] = $id;
             }
-        } else {
-            $transformed['meta'][ $key ] = $value_array;
         }
     }
+    $transformed['total-watched'] = count($transformed['watched']);
+
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
     $file_path  = $user_dir . "/user_{$user_id}.json";
+
     if ( ! file_exists( $user_dir ) ) {
         wp_mkdir_p( $user_dir );
     }
+
     file_put_contents( $file_path, wp_json_encode( $transformed, JSON_PRETTY_PRINT ) );
 }
 
