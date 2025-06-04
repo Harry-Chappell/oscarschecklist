@@ -128,6 +128,8 @@ function oscars_compile_all_user_stats() {
                     'user_id' => $user_id,
                     'last-updated' => $data['last-updated'] ?? '',
                     'total-watched' => $data['total-watched'] ?? 0,
+                    'username' => $data['username'] ?? '',
+                    'public' => $data['public'] ?? false,
                 ];
             }
         }
