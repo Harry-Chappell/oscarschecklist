@@ -78,6 +78,26 @@ function save_user_meta_json($user_id, $data) {
     file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
 }
 
+function oscars_update_film_stats_json($film_id, $action) {
+    $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
+    if (!file_exists($output_path)) return;
+    $json = file_get_contents($output_path);
+    $films = json_decode($json, true);
+    if (!$films || !is_array($films)) return;
+    foreach ($films as &$film) {
+        if (isset($film['film-id']) && $film['film-id'] == $film_id) {
+            if (!isset($film['watched-count'])) $film['watched-count'] = 0;
+            if ($action === 'watched') {
+                $film['watched-count']++;
+            } elseif ($action === 'unwatched' && $film['watched-count'] > 0) {
+                $film['watched-count']--;
+            }
+            break;
+        }
+    }
+    file_put_contents($output_path, json_encode($films, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+
 function markAsWatched()
 {
     $post_id = $_POST['watched_post_id'] ?? null;
@@ -89,6 +109,7 @@ function markAsWatched()
 
     $user_id = get_current_user_id();
     $json = load_user_meta_json($user_id);
+    $changed = false;
 
     if ($action === 'watched') {
         // Only add if not already present
@@ -128,17 +149,24 @@ function markAsWatched()
             if ($film_year) $entry['film-year'] = $film_year;
             if ($film_slug) $entry['film-url'] = $film_slug;
             $json['watched'][] = $entry;
+            $changed = true;
         }
     } elseif ($action === 'unwatched') {
-        // Remove from watched array
+        $before = count($json['watched']);
         $json['watched'] = array_values(array_filter($json['watched'], function($film) use ($post_id) {
             return $film['film-id'] != $post_id;
         }));
+        if (count($json['watched']) < $before) {
+            $changed = true;
+        }
     }
     // Update stats and last-updated
     $json['total-watched'] = count($json['watched']);
     $json['last-updated'] = date('Y-m-d');
     save_user_meta_json($user_id, $json);
+    if ($changed) {
+        oscars_update_film_stats_json($post_id, $action);
+    }
 }
 add_action('init', 'markAsWatched');
 
