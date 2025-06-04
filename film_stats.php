@@ -152,3 +152,40 @@ function oscars_all_user_stats_button_shortcode() {
     return $output;
 }
 add_shortcode('all_user_stats_button', 'oscars_all_user_stats_button_shortcode');
+
+/**
+ * Shortcode for user to toggle 'public' field in their user meta JSON.
+ */
+function oscars_publicise_data_checkbox_shortcode() {
+    if (!is_user_logged_in()) {
+        return '<p>Please log in to change your data publicity setting.</p>';
+    }
+    $user_id = get_current_user_id();
+    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
+    $public = false;
+    if (file_exists($file_path)) {
+        $data = json_decode(file_get_contents($file_path), true);
+        $public = !empty($data['public']);
+    }
+    // Handle POST only for this user and this form
+    if (
+        isset($_POST['oscars_publicise_data_checkbox']) &&
+        isset($_POST['oscars_publicise_data_form_user']) &&
+        intval($_POST['oscars_publicise_data_form_user']) === $user_id
+    ) {
+        $public = !empty($_POST['oscars_publicise_data']);
+        if (file_exists($file_path)) {
+            $data = json_decode(file_get_contents($file_path), true);
+            $data['public'] = $public;
+            file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
+    }
+    $checked = $public ? 'checked' : '';
+    $output = '<form method="post" id="oscars-publicise-form">';
+    $output .= '<input type="hidden" name="oscars_publicise_data_checkbox" value="1">';
+    $output .= '<input type="hidden" name="oscars_publicise_data_form_user" value="' . esc_attr($user_id) . '">';
+    $output .= '<label><input type="checkbox" name="oscars_publicise_data" value="1" ' . $checked . ' onchange="this.form.submit()"> Publicise my data</label>';
+    $output .= '</form>';
+    return $output;
+}
+add_shortcode('publicise_data_checkbox', 'oscars_publicise_data_checkbox_shortcode');

@@ -91,9 +91,13 @@ function ajax_transform_user_meta_to_json() {
 
     $user_id = get_current_user_id();
     $meta = get_user_meta( $user_id );
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
 
     // Build $transformed in the new order
     $transformed = [
+        'username'       => $username,
+        'public'         => false,
         'last-updated'   => '',
         'total-watched'  => 0, // will set below
         'predictions'    => [],
@@ -179,6 +183,7 @@ function ajax_transform_user_meta_to_json() {
         } 
     }
     $transformed['total-watched'] = count($transformed['watched']);
+    // $transformed['last-updated'] = date('Y-m-d');
 
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
@@ -259,7 +264,12 @@ function debug_log_time($label, $start_time) {
 
 function regenerate_user_json($user_id) {
     $meta = get_user_meta( $user_id );
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
+
     $transformed = [
+        'username'       => $username,
+        'public'         => false,
         'last-updated'   => '',
         'total-watched'  => 0, // will set below
         'predictions'    => [],
@@ -315,6 +325,7 @@ function regenerate_user_json($user_id) {
         }
     }
     $transformed['total-watched'] = count($transformed['watched']);
+    // $transformed['last-updated'] = date('Y-m-d');
 
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
