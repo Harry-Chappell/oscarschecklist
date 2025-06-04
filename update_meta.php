@@ -40,12 +40,43 @@ add_action( 'wp_enqueue_scripts', 'enqueue_user_meta_transform_script' );
 function user_meta_transform_button_shortcode() {
     if ( !is_user_logged_in() ) return '<p>Please log in to view your meta data.</p>';
 
-    return '
-        <div><button id="transform-user-meta" style="padding:10px 20px;cursor:pointer;">Refresh User Meta</button></div>
+    $html = '
+        <div><button id="transform-user-meta" style="padding:10px 20px;cursor:pointer;">Refresh Current User Meta</button></div>
+        <div><button id="refresh-all-users-meta" style="padding:10px 20px;cursor:pointer;margin-top:10px;">Refresh All Users Meta</button></div>
         <div id="meta-count-output" style="margin-top:20px;font-weight:bold;"></div>
         <canvas id="watchedChart" width="100%" height="40" style="margin-top:20px;max-width:100%;"></canvas>
         <div id="watched-by-decade"></div>
-    ';
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var allBtn = document.getElementById("refresh-all-users-meta");
+            if (allBtn) {
+                allBtn.addEventListener("click", function() {
+                    allBtn.disabled = true;
+                    allBtn.textContent = "Refreshing all users...";
+                    fetch(ajaxurl, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                        body: new URLSearchParams({
+                            action: "refresh_all_users_meta",
+                            nonce: userMetaAjax.nonce
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        allBtn.disabled = false;
+                        allBtn.textContent = "Refresh All Users Meta";
+                        alert(data.success ? data.data : (data.data || "Unknown error"));
+                    })
+                    .catch(() => {
+                        allBtn.disabled = false;
+                        allBtn.textContent = "Refresh All Users Meta";
+                        alert("Error refreshing all users meta");
+                    });
+                });
+            }
+        });
+        </script>';
+    return $html;
 }
 add_shortcode( 'transform_user_meta_button', 'user_meta_transform_button_shortcode' );
 
@@ -231,3 +262,79 @@ function debug_log_time($label, $start_time) {
     error_log("[$label] took {$elapsed}ms");
     return $end_time;
 }
+
+function regenerate_user_json($user_id) {
+    $meta = get_user_meta( $user_id );
+    $transformed = [
+        'watched'     => [],
+        'favourites'  => [],
+        'predictions' => [],
+    ];
+    foreach ( $meta as $key => $value_array ) {
+        if ( preg_match( '/^(watched|fav|predict)_(\d+)$/', $key, $matches ) ) {
+            $type = $matches[1];
+            $id = (int) $matches[2];
+            if ( !isset($value_array[0]) || $value_array[0] !== 'y' ) {
+                continue;
+            }
+            if ( $type === 'watched' ) {
+                $film_name = '';
+                $film_year = null;
+                $film_term = get_term( $id, 'films' );
+                if ( $film_term && ! is_wp_error( $film_term ) ) {
+                    $film_name = $film_term->name;
+                    $film_slug = $film_term->slug;
+                } else {
+                    $film_slug = null;
+                }
+                $nomination_query = new WP_Query([
+                    'post_type' => 'nominations',
+                    'posts_per_page' => 1,
+                    'tax_query' => [[
+                        'taxonomy' => 'films',
+                        'field'    => 'term_id',
+                        'terms'    => $id,
+                    ]],
+                    'orderby' => 'date',
+                    'order' => 'ASC',
+                ]);
+                if ( $nomination_query->have_posts() ) {
+                    $nomination = $nomination_query->posts[0];
+                    $film_year = (int) date( 'Y', strtotime( $nomination->post_date ) );
+                }
+                wp_reset_postdata();
+                if ( !empty( $film_name ) && !empty( $film_year ) ) {
+                    $transformed['watched'][] = [
+                        'film-id'   => $id,
+                        'film-name' => $film_name,
+                        'film-year' => $film_year,
+                        'film-url'  => $film_slug,
+                    ];
+                }
+            } elseif ( $type === 'fav' ) {
+                $transformed['favourites'][] = $id;
+            } elseif ( $type === 'predict' ) {
+                $transformed['predictions'][] = $id;
+            }
+        } else {
+            $transformed['meta'][ $key ] = $value_array;
+        }
+    }
+    $upload_dir = wp_upload_dir();
+    $user_dir   = $upload_dir['basedir'] . '/user_meta';
+    $file_path  = $user_dir . "/user_{$user_id}.json";
+    if ( ! file_exists( $user_dir ) ) {
+        wp_mkdir_p( $user_dir );
+    }
+    file_put_contents( $file_path, wp_json_encode( $transformed, JSON_PRETTY_PRINT ) );
+}
+
+function ajax_refresh_all_users_meta() {
+    check_ajax_referer( 'user_meta_nonce', 'nonce' );
+    $users = get_users([ 'fields' => 'ID' ]);
+    foreach ($users as $user_id) {
+        regenerate_user_json($user_id);
+    }
+    wp_send_json_success('All user meta JSON files have been refreshed.');
+}
+add_action('wp_ajax_refresh_all_users_meta', 'ajax_refresh_all_users_meta');
