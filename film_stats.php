@@ -290,10 +290,55 @@ function oscars_update_all_user_prediction_stats_button_shortcode() {
 add_shortcode('update_all_user_prediction_stats_button', 'oscars_update_all_user_prediction_stats_button_shortcode');
 
 /**
- * Shortcode to display a leaderboard of users by correct predictions or correct prediction rate.
+ * Shortcode to display a leaderboard of users by correct predictions or correct prediction rate, with AJAX switch.
  */
 function oscars_predictions_leaderboard_shortcode() {
+    ob_start();
+    ?>
+    <form id="oscars-predictions-leaderboard-form" style="margin-bottom:1em">
+        <label><input type="radio" name="oscars_leaderboard_sort" value="correct" checked> Correct Predictions</label>
+        <label><input type="radio" name="oscars_leaderboard_sort" value="rate"> Prediction Rate</label>
+    </form>
+    <div id="oscars-predictions-leaderboard-results"></div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function fetchLeaderboard(sort) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', window.location.href, true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(xhr.responseText, 'text/html');
+                    var leaderboard = doc.querySelector('#oscars-predictions-leaderboard-ajax');
+                    if (leaderboard) {
+                        document.getElementById('oscars-predictions-leaderboard-results').innerHTML = leaderboard.innerHTML;
+                    }
+                }
+            };
+            xhr.send('oscars_leaderboard_sort=' + encodeURIComponent(sort) + '&oscars_leaderboard_ajax=1');
+        }
+        var radios = document.querySelectorAll('#oscars-predictions-leaderboard-form input[type=radio]');
+        radios.forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                fetchLeaderboard(this.value);
+            });
+        });
+        // Initial load
+        fetchLeaderboard(document.querySelector('#oscars-predictions-leaderboard-form input[type=radio]:checked').value);
+    });
+    </script>
+    <div id="oscars-predictions-leaderboard-ajax" style="display:none">
+        <?php echo oscars_predictions_leaderboard_inner(); ?>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('oscars_predictions_leaderboard', 'oscars_predictions_leaderboard_shortcode');
+
+function oscars_predictions_leaderboard_inner() {
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+    $sort_by = isset($_POST['oscars_leaderboard_sort']) && $_POST['oscars_leaderboard_sort'] === 'rate' ? 'correct-prediction-rate' : 'correct-predictions';
     if (!file_exists($output_path)) {
         return '<p>No leaderboard data found. Please generate it first.</p>';
     }
@@ -302,22 +347,15 @@ function oscars_predictions_leaderboard_shortcode() {
     if (!$users || !is_array($users)) {
         return '<p>Leaderboard data is invalid.</p>';
     }
-    // Default sort: correct-predictions
-    $sort_by = isset($_POST['oscars_leaderboard_sort']) && $_POST['oscars_leaderboard_sort'] === 'rate' ? 'correct-prediction-rate' : 'correct-predictions';
-    // Sort users
     usort($users, function($a, $b) use ($sort_by) {
         $a_val = isset($a[$sort_by]) && $a[$sort_by] !== '' ? $a[$sort_by] : 0;
         $b_val = isset($b[$sort_by]) && $b[$sort_by] !== '' ? $b[$sort_by] : 0;
         return $b_val <=> $a_val;
     });
-    $output = '<form method="post" style="margin-bottom:1em">';
-    $output .= '<label><input type="radio" name="oscars_leaderboard_sort" value="correct"' . ($sort_by === 'correct-predictions' ? ' checked' : '') . ' onchange="this.form.submit()"> Correct Predictions</label> ';
-    $output .= '<label><input type="radio" name="oscars_leaderboard_sort" value="rate"' . ($sort_by === 'correct-prediction-rate' ? ' checked' : '') . ' onchange="this.form.submit()"> Prediction Rate</label>';
-    $output .= '</form>';
     $last_score = null;
     $rank = 0;
     $display_rank = 0;
-    $output .= '<ul class="oscars-leaderboard">';
+    $output = '<ul class="oscars-leaderboard">';
     foreach ($users as $i => $user) {
         $rank++;
         $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
@@ -336,4 +374,3 @@ function oscars_predictions_leaderboard_shortcode() {
     $output .= '</ul>';
     return $output;
 }
-add_shortcode('oscars_predictions_leaderboard', 'oscars_predictions_leaderboard_shortcode');
