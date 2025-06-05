@@ -121,18 +121,21 @@ function markAsWatched()
             }
         }
         if (!$already) {
-            // Gather film info
-            $film_term = get_term($post_id, 'films');
+            // Use get_term to fetch the film term by ID
+            $film_term = get_term((int)$post_id, 'films');
             $film_name = ($film_term && !is_wp_error($film_term)) ? $film_term->name : '';
             $film_slug = ($film_term && !is_wp_error($film_term)) ? $film_term->slug : '';
+            $film_url = ($film_term && !is_wp_error($film_term)) ? get_term_link($film_term) : '';
             $film_year = null;
+
+            // Get year from first nomination post (if any)
             $nomination_query = new WP_Query([
                 'post_type' => 'nominations',
                 'posts_per_page' => 1,
                 'tax_query' => [[
                     'taxonomy' => 'films',
                     'field'    => 'term_id',
-                    'terms'    => $post_id,
+                    'terms'    => (int)$post_id,
                 ]],
                 'orderby' => 'date',
                 'order'   => 'ASC',
@@ -143,11 +146,13 @@ function markAsWatched()
             }
             wp_reset_postdata();
 
-            // Always add to watched, even if some info is missing
-            $entry = [ 'film-id' => (int)$post_id ];
-            if ($film_name) $entry['film-name'] = $film_name;
-            if ($film_year) $entry['film-year'] = $film_year;
-            if ($film_slug) $entry['film-url'] = $film_slug;
+            $entry = [
+                'film-id' => (int)$post_id,
+                'film-name' => $film_name,
+                'film-year' => $film_year,
+                'film-url' => $film_url,
+                'watched-date' => date('Y-m-d'),
+            ];
             $json['watched'][] = $entry;
             $changed = true;
         }
@@ -168,7 +173,7 @@ function markAsWatched()
         oscars_update_film_stats_json($post_id, $action);
     }
 }
-add_action('init', 'markAsWatched');
+add_action('init', 'markAsWatched', 30);
 
 function markAsFav()
 {
@@ -1108,112 +1113,6 @@ add_filter('template_include', 'load_custom_search_template');
 
 
 
-
-// function display_winner_script_shortcode() {
-//     $output = '';  // Initialize output if not already done
-
-//     $output .= '
-//     <script>
-//         const url = "https://results.oscarschecklist.com/serve-results.php";
-    
-//         async function fetchWinnersData() {
-//             try {
-//                 // console.log("Attempting to fetch data from serve-results.php...");  // Log for debugging
-//                 const response = await fetch(url);
-                
-//                 // if (!response.ok) {  // Check if response is OK
-//                 //     throw new Error("Network response was not ok: " + response.statusText);
-//                 // }
-    
-//                 const data = await response.json();
-//                 // console.log("Fetched data:", data);  // Log fetched data
-    
-//                 const activeCategory = data.activeCategory;
-//                 const winnerIDs = data.wInnerIDs;
-    
-//                 // Clear previous winner classes
-//                 // document.querySelectorAll(".winner").forEach(el => el.classList.remove("winner"));
-    
-//                 // Add class to elements matching winner IDs
-//                 winnerIDs.forEach(id => {
-//                     const winnerElement = document.getElementById("nomination-" + id);
-//                     if (winnerElement) {
-//                         winnerElement.classList.add("winner");
-//                         // console.log("Added \'winner\' class to element with ID: nomination-" + id);
-//                     } else {
-//                         // console.log("No element found with ID: nomination-" + id);
-//                     }
-//                 });
-    
-//                 // console.log("Active Category ID: " + activeCategory);
-//             } catch (error) {
-//                 // console.error("Error fetching or processing winners data:", error);  // Log the error
-//             }
-//         }
-    
-//         // Fetch data every 5 seconds
-//         setInterval(fetchWinnersData, 1000);
-//     </script>
-//     ';
-    
-//     // Echo or return $output as needed in your template or shortcode function
-
-//     return $output;
-// }
-// add_shortcode('display_winner_script', 'display_winner_script_shortcode');
-
-
-
-// function update_winners_file($post_id, $terms) {
-//     // Check if the post is of the 'nominations' post type
-//     if (get_post_type($post_id) === 'nominations') {
-//         // Log for debugging
-//         error_log("update_winners_file function triggered for post ID: $post_id");
-
-//         // Check if the post is being assigned to the "winner" category
-//         $is_winner = false;
-//         foreach ($terms as $term_id) {
-//             $term = get_term($term_id); // Retrieve the full term object
-//             if ($term && $term->slug === 'winner') {
-//                 $is_winner = true;
-//                 break;
-//             }
-//         }
-
-//         if ($is_winner) {
-//             // Prepare data for results.txt with just this single winner
-//             $data = [
-//                 'activeCategory' => '123', // Update if needed
-//                 'winnerIDs' => [strval($post_id)], // Only the newly added winner
-//             ];
-
-//             // Convert data to JSON
-//             $json_data = json_encode($data, JSON_PRETTY_PRINT);
-
-//             // Define the path to results.txt on the external server
-//             $url = 'https://results.oscarschecklist.com/serve-results.php';
-
-//             // Use wp_remote_post to send the data
-//             $response = wp_remote_post($url, [
-//                 'method'    => 'POST',
-//                 'headers'   => [
-//                     'Content-Type' => 'application/json',
-//                 ],
-//                 'body'      => $json_data,
-//                 'timeout'   => 15,
-//             ]);
-
-//             if (is_wp_error($response)) {
-//                 error_log("Failed to update winners file: " . $response->get_error_message());
-//             } else {
-//                 error_log("Winners file successfully updated with post ID: $post_id");
-//             }
-//         } else {
-//             error_log("Post ID $post_id is not in the 'winner' category.");
-//         }
-//     }
-// }
-// add_action('set_object_terms', 'update_winners_file', 10, 2);
 
 
 
