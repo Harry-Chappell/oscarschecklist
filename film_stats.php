@@ -720,3 +720,83 @@ function oscars_active_users_barchart_shortcode() {
     return ob_get_clean();
 }
 add_shortcode('oscars_active_users_barchart', 'oscars_active_users_barchart_shortcode');
+
+/**
+ * Shortcode: oscars_user_watched_by_week_barchart
+ * Shows a bar chart of how many films the current user watched in each of the last 52 weeks.
+ * Uses Chart.js (loads from CDN if not present).
+ */
+function oscars_user_watched_by_week_barchart_shortcode() {
+    if (!is_user_logged_in()) {
+        return '<p>Please log in to see your watched films by week.</p>';
+    }
+    $user_id = get_current_user_id();
+    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
+    if (!file_exists($file_path)) {
+        return '<p>No data found for current user.</p>';
+    }
+    $json = file_get_contents($file_path);
+    $data = json_decode($json, true);
+    if (!$data || empty($data['watched']) || !is_array($data['watched'])) {
+        return '<p>No watched films data found.</p>';
+    }
+    // Prepare 52 weeks of bins (0 = this week, 51 = 51 weeks ago)
+    $now = strtotime('today');
+    $bins = array_fill(0, 52, 0);
+    foreach ($data['watched'] as $film) {
+        if (!empty($film['watched-date'])) {
+            $watched = strtotime($film['watched-date']);
+            if ($watched) {
+                $weeks_ago = floor(($now - $watched) / (7 * 86400));
+                if ($weeks_ago >= 0 && $weeks_ago < 52) {
+                    $bins[$weeks_ago]++;
+                }
+            }
+        }
+    }
+    // Prepare labels (week start dates)
+    $labels = [];
+    for ($i = 51; $i >= 0; $i--) {
+        $week_start = strtotime("-{$i} week", $now);
+        $labels[] = date('j M', $week_start);
+    }
+    // Reverse bins for left-to-right (oldest to newest)
+    $bins = array_reverse($bins);
+    $labels = array_reverse($labels);
+    ob_start();
+    ?>
+    <canvas id="oscars-user-watched-by-week-barchart" width="1000" height="300"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('oscars-user-watched-by-week-barchart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode($labels); ?>,
+                datasets: [{
+                    label: 'Films watched',
+                    data: <?php echo json_encode($bins); ?>,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Your Films Watched by Week (past 52 weeks)' }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Week (starting)' }, ticks: { maxTicksLimit: 13 } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Films Watched' } }
+                }
+            }
+        });
+    });
+    </script>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('user_watched_by_week_barchart', 'oscars_user_watched_by_week_barchart_shortcode');
