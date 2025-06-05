@@ -197,8 +197,9 @@ add_shortcode('publicise_data_checkbox', 'oscars_publicise_data_checkbox_shortco
 
 /**
  * Shortcode to display a leaderboard of users by total-watched, using all_user_stats.json.
+ * Renamed to oscars_watched_leaderboard. Now includes average at the bottom.
  */
-function oscars_leaderboard_shortcode() {
+function oscars_watched_leaderboard_shortcode() {
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
     if (!file_exists($output_path)) {
         return '<p>No leaderboard data found. Please generate it first.</p>';
@@ -216,6 +217,8 @@ function oscars_leaderboard_shortcode() {
     $last_score = null;
     $rank = 0;
     $display_rank = 0;
+    $sum = 0;
+    $count = 0;
     foreach ($users as $i => $user) {
         $rank++;
         if ($last_score !== $user['total-watched']) {
@@ -228,11 +231,17 @@ function oscars_leaderboard_shortcode() {
         elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
         $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
         $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . intval($user['total-watched']) . '</li>';
+        $sum += intval($user['total-watched']);
+        $count++;
     }
     $output .= '</ul>';
+    if ($count > 0) {
+        $avg = round($sum / $count, 1);
+        $output .= '<div class="oscars-leaderboard-avg">Average: ' . $avg . '</div>';
+    }
     return $output;
 }
-add_shortcode('oscars_leaderboard', 'oscars_leaderboard_shortcode');
+add_shortcode('oscars_watched_leaderboard', 'oscars_watched_leaderboard_shortcode');
 
 /**
  * For every user, count correct/incorrect predictions and save to their JSON. Add a shortcode button for admins.
@@ -356,6 +365,8 @@ function oscars_predictions_leaderboard_inner() {
     $rank = 0;
     $display_rank = 0;
     $output = '<ul class="oscars-leaderboard">';
+    $sum = 0;
+    $count = 0;
     foreach ($users as $i => $user) {
         $rank++;
         $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
@@ -370,7 +381,23 @@ function oscars_predictions_leaderboard_inner() {
         $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
         $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($score) ? (100 * $score) . '%' : 'N/A') : intval($score);
         $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . $display_score . '</li>';
+        if ($sort_by === 'correct-prediction-rate' && is_numeric($score)) {
+            $sum += $score;
+            $count++;
+        } elseif ($sort_by === 'correct-predictions') {
+            $sum += intval($score);
+            $count++;
+        }
     }
     $output .= '</ul>';
+    if ($count > 0) {
+        if ($sort_by === 'correct-prediction-rate') {
+            $avg = round(100 * $sum / $count, 1);
+            $output .= '<div class="oscars-leaderboard-avg">Average: ' . $avg . '%</div>';
+        } else {
+            $avg = round($sum / $count, 1);
+            $output .= '<div class="oscars-leaderboard-avg">Average: ' . $avg . '</div>';
+        }
+    }
     return $output;
 }
