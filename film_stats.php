@@ -643,3 +643,80 @@ function oscars_user_count_active_days_inner() {
     }
     return $count;
 }
+
+/**
+ * Shortcode: oscars_active_users_barchart
+ * Displays a bar chart of number of users last active in each of the last 52 weeks.
+ * Uses Chart.js (loads from CDN if not present).
+ */
+function oscars_active_users_barchart_shortcode() {
+    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+    if (!file_exists($output_path)) {
+        return '<p>No user stats data found.</p>';
+    }
+    $json = file_get_contents($output_path);
+    $users = json_decode($json, true);
+    if (!$users || !is_array($users)) {
+        return '<p>User stats data is invalid.</p>';
+    }
+    // Prepare 52 weeks of bins (0 = this week, 51 = 51 weeks ago)
+    $now = strtotime('today');
+    $bins = array_fill(0, 52, 0);
+    foreach ($users as $user) {
+        if (!empty($user['last-updated'])) {
+            $last = strtotime($user['last-updated']);
+            if ($last) {
+                $weeks_ago = floor(($now - $last) / (7 * 86400));
+                if ($weeks_ago >= 0 && $weeks_ago < 52) {
+                    $bins[$weeks_ago]++;
+                }
+            }
+        }
+    }
+    // Prepare labels (week start dates)
+    $labels = [];
+    for ($i = 51; $i >= 0; $i--) {
+        $week_start = strtotime("-{$i} week", $now);
+        $labels[] = date('j M', $week_start);
+    }
+    // Reverse bins for left-to-right (oldest to newest)
+    $bins = array_reverse($bins);
+    $labels = array_reverse($labels);
+    // Output chart container and Chart.js loader
+    ob_start();
+    ?>
+    <canvas id="oscars-active-users-barchart" width="1000" height="300"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('oscars-active-users-barchart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode($labels); ?>,
+                datasets: [{
+                    label: 'Users last active',
+                    data: <?php echo json_encode($bins); ?>,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'User Last Active by Week (past 52 weeks)' }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Week (starting)' }, ticks: { maxTicksLimit: 13 } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Number of Users' } }
+                }
+            }
+        });
+    });
+    </script>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('oscars_active_users_barchart', 'oscars_active_users_barchart_shortcode');
