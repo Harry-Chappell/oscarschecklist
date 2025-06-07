@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Fetch stats from existing JSON and generate chart
     function fetchAndRenderStats() {
+        console.log('[user-meta-transform] fetchAndRenderStats called');
         countOutput.textContent = "Loading stats...";
 
         fetch(userMetaAjax.ajax_url, {
@@ -31,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(res => res.json())
         .then(data => {
+            console.log('[user-meta-transform] AJAX response:', data);
             if (!data.success) {
                 countOutput.textContent = `Error: ${data.data}`;
                 return;
@@ -46,40 +48,50 @@ document.addEventListener("DOMContentLoaded", function () {
             const years = Object.keys(result.watchedByYear);
             const values = Object.values(result.watchedByYear);
 
+            if (!chartCanvas) {
+                console.error('[user-meta-transform] chartCanvas (watchedChart) not found!');
+                return;
+            }
+
             if (chart) chart.destroy();
 
-            chart = new Chart(chartCanvas, {
-                type: 'bar',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: 'Watched Films by Year',
-                        data: values,
-                        backgroundColor: '#c59d40',
-                        borderRadius: 1,
-                        barPercentage: 1.0,
-                        categoryPercentage: 1.0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: true }
+            if (typeof Chart === 'undefined') {
+                console.error('[user-meta-transform] Chart.js is not loaded!');
+            } else {
+                console.log('[user-meta-transform] Rendering Chart.js bar chart', { years, values });
+                chart = new Chart(chartCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            label: 'Watched Films by Year',
+                            data: values,
+                            backgroundColor: '#c59d40',
+                            borderRadius: 1,
+                            barPercentage: 1.0,
+                            categoryPercentage: 1.0
+                        }]
                     },
-                    scales: {
-                        x: {
-                            ticks: { display: false },
-                            grid: { display: false, drawBorder: false }
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: true }
                         },
-                        y: {
-                            ticks: { display: false },
-                            grid: { display: false, drawBorder: false },
-                            beginAtZero: true
+                        scales: {
+                            x: {
+                                ticks: { display: false },
+                                grid: { display: false, drawBorder: false }
+                            },
+                            y: {
+                                ticks: { display: false },
+                                grid: { display: false, drawBorder: false },
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
             displayWatchedFilmsByDecade(result.watched);  
         });
     }

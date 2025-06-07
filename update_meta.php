@@ -44,8 +44,6 @@ function user_meta_transform_button_shortcode() {
         <div><button id="transform-user-meta" style="padding:10px 20px;cursor:pointer;">Refresh Current User Meta</button></div>
         <div><button id="refresh-all-users-meta" style="padding:10px 20px;cursor:pointer;margin-top:10px;">Refresh All Users Meta</button></div>
         <div id="meta-count-output" style="margin-top:20px;font-weight:bold;"></div>
-        <canvas id="watchedChart" width="100%" height="40" style="margin-top:20px;max-width:100%;"></canvas>
-        <div id="watched-by-decade"></div>
         <script>
         document.addEventListener("DOMContentLoaded", function() {
             var allBtn = document.getElementById("refresh-all-users-meta");
