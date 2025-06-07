@@ -2185,3 +2185,7 @@ div#watched-by-decade a {
     line-height: 1;
     padding: 4px 5px 2px;
 }
+
+summary h3 {
+    display: inline;
+}
