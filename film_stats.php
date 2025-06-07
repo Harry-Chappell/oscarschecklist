@@ -928,13 +928,21 @@ function oscars_user_watched_by_decade_shortcode() {
         if (!empty($film['film-year'])) {
             $decade = floor($film['film-year'] / 10) * 10;
             if (!isset($by_decade[$decade])) $by_decade[$decade] = [];
-            $by_decade[$decade][] = $film['film-name'] . ' (' . $film['film-year'] . ')';
+            $by_decade[$decade][] = [
+                'name' => $film['film-name'],
+                'url' => $film['film-url'] ?? ''
+            ];
         }
     }
-    ksort($by_decade);
+    krsort($by_decade); // Descending order (most recent first)
     $output = '<div class="oscars-watched-by-decade">';
     foreach ($by_decade as $decade => $films) {
-        $output .= '<strong>' . $decade . 's</strong>: ' . implode(', ', $films) . '<br>';
+        $output .= '<details><summary><strong>' . $decade . 's</strong> (' . count($films) . ')</summary><ul>';
+        foreach ($films as $film) {
+            $url = esc_url('https://stage.oscarschecklist.com/films/' . ltrim($film['url'], '/'));
+            $output .= '<li><a href="' . $url . '">' . esc_html($film['name']) . '</a></li>';
+        }
+        $output .= '</ul></details>';
     }
     $output .= '</div>';
     return $output;

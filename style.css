@@ -2170,7 +2170,7 @@ div#prediction-counter.all-predictions-made {
 }
 
 
-div#watched-by-decade ul {
+div.oscars-watched-by-decade ul {
     padding: 0;
     list-style-type: none;
     display: flex;
@@ -2178,9 +2178,9 @@ div#watched-by-decade ul {
     gap: 5px;
     font-size: 12px;
 }
-div#watched-by-decade a {
+div.oscars-watched-by-decade a {
     height: 100%;
-    background: #1a1a1a;
+    background: #000;
     display: flex;
     line-height: 1;
     padding: 4px 5px 2px;
