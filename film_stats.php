@@ -768,8 +768,15 @@ function oscars_user_watched_by_week_barchart_shortcode() {
     <canvas id="oscars-user-watched-by-week-barchart" width="1000" height="300"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('oscars-user-watched-by-week-barchart').getContext('2d');
+    function renderUserWatchedByWeekChart() {
+        var canvas = document.getElementById('oscars-user-watched-by-week-barchart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        // Wait until canvas is visible and has width
+        if (canvas.offsetWidth === 0 || canvas.offsetHeight === 0) {
+            setTimeout(renderUserWatchedByWeekChart, 100);
+            return;
+        }
         new Chart(ctx, {
             type: 'bar',
             data: {
@@ -794,7 +801,8 @@ function oscars_user_watched_by_week_barchart_shortcode() {
                 }
             }
         });
-    });
+    }
+    document.addEventListener('DOMContentLoaded', renderUserWatchedByWeekChart);
     </script>
     <?php
     return ob_get_clean();
