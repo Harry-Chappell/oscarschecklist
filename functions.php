@@ -41,63 +41,78 @@ if (!current_user_can('edit_posts')) {
 
 
 
-function get_user_meta_json_path($user_id) {
+function get_user_meta_json_path($user_id, $type = 'watched') {
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
     if ( ! file_exists( $user_dir ) ) {
         wp_mkdir_p( $user_dir );
     }
-    return $user_dir . "/user_{$user_id}.json";
+    if ($type === 'watched') {
+        return $user_dir . "/user_{$user_id}_watched.json";
+    } else {
+        return $user_dir . "/user_{$user_id}_prefs.json";
+    }
 }
 
-function load_user_meta_json($user_id) {
-    $file_path = get_user_meta_json_path($user_id);
+function load_user_meta_json($user_id, $type = null) {
+    // If type is null, load both and merge for legacy compatibility
+    if ($type === null) {
+        $watched = load_user_meta_json($user_id, 'watched');
+        $prefs = load_user_meta_json($user_id, 'prefs');
+        return array_merge($watched, $prefs);
+    }
+    $file_path = get_user_meta_json_path($user_id, $type);
     if (!file_exists($file_path)) {
-        return [
-            'watched' => [],
-            'favourites' => [],
-            'predictions' => [],
-            'watchlist' => [],
-            'favourite-categories' => [],
-            'hidden-categories' => [],
-        ];
+        if ($type === 'watched') {
+            return [
+                'watched' => [],
+                'total-watched' => 0,
+                'last-updated' => '',
+            ];
+        } else {
+            return [
+                'favourites' => [],
+                'predictions' => [],
+                'last-updated' => '',
+                'public' => false,
+                'correct-predictions' => '',
+                'incorrect-predictions' => '',
+                'correct-prediction-rate' => '',
+            ];
+        }
     }
     $json = file_get_contents($file_path);
-    return json_decode($json, true) ?: [
-        'watched' => [],
-        'favourites' => [],
-        'predictions' => [],
-        'watchlist' => [],
-        'favourite-categories' => [],
-        'hidden-categories' => [],
-    ];
+    return json_decode($json, true) ?: [];
 }
 
-function save_user_meta_json($user_id, $data) {
-    $file_path = get_user_meta_json_path($user_id);
+function save_user_meta_json($user_id, $data, $type = null) {
+    // If type is null, try to split and save both
+    if ($type === null) {
+        if (isset($data['watched'])) {
+            save_user_meta_json($user_id, [
+                'username' => isset($data['username']) ? $data['username'] : '',
+                'last-updated' => isset($data['last-updated']) ? $data['last-updated'] : '',
+                'total-watched' => isset($data['total-watched']) ? $data['total-watched'] : count($data['watched']),
+                'watched' => $data['watched'],
+            ], 'watched');
+        }
+        save_user_meta_json($user_id, [
+            'username' => isset($data['username']) ? $data['username'] : '',
+            'public' => isset($data['public']) ? $data['public'] : false,
+            'last-updated' => isset($data['last-updated']) ? $data['last-updated'] : '',
+            'favourites' => isset($data['favourites']) ? $data['favourites'] : [],
+            'predictions' => isset($data['predictions']) ? $data['predictions'] : [],
+            'correct-predictions' => isset($data['correct-predictions']) ? $data['correct-predictions'] : '',
+            'incorrect-predictions' => isset($data['incorrect-predictions']) ? $data['incorrect-predictions'] : '',
+            'correct-prediction-rate' => isset($data['correct-prediction-rate']) ? $data['correct-prediction-rate'] : '',
+        ], 'prefs');
+        return;
+    }
+    $file_path = get_user_meta_json_path($user_id, $type);
     file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
 }
 
-function oscars_update_film_stats_json($film_id, $action) {
-    $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
-    if (!file_exists($output_path)) return;
-    $json = file_get_contents($output_path);
-    $films = json_decode($json, true);
-    if (!$films || !is_array($films)) return;
-    foreach ($films as &$film) {
-        if (isset($film['film-id']) && $film['film-id'] == $film_id) {
-            if (!isset($film['watched-count'])) $film['watched-count'] = 0;
-            if ($action === 'watched') {
-                $film['watched-count']++;
-            } elseif ($action === 'unwatched' && $film['watched-count'] > 0) {
-                $film['watched-count']--;
-            }
-            break;
-        }
-    }
-    file_put_contents($output_path, json_encode($films, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-}
-
+// Update markAsWatched, markAsFav, markAspredict to use new structure
 function markAsWatched()
 {
     $post_id = $_POST['watched_post_id'] ?? null;
@@ -108,11 +123,10 @@ function markAsWatched()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id);
+    $json = load_user_meta_json($user_id, 'watched');
     $changed = false;
 
     if ($action === 'watched') {
-        // Only add if not already present
         $already = false;
         foreach ($json['watched'] as $film) {
             if ($film['film-id'] == $post_id) {
@@ -121,39 +135,10 @@ function markAsWatched()
             }
         }
         if (!$already) {
-            // Use get_term to fetch the film term by ID
-            $film_term = get_term((int)$post_id, 'films');
-            $film_name = ($film_term && !is_wp_error($film_term)) ? $film_term->name : '';
-            $film_slug = ($film_term && !is_wp_error($film_term)) ? $film_term->slug : '';
-            $film_url = ($film_term && !is_wp_error($film_term)) ? get_term_link($film_term) : '';
-            $film_year = null;
-
-            // Get year from first nomination post (if any)
-            $nomination_query = new WP_Query([
-                'post_type' => 'nominations',
-                'posts_per_page' => 1,
-                'tax_query' => [[
-                    'taxonomy' => 'films',
-                    'field'    => 'term_id',
-                    'terms'    => (int)$post_id,
-                ]],
-                'orderby' => 'date',
-                'order'   => 'ASC',
-            ]);
-            if ($nomination_query->have_posts()) {
-                $nomination = $nomination_query->posts[0];
-                $film_year = (int) date('Y', strtotime($nomination->post_date));
-            }
-            wp_reset_postdata();
-
-            $entry = [
-                'film-id' => (int)$post_id,
-                'film-name' => $film_name,
-                'film-year' => $film_year,
-                'film-url' => $film_url,
-                'watched-date' => date('Y-m-d'),
+            $json['watched'][] = [
+                'film-id' => $post_id,
+                // Optionally add more film info if needed
             ];
-            $json['watched'][] = $entry;
             $changed = true;
         }
     } elseif ($action === 'unwatched') {
@@ -165,10 +150,9 @@ function markAsWatched()
             $changed = true;
         }
     }
-    // Update stats and last-updated
     $json['total-watched'] = count($json['watched']);
     $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json);
+    save_user_meta_json($user_id, $json, 'watched');
     if ($changed) {
         oscars_update_film_stats_json($post_id, $action);
     }
@@ -185,7 +169,7 @@ function markAsFav()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id);
+    $json = load_user_meta_json($user_id, 'prefs');
 
     if ($fav_action === 'fav') {
         if (!in_array((int)$fav_nom_id, $json['favourites'])) {
@@ -197,7 +181,7 @@ function markAsFav()
         }));
     }
     $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json);
+    save_user_meta_json($user_id, $json, 'prefs');
 }
 add_action('init', 'markAsFav');
 
@@ -211,7 +195,7 @@ function markAspredict()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id);
+    $json = load_user_meta_json($user_id, 'prefs');
 
     if ($predict_action === 'predict') {
         if (!in_array((int)$predict_nom_id, $json['predictions'])) {
@@ -223,7 +207,7 @@ function markAspredict()
         }));
     }
     $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json);
+    save_user_meta_json($user_id, $json, 'prefs');
 }
 add_action('init', 'markAspredict');
 

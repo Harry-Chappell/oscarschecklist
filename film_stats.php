@@ -46,7 +46,7 @@ function oscars_compile_films_stats() {
     // Count watched per user
     $user_meta_dir = ABSPATH . 'wp-content/uploads/user_meta/';
     if (is_dir($user_meta_dir)) {
-        foreach (glob($user_meta_dir . 'user_*.json') as $file) {
+        foreach (glob($user_meta_dir . 'user_*_watched.json') as $file) {
             $json = file_get_contents($file);
             $data = json_decode($json, true);
             if (!empty($data['watched']) && is_array($data['watched'])) {
@@ -119,20 +119,21 @@ function oscars_compile_all_user_stats() {
     $user_meta_dir = ABSPATH . 'wp-content/uploads/user_meta/';
     $output = [];
     if (is_dir($user_meta_dir)) {
-        foreach (glob($user_meta_dir . 'user_*.json') as $file) {
-            if (preg_match('/user_(\d+)\.json$/', $file, $matches)) {
+        foreach (glob($user_meta_dir . 'user_*_watched.json') as $watched_file) {
+            if (preg_match('/user_(\d+)_watched\.json$/', $watched_file, $matches)) {
                 $user_id = (int)$matches[1];
-                $json = file_get_contents($file);
-                $data = json_decode($json, true);
+                $prefs_file = $user_meta_dir . "user_{$user_id}_prefs.json";
+                $watched_data = json_decode(file_get_contents($watched_file), true);
+                $prefs_data = file_exists($prefs_file) ? json_decode(file_get_contents($prefs_file), true) : [];
                 $output[] = [
                     'user_id' => $user_id,
-                    'last-updated' => $data['last-updated'] ?? '',
-                    'total-watched' => $data['total-watched'] ?? 0,
-                    'username' => $data['username'] ?? '',
-                    'public' => $data['public'] ?? false,
-                    'correct-predictions' => $data['correct-predictions'] ?? '',
-                    'incorrect-predictions' => $data['incorrect-predictions'] ?? '',
-                    'correct-prediction-rate' => $data['correct-prediction-rate'] ?? '',
+                    'last-updated' => $watched_data['last-updated'] ?? '',
+                    'total-watched' => $watched_data['total-watched'] ?? 0,
+                    'username' => $watched_data['username'] ?? ($prefs_data['username'] ?? ''),
+                    'public' => $prefs_data['public'] ?? false,
+                    'correct-predictions' => $prefs_data['correct-predictions'] ?? '',
+                    'incorrect-predictions' => $prefs_data['incorrect-predictions'] ?? '',
+                    'correct-prediction-rate' => $prefs_data['correct-prediction-rate'] ?? '',
                 ];
             }
         }
@@ -166,10 +167,10 @@ function oscars_publicise_data_checkbox_shortcode() {
         return '<p>Please log in to change your data publicity setting.</p>';
     }
     $user_id = get_current_user_id();
-    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
+    $prefs_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}_prefs.json";
     $public = false;
-    if (file_exists($file_path)) {
-        $data = json_decode(file_get_contents($file_path), true);
+    if (file_exists($prefs_path)) {
+        $data = json_decode(file_get_contents($prefs_path), true);
         $public = !empty($data['public']);
     }
     // Handle POST only for this user and this form
@@ -179,10 +180,10 @@ function oscars_publicise_data_checkbox_shortcode() {
         intval($_POST['oscars_publicise_data_form_user']) === $user_id
     ) {
         $public = !empty($_POST['oscars_publicise_data']);
-        if (file_exists($file_path)) {
-            $data = json_decode(file_get_contents($file_path), true);
+        if (file_exists($prefs_path)) {
+            $data = json_decode(file_get_contents($prefs_path), true);
             $data['public'] = $public;
-            file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            file_put_contents($prefs_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
     }
     $checked = $public ? 'checked' : '';
@@ -250,13 +251,12 @@ function oscars_update_all_user_prediction_stats() {
     $user_meta_dir = ABSPATH . 'wp-content/uploads/user_meta/';
     if (!is_dir($user_meta_dir)) return 'User meta directory not found.';
     $count = 0;
-    foreach (glob($user_meta_dir . 'user_*.json') as $file) {
-        $json = file_get_contents($file);
-        $data = json_decode($json, true);
-        if (!is_array($data) || empty($data['predictions']) || !is_array($data['predictions'])) continue;
+    foreach (glob($user_meta_dir . 'user_*_prefs.json') as $prefs_file) {
+        $prefs_data = json_decode(file_get_contents($prefs_file), true);
+        if (!is_array($prefs_data) || empty($prefs_data['predictions']) || !is_array($prefs_data['predictions'])) continue;
         $correct = 0;
         $incorrect = 0;
-        foreach ($data['predictions'] as $nom_id) {
+        foreach ($prefs_data['predictions'] as $nom_id) {
             $cat_terms = wp_get_post_terms($nom_id, 'award-categories');
             if (is_wp_error($cat_terms) || empty($cat_terms)) {
                 $incorrect++;
@@ -275,11 +275,11 @@ function oscars_update_all_user_prediction_stats() {
                 $incorrect++;
             }
         }
-        $data['correct-predictions'] = $correct;
-        $data['incorrect-predictions'] = $incorrect;
+        $prefs_data['correct-predictions'] = $correct;
+        $prefs_data['incorrect-predictions'] = $incorrect;
         $total = $correct + $incorrect;
-        $data['correct-prediction-rate'] = $total > 0 ? round($correct / $total, 3) : null;
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $prefs_data['correct-prediction-rate'] = $total > 0 ? round($correct / $total, 3) : null;
+        file_put_contents($prefs_file, json_encode($prefs_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $count++;
     }
     return "Prediction stats updated for $count users.";
@@ -731,11 +731,11 @@ function oscars_user_watched_by_week_barchart_shortcode() {
         return '<p>Please log in to see your watched films by week.</p>';
     }
     $user_id = get_current_user_id();
-    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
-    if (!file_exists($file_path)) {
+    $watched_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}_watched.json";
+    if (!file_exists($watched_path)) {
         return '<p>No data found for current user.</p>';
     }
-    $json = file_get_contents($file_path);
+    $json = file_get_contents($watched_path);
     $data = json_decode($json, true);
     if (!$data || empty($data['watched']) || !is_array($data['watched'])) {
         return '<p>No watched films data found.</p>';
@@ -816,15 +816,16 @@ add_shortcode('user_watched_by_week_barchart', 'oscars_user_watched_by_week_barc
 function oscars_user_stats_shortcode() {
     if (!is_user_logged_in()) return '<p>Please log in to view your stats.</p>';
     $user_id = get_current_user_id();
-    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
-    if (!file_exists($file_path)) return '<p>No user data found.</p>';
-    $data = json_decode(file_get_contents($file_path), true);
-    if (!$data) return '<p>User data is invalid.</p>';
+    $watched_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}_watched.json";
+    $prefs_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}_prefs.json";
+    if (!file_exists($watched_path) && !file_exists($prefs_path)) return '<p>No user data found.</p>';
+    $watched = file_exists($watched_path) ? json_decode(file_get_contents($watched_path), true) : [];
+    $prefs = file_exists($prefs_path) ? json_decode(file_get_contents($prefs_path), true) : [];
     $output = '<div class="oscars-user-stats">';
-    $output .= '<strong>Total Watched:</strong> ' . intval($data['total-watched'] ?? 0) . '<br>';
-    $output .= '<strong>Favourites:</strong> ' . count($data['favourites'] ?? []) . '<br>';
-    $output .= '<strong>Predictions:</strong> ' . count($data['predictions'] ?? []) . '<br>';
-    $output .= '<strong>Last Updated:</strong> ' . esc_html($data['last-updated'] ?? '') . '<br>';
+    $output .= '<strong>Total Watched:</strong> ' . intval($watched['total-watched'] ?? 0) . '<br>';
+    $output .= '<strong>Favourites:</strong> ' . count($prefs['favourites'] ?? []) . '<br>';
+    $output .= '<strong>Predictions:</strong> ' . count($prefs['predictions'] ?? []) . '<br>';
+    $output .= '<strong>Last Updated:</strong> ' . esc_html($watched['last-updated'] ?? '') . '<br>';
     $output .= '</div>';
     return $output;
 }
@@ -837,9 +838,9 @@ add_shortcode('oscars_user_stats', 'oscars_user_stats_shortcode');
 function oscars_user_watched_chart_shortcode() {
     if (!is_user_logged_in()) return '<p>Please log in to view your chart.</p>';
     $user_id = get_current_user_id();
-    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
-    if (!file_exists($file_path)) return '<p>No user data found.</p>';
-    $data = json_decode(file_get_contents($file_path), true);
+    $watched_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}_watched.json";
+    if (!file_exists($watched_path)) return '<p>No user data found.</p>';
+    $data = json_decode(file_get_contents($watched_path), true);
     if (!$data || empty($data['watched'])) return '<p>No watched films data found.</p>';
     $watched_by_year = [];
     // Find min/max year
@@ -919,9 +920,9 @@ add_shortcode('oscars_user_watched_chart', 'oscars_user_watched_chart_shortcode'
 function oscars_user_watched_by_decade_shortcode() {
     if (!is_user_logged_in()) return '<p>Please log in to view your watched films by decade.</p>';
     $user_id = get_current_user_id();
-    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
-    if (!file_exists($file_path)) return '<p>No user data found.</p>';
-    $data = json_decode(file_get_contents($file_path), true);
+    $watched_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}_watched.json";
+    if (!file_exists($watched_path)) return '<p>No user data found.</p>';
+    $data = json_decode(file_get_contents($watched_path), true);
     if (!$data || empty($data['watched'])) return '<p>No watched films data found.</p>';
     $by_decade = [];
     foreach ($data['watched'] as $film) {

@@ -79,7 +79,6 @@ function user_meta_transform_button_shortcode() {
 add_shortcode( 'transform_user_meta_button', 'user_meta_transform_button_shortcode' );
 
 
-// Save transformed user meta to JSON file
 function ajax_transform_user_meta_to_json() {
     check_ajax_referer( 'user_meta_nonce', 'nonce' );
 
@@ -92,18 +91,22 @@ function ajax_transform_user_meta_to_json() {
     $user = get_userdata($user_id);
     $username = $user ? $user->user_login : '';
 
-    // Build $transformed in the new order
-    $transformed = [
+    // Prepare watched and prefs structures
+    $watched = [
+        'username'       => $username,
+        'last-updated'   => '',
+        'total-watched'  => 0, // will set below
+        'watched'        => [],
+    ];
+    $prefs = [
         'username'       => $username,
         'public'         => false,
         'last-updated'   => '',
-        'total-watched'  => 0, // will set below
+        'favourites'     => [],
+        'predictions'    => [],
         'correct-predictions'   => '',
         'incorrect-predictions'   => '',
         'correct-prediction-rate'   => '',
-        'predictions'    => [],
-        'favourites'     => [],
-        'watched'        => [],
     ];
 
     foreach ( $meta as $key => $value_array ) {
@@ -119,22 +122,13 @@ function ajax_transform_user_meta_to_json() {
             if ( $type === 'watched' ) {
                 $film_name = '';
                 $film_year = null;
-
-                // Get the film name from the term
                 $film_term = get_term( $id, 'films' );
-                
-                // Debugging: Check if term is valid
                 if ( $film_term && ! is_wp_error( $film_term ) ) {
                     $film_name = $film_term->name;
-                    $film_slug = $film_term->slug; // <-- add this line
-                    // Debugging: Output term name
-                    error_log("Found Film Term: " . $film_name);
+                    $film_slug = $film_term->slug;
                 } else {
-                    $film_slug = null; // fallback if not found
-                    error_log("No Film Term found for ID: " . $id);
+                    $film_slug = null;
                 }
-
-                // Find a nomination that has this film term
                 $nomination_query = new WP_Query([
                     'post_type' => 'nominations',
                     'posts_per_page' => 1,
@@ -146,27 +140,13 @@ function ajax_transform_user_meta_to_json() {
                     'orderby' => 'date',
                     'order' => 'ASC',
                 ]);
-
-                // Check if nominations are found
                 if ( $nomination_query->have_posts() ) {
                     $nomination = $nomination_query->posts[0];
                     $film_year = (int) date( 'Y', strtotime( $nomination->post_date ) );
-                    
-                    // Debugging: Log nomination info
-                    error_log("Found Nomination: " . $nomination->post_title . " Year: " . $film_year);
-                } else {
-                    error_log("No nominations found for Film Term ID: " . $id);
                 }
-
                 wp_reset_postdata();
-
-                // Debugging: Check the data before pushing to the transformed array
-                error_log("Adding to watched array: Film ID: $id, Name: $film_name, Year: $film_year");
-
-                $film_url = ( $film_term && ! is_wp_error( $film_term ) ) ? get_term_link( $film_term ) : '';
-// error_log("Film URL: " . $film_url);
                 if ( !empty( $film_name ) && !empty( $film_year ) ) {
-                    $transformed['watched'][] = [
+                    $watched['watched'][] = [
                         'film-id'   => $id,
                         'film-name' => $film_name,
                         'film-year' => $film_year,
@@ -174,40 +154,42 @@ function ajax_transform_user_meta_to_json() {
                     ];
                 }
             } elseif ( $type === 'fav' ) {
-                $transformed['favourites'][] = $id;
+                $prefs['favourites'][] = $id;
             } elseif ( $type === 'predict' ) {
-                $transformed['predictions'][] = $id;
+                $prefs['predictions'][] = $id;
             }
-
-            // Debugging: Log the transformed array before saving
-            error_log("Transformed data: " . wp_json_encode($transformed));
-        } 
+        }
     }
-    $transformed['total-watched'] = count($transformed['watched']);
-    // $transformed['last-updated'] = date('Y-m-d');
+    $watched['total-watched'] = count($watched['watched']);
+    // $watched['last-updated'] = date('Y-m-d');
+    // $prefs['last-updated'] = date('Y-m-d');
 
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
-    $file_path  = $user_dir . "/user_{$user_id}.json";
+    $watched_path  = $user_dir . "/user_{$user_id}_watched.json";
+    $prefs_path    = $user_dir . "/user_{$user_id}_prefs.json";
 
     if ( ! file_exists( $user_dir ) ) {
         wp_mkdir_p( $user_dir );
     }
 
-    file_put_contents( $file_path, wp_json_encode( $transformed, JSON_PRETTY_PRINT ) );
+    file_put_contents( $watched_path, wp_json_encode( $watched, JSON_PRETTY_PRINT ) );
+    file_put_contents( $prefs_path, wp_json_encode( $prefs, JSON_PRETTY_PRINT ) );
 
-    $file_size = filesize( $file_path );
+    $watched_size = filesize( $watched_path );
+    $prefs_size = filesize( $prefs_path );
 
     wp_send_json_success([
-        'message'   => 'User meta transformed and saved to JSON.',
-        'file_url'  => $upload_dir['baseurl'] . "/user_meta/user_{$user_id}.json",
-        'file_size' => size_format( $file_size )
+        'message'   => 'User meta transformed and saved to watched and prefs JSON files.',
+        'watched_file_url'  => $upload_dir['baseurl'] . "/user_meta/user_{$user_id}_watched.json",
+        'prefs_file_url'    => $upload_dir['baseurl'] . "/user_meta/user_{$user_id}_prefs.json",
+        'watched_file_size' => size_format( $watched_size ),
+        'prefs_file_size'   => size_format( $prefs_size ),
     ]);
 }
 add_action( 'wp_ajax_transform_user_meta', 'ajax_transform_user_meta_to_json' );
 
 
-// Read and analyze transformed JSON for stats
 function ajax_count_user_meta_stats_from_json() {
     check_ajax_referer( 'user_meta_nonce', 'nonce' );
 
@@ -255,7 +237,6 @@ function ajax_count_user_meta_stats_from_json() {
 add_action( 'wp_ajax_count_user_meta_stats', 'ajax_count_user_meta_stats_from_json' );
 
 
-
 function debug_log_time($label, $start_time) {
     $end_time = microtime(true);
     $elapsed = round(($end_time - $start_time) * 1000, 2); // ms
@@ -263,22 +244,27 @@ function debug_log_time($label, $start_time) {
     return $end_time;
 }
 
+
 function regenerate_user_json($user_id) {
     $meta = get_user_meta( $user_id );
     $user = get_userdata($user_id);
     $username = $user ? $user->user_login : '';
 
-    $transformed = [
+    $watched = [
+        'username'       => $username,
+        'last-updated'   => '',
+        'total-watched'  => 0, // will set below
+        'watched'        => [],
+    ];
+    $prefs = [
         'username'       => $username,
         'public'         => false,
         'last-updated'   => '',
-        'total-watched'  => 0, // will set below
+        'favourites'     => [],
+        'predictions'    => [],
         'correct-predictions'   => '',
         'incorrect-predictions'   => '',
         'correct-prediction-rate'   => '',
-        'predictions'    => [],
-        'favourites'     => [],
-        'watched'        => [],
     ];
     foreach ( $meta as $key => $value_array ) {
         if ( preg_match( '/^(watched|fav|predict)_(\d+)$/', $key, $matches ) ) {
@@ -314,7 +300,7 @@ function regenerate_user_json($user_id) {
                 }
                 wp_reset_postdata();
                 if ( !empty( $film_name ) && !empty( $film_year ) ) {
-                    $transformed['watched'][] = [
+                    $watched['watched'][] = [
                         'film-id'   => $id,
                         'film-name' => $film_name,
                         'film-year' => $film_year,
@@ -322,25 +308,29 @@ function regenerate_user_json($user_id) {
                     ];
                 }
             } elseif ( $type === 'fav' ) {
-                $transformed['favourites'][] = $id;
+                $prefs['favourites'][] = $id;
             } elseif ( $type === 'predict' ) {
-                $transformed['predictions'][] = $id;
+                $prefs['predictions'][] = $id;
             }
         }
     }
-    $transformed['total-watched'] = count($transformed['watched']);
-    // $transformed['last-updated'] = date('Y-m-d');
+    $watched['total-watched'] = count($watched['watched']);
+    // $watched['last-updated'] = date('Y-m-d');
+    // $prefs['last-updated'] = date('Y-m-d');
 
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
-    $file_path  = $user_dir . "/user_{$user_id}.json";
+    $watched_path  = $user_dir . "/user_{$user_id}_watched.json";
+    $prefs_path    = $user_dir . "/user_{$user_id}_prefs.json";
 
     if ( ! file_exists( $user_dir ) ) {
         wp_mkdir_p( $user_dir );
     }
 
-    file_put_contents( $file_path, wp_json_encode( $transformed, JSON_PRETTY_PRINT ) );
+    file_put_contents( $watched_path, wp_json_encode( $watched, JSON_PRETTY_PRINT ) );
+    file_put_contents( $prefs_path, wp_json_encode( $prefs, JSON_PRETTY_PRINT ) );
 }
+
 
 function ajax_refresh_all_users_meta() {
     check_ajax_referer( 'user_meta_nonce', 'nonce' );
