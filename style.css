@@ -2185,7 +2185,24 @@ div.oscars-watched-by-decade a {
     line-height: 1;
     padding: 4px 5px 2px;
 }
+div.oscars-watched-by-decade ul ul {
+    flex-flow: column;
+}
+div.oscars-watched-by-decade details > ul > li {
+    width: calc((100% - (5px * 9)) / 10);
+}
+@media screen and (max-width: 999px) {
+    div.oscars-watched-by-decade details > ul > li {
+        width: calc((100% - (5px * 4)) / 5);
+    }
+}
+@media screen and (max-width: 689px) {
+    div.oscars-watched-by-decade details > ul > li {
+        width: calc((100% - (5px * 2)) / 3);
+    }
+}
 
 summary h3 {
     display: inline;
 }
+

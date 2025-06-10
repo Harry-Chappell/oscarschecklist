@@ -927,20 +927,35 @@ function oscars_user_watched_by_decade_shortcode() {
     foreach ($data['watched'] as $film) {
         if (!empty($film['film-year'])) {
             $decade = floor($film['film-year'] / 10) * 10;
+            $year = intval($film['film-year']);
             if (!isset($by_decade[$decade])) $by_decade[$decade] = [];
-            $by_decade[$decade][] = [
+            if (!isset($by_decade[$decade][$year])) $by_decade[$decade][$year] = [];
+            $by_decade[$decade][$year][] = [
                 'name' => $film['film-name'],
                 'url' => $film['film-url'] ?? ''
             ];
         }
     }
-    krsort($by_decade); // Descending order (most recent first)
+    krsort($by_decade); // Descending order (most recent decade first)
     $output = '<div class="oscars-watched-by-decade">';
-    foreach ($by_decade as $decade => $films) {
-        $output .= '<details><summary><strong>' . $decade . 's</strong> (' . count($films) . ')</summary><ul>';
-        foreach ($films as $film) {
-            $url = esc_url('https://stage.oscarschecklist.com/films/' . ltrim($film['url'], '/'));
-            $output .= '<li><a href="' . $url . '">' . esc_html($film['name']) . '</a></li>';
+    foreach ($by_decade as $decade => $years) {
+        // Count total films in decade
+        $decade_count = 0;
+        foreach ($years as $films) { $decade_count += count($films); }
+        $output .= '<details><summary><strong>' . $decade . 's</strong> (' . $decade_count . ')</summary><ul>';
+        krsort($years); // Most recent year first
+        foreach ($years as $year => $films) {
+            $year_count = count($films);
+            $output .= '<li><strong>' . $year . '</strong> (' . $year_count . '): <ul>';
+            // Sort films alphabetically by name
+            usort($films, function($a, $b) {
+                return strcasecmp($a['name'], $b['name']);
+            });
+            foreach ($films as $film) {
+                $url = esc_url('https://stage.oscarschecklist.com/films/' . ltrim($film['url'], '/'));
+                $output .= '<li><a href="' . $url . '">' . esc_html($film['name']) . '</a></li>';
+            }
+            $output .= '</ul></li>';
         }
         $output .= '</ul></details>';
     }
