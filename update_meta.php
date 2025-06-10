@@ -196,6 +196,15 @@ function ajax_transform_user_meta_to_json() {
 
     file_put_contents( $file_path, wp_json_encode( $transformed, JSON_PRETTY_PRINT ) );
 
+    // Create predictions & favourites only JSON
+    $pred_fav = [
+        'username'    => $username,
+        'predictions' => $transformed['predictions'],
+        'favourites'  => $transformed['favourites'],
+    ];
+    $pred_fav_path = $user_dir . "/user_{$user_id}_pred_fav.json";
+    file_put_contents( $pred_fav_path, wp_json_encode( $pred_fav, JSON_PRETTY_PRINT ) );
+
     $file_size = filesize( $file_path );
 
     wp_send_json_success([
@@ -340,6 +349,15 @@ function regenerate_user_json($user_id) {
     }
 
     file_put_contents( $file_path, wp_json_encode( $transformed, JSON_PRETTY_PRINT ) );
+
+    // Create predictions & favourites only JSON
+    $pred_fav = [
+        'username'    => $username,
+        'predictions' => $transformed['predictions'],
+        'favourites'  => $transformed['favourites'],
+    ];
+    $pred_fav_path = $user_dir . "/user_{$user_id}_pred_fav.json";
+    file_put_contents( $pred_fav_path, wp_json_encode( $pred_fav, JSON_PRETTY_PRINT ) );
 }
 
 function ajax_refresh_all_users_meta() {
