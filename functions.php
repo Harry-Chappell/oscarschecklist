@@ -49,6 +49,14 @@ function get_user_meta_json_path($user_id) {
     }
     return $user_dir . "/user_{$user_id}.json";
 }
+function get_user_pred_fav_json_path($user_id) {
+    $upload_dir = wp_upload_dir();
+    $user_dir   = $upload_dir['basedir'] . '/user_meta';
+    if ( ! file_exists( $user_dir ) ) {
+        wp_mkdir_p( $user_dir );
+    }
+    return $user_dir . "/user_{$user_id}_pred_fav.json";
+}
 
 function load_user_meta_json($user_id) {
     $file_path = get_user_meta_json_path($user_id);
@@ -75,6 +83,10 @@ function load_user_meta_json($user_id) {
 
 function save_user_meta_json($user_id, $data) {
     $file_path = get_user_meta_json_path($user_id);
+    file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
+}
+function save_user_pred_fav_json($user_id, $data) {
+    $file_path = get_user_pred_fav_json_path($user_id);
     file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
 }
 
@@ -198,6 +210,7 @@ function markAsFav()
     }
     $json['last-updated'] = date('Y-m-d');
     save_user_meta_json($user_id, $json);
+    save_user_pred_fav_json($user_id, $json);
 }
 add_action('init', 'markAsFav');
 
@@ -224,6 +237,7 @@ function markAspredict()
     }
     $json['last-updated'] = date('Y-m-d');
     save_user_meta_json($user_id, $json);
+    save_user_pred_fav_json($user_id, $json);
 }
 add_action('init', 'markAspredict');
 
