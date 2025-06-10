@@ -222,14 +222,12 @@ function show_nominations_by_cat_shortcode($atts) {
                             $output .= '<div class="buttons-cntr">';
                                 if (is_user_logged_in()) {
                                     $film_id = $film->term_id;
-                                    $user_watched = get_user_meta(get_current_user_id(), 'watched_' . $film_id, true);
-                                    
+                                    // Use the $user_watched value determined above from the JSON file
                                     $watched_button_class = $user_watched ? 'mark-as-unwatched-button' : 'mark-as-watched-button';
                                     $button_text = $user_watched ? 'Watched' : 'Unwatched';
                                     $watched_action = $user_watched ? 'unwatched' : 'watched';
-                                    
                                     $output .= '<button title="Watched" class="' . $watched_button_class . '" data-film-id="' . $film_id . '" data-action="' . $watched_action . '">';
-                                    $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
+                                    $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
                                     $output .= '</button>';
                                     
                                     
