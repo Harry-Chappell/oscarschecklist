@@ -214,8 +214,12 @@ function nominees_nominations_function() {
                     $json_data = file_get_contents($json_path);
                     $user_meta = json_decode($json_data, true);
                     if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
-                        // Use loose comparison in case IDs are stored as strings
-                        $user_watched = in_array((string)$post_id, array_map('strval', $user_meta['watched']), true);
+                        foreach ($user_meta['watched'] as $watched_film) {
+                            if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post_id) {
+                                $user_watched = true;
+                                break;
+                            }
+                        }
                     }
                 }
                 if ($user_watched) {
@@ -302,7 +306,12 @@ function nominees_nominations_function() {
                     $json_data = file_get_contents($json_path);
                     $user_meta = json_decode($json_data, true);
                     if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
-                        $user_watched = in_array((string)$post_id, array_map('strval', $user_meta['watched']), true);
+                        foreach ($user_meta['watched'] as $watched_film) {
+                            if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post_id) {
+                                $user_watched = true;
+                                break;
+                            }
+                        }
                     }
                 }
                 $button_class = $user_watched ? 'mark-as-unwatched-button' : 'mark-as-watched-button';
