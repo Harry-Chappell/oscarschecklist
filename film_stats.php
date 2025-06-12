@@ -692,30 +692,27 @@ function oscars_active_users_barchart_shortcode() {
     if (!$users || !is_array($users)) {
         return '<p>User stats data is invalid.</p>';
     }
-    // Prepare 52 weeks of bins (0 = this week, 51 = 51 weeks ago)
     $now = strtotime('today');
-    $bins = array_fill(0, 52, 0);
+    $bins = array_fill(0, 53, 0); // 0 = this week, 52 = 52 weeks ago
     foreach ($users as $user) {
         if (!empty($user['last-updated'])) {
             $last = strtotime($user['last-updated']);
             if ($last) {
                 $weeks_ago = floor(($now - $last) / (7 * 86400));
-                if ($weeks_ago >= 0 && $weeks_ago < 52) {
+                if ($weeks_ago >= 0 && $weeks_ago <= 52) {
                     $bins[$weeks_ago]++;
                 }
             }
         }
     }
-    // Prepare labels (week start dates)
+    // Prepare labels: 52 (left) to 0 (right)
     $labels = [];
-    for ($i = 51; $i >= 0; $i--) {
-        $week_start = strtotime("-{$i} week", $now);
-        $labels[] = date('j M', $week_start);
+    for ($i = 52; $i >= 0; $i--) {
+        $labels[] = $i . 'w ago';
     }
-    // Reverse bins for left-to-right (oldest to newest)
+    // Reverse both bins and labels so left is 0w ago, right is 52w ago
+    // $labels = array_reverse($labels);
     $bins = array_reverse($bins);
-    $labels = array_reverse($labels);
-    // Output chart container and Chart.js loader
     ob_start();
     ?>
     <canvas id="oscars-active-users-barchart" width="1000" height="300"></canvas>
@@ -742,7 +739,7 @@ function oscars_active_users_barchart_shortcode() {
                     title: { display: true, text: 'User Last Active by Week (past 52 weeks)' }
                 },
                 scales: {
-                    x: { title: { display: true, text: 'Week (starting)' }, ticks: { maxTicksLimit: 13 } },
+                    x: { title: { display: true, text: 'Weeks Ago' }, ticks: { maxTicksLimit: 13 } },
                     y: { beginAtZero: true, title: { display: true, text: 'Number of Users' } }
                 }
             }
@@ -773,27 +770,25 @@ function oscars_user_watched_by_week_barchart_shortcode() {
     if (!$data || empty($data['watched']) || !is_array($data['watched'])) {
         return '<p>No watched films data found.</p>';
     }
-    // Prepare 52 weeks of bins (0 = this week, 51 = 51 weeks ago)
     $now = strtotime('today');
-    $bins = array_fill(0, 52, 0);
+    $bins = array_fill(0, 53, 0); // 0 = this week, 52 = 52 weeks ago
     foreach ($data['watched'] as $film) {
         if (!empty($film['watched-date'])) {
             $watched = strtotime($film['watched-date']);
             if ($watched) {
                 $weeks_ago = floor(($now - $watched) / (7 * 86400));
-                if ($weeks_ago >= 0 && $weeks_ago < 52) {
+                if ($weeks_ago >= 0 && $weeks_ago <= 52) {
                     $bins[$weeks_ago]++;
                 }
             }
         }
     }
-    // Prepare labels (week start dates)
+    // Prepare labels: 0 (left) to 52 (right)
     $labels = [];
-    for ($i = 51; $i >= 0; $i--) {
-        $week_start = strtotime("-{$i} week", $now);
-        $labels[] = date('j M', $week_start);
+    for ($i = 0; $i <= 52; $i++) {
+        $labels[] = $i . 'w ago';
     }
-    // Reverse bins for left-to-right (oldest to newest)
+    // Only reverse bins so left is 0w ago, right is 52w ago
     $bins = array_reverse($bins);
     $labels = array_reverse($labels);
     ob_start();
@@ -829,7 +824,7 @@ function oscars_user_watched_by_week_barchart_shortcode() {
                     title: { display: true, text: 'Your Films Watched by Week (past 52 weeks)' }
                 },
                 scales: {
-                    x: { title: { display: true, text: 'Week (starting)' }, ticks: { maxTicksLimit: 13 } },
+                    x: { title: { display: true, text: 'Weeks Ago' }, ticks: { maxTicksLimit: 13 } },
                     y: { beginAtZero: true, title: { display: true, text: 'Films Watched' } }
                 }
             }
@@ -996,3 +991,24 @@ function oscars_user_watched_by_decade_shortcode() {
     return $output;
 }
 add_shortcode('oscars_user_watched_by_decade', 'oscars_user_watched_by_decade_shortcode');
+
+
+
+// 1. Add a custom schedule for every minute
+add_filter('cron_schedules', function($schedules) {
+    $schedules['every_minute'] = [
+        'interval' => 60,
+        'display'  => __('Every Minute')
+    ];
+    return $schedules;
+});
+
+// 2. Schedule the event if not already scheduled
+add_action('wp', function() {
+    if (!wp_next_scheduled('oscars_compile_all_user_stats_cron')) {
+        wp_schedule_event(time(), 'every_minute', 'oscars_compile_all_user_stats_cron');
+    }
+});
+
+// 3. Hook your function to the event
+add_action('oscars_compile_all_user_stats_cron', 'oscars_compile_all_user_stats');
