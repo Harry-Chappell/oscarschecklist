@@ -41,9 +41,7 @@ function user_meta_transform_button_shortcode() {
     if ( !is_user_logged_in() ) return '<p>Please log in to view your meta data.</p>';
 
     $html = '
-        <div><button id="transform-user-meta" style="padding:10px 20px;cursor:pointer;">Refresh Current User Meta</button></div>
         <div><button id="refresh-all-users-meta" style="padding:10px 20px;cursor:pointer;margin-top:10px;">Refresh All Users Meta</button></div>
-        <div id="meta-count-output" style="margin-top:20px;font-weight:bold;"></div>
         <script>
         document.addEventListener("DOMContentLoaded", function() {
             var allBtn = document.getElementById("refresh-all-users-meta");
