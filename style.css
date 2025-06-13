@@ -2206,3 +2206,15 @@ summary h3 {
     display: inline;
 }
 
+li.current-user {
+    margin: 20px 0 0;
+    font-weight: bold;
+    color: var(--theme-palette-color-1);
+}
+li.current-user:has(+.current-users-friend):after {
+    content: "Friends";
+    display: block;
+    font-size: 1.3em;
+    margin: 20px 0 0;
+    color: var(--theme-palette-color-3);
+}

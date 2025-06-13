@@ -255,10 +255,23 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
     usort($users, function($a, $b) {
         return $b['total-watched'] <=> $a['total-watched'];
     });
-    if ($top !== null) {
-        $users = array_slice($users, 0, $top);
+    // Prepare user/friends logic
+    $current_user_id = is_user_logged_in() ? get_current_user_id() : null;
+    $current_username = null;
+    $friends = [];
+    // Example: get friends from user meta (replace with your logic)
+    if ($current_user_id) {
+        $current_user_data = get_userdata($current_user_id);
+        $current_username = $current_user_data ? $current_user_data->user_login : null;
+        if (function_exists('friends_get_friend_user_ids')) {
+            $friends = friends_get_friend_user_ids($current_user_id);
+        } else {
+            $friends = [];
+        }
     }
-    $output = '<ul class="oscars-leaderboard">';
+    // Build rank map and find user/friends
+    $ranked_users = [];
+    $user_ranks = [];
     $last_score = null;
     $rank = 0;
     $display_rank = 0;
@@ -268,12 +281,52 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
             $display_rank = $rank;
             $last_score = $user['total-watched'];
         }
-        $suffix = 'th';
-        if ($display_rank % 10 == 1 && $display_rank % 100 != 11) $suffix = 'st';
-        elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
-        elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
-        $username = esc_html($user['username']);
-        $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . intval($user['total-watched']) . '</li>';
+        $user_ranks[$user['user_id']] = [
+            'rank' => $display_rank,
+            'user' => $user
+        ];
+        $ranked_users[] = [
+            'rank' => $display_rank,
+            'user' => $user
+        ];
+    }
+    // Top X
+    $top_users = $top !== null ? array_slice($ranked_users, 0, $top) : $ranked_users;
+    // Collect user/friends (if not in top X)
+    $extra_users = [];
+    $added_ids = array_column($top_users, 'user_id');
+    if ($current_user_id && isset($user_ranks[$current_user_id]) && !in_array($current_user_id, $added_ids)) {
+        $extra_users[$current_user_id] = $user_ranks[$current_user_id];
+    }
+    foreach ($ranked_users as $entry) {
+        $u = $entry['user'];
+        if ($current_user_id && in_array($u['user_id'], $friends) && !in_array($u['user_id'], $added_ids) && $u['user_id'] !== $current_user_id) {
+            $extra_users[$u['user_id']] = $entry;
+        }
+    }
+    // Output
+    $output = '<ul class="oscars-leaderboard">';
+    $suffixes = function($n) {
+        if ($n % 10 == 1 && $n % 100 != 11) return 'st';
+        if ($n % 10 == 2 && $n % 100 != 12) return 'nd';
+        if ($n % 10 == 3 && $n % 100 != 13) return 'rd';
+        return 'th';
+    };
+    $shown_ids = [];
+    foreach ($top_users as $entry) {
+        $u = $entry['user'];
+        $shown_ids[] = $u['user_id'];
+        $username = esc_html($u['username']);
+        $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
+        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
+    }
+    // Show current user and friends if not already shown
+    foreach ($extra_users as $uid => $entry) {
+        if (in_array($uid, $shown_ids)) continue;
+        $u = $entry['user'];
+        $username = esc_html($u['username']);
+        $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : ' class="current-users-friend"';
+        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
     }
     $output .= '</ul>';
     if ($count > 0) {
@@ -420,13 +473,25 @@ function oscars_predictions_leaderboard_inner($top = null) {
         $b_val = isset($b[$sort_by]) && $b[$sort_by] !== '' ? $b[$sort_by] : 0;
         return $b_val <=> $a_val;
     });
-    if ($top !== null) {
-        $users = array_slice($users, 0, $top);
+    // Prepare user/friends logic
+    $current_user_id = is_user_logged_in() ? get_current_user_id() : null;
+    $current_username = null;
+    $friends = [];
+    if ($current_user_id) {
+        $current_user_data = get_userdata($current_user_id);
+        $current_username = $current_user_data ? $current_user_data->user_login : null;
+        if (function_exists('friends_get_friend_user_ids')) {
+            $friends = friends_get_friend_user_ids($current_user_id);
+        } else {
+            $friends = [];
+        }
     }
+    // Build rank map and find user/friends
+    $ranked_users = [];
+    $user_ranks = [];
     $last_score = null;
     $rank = 0;
     $display_rank = 0;
-    $output = '<ul class="oscars-leaderboard">';
     foreach ($users as $i => $user) {
         $rank++;
         $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
@@ -434,13 +499,54 @@ function oscars_predictions_leaderboard_inner($top = null) {
             $display_rank = $rank;
             $last_score = $score;
         }
-        $suffix = 'th';
-        if ($display_rank % 10 == 1 && $display_rank % 100 != 11) $suffix = 'st';
-        elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
-        elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
-        $username = esc_html($user['username']);
-        $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($score) ? (100 * $score) . '%' : 'N/A') : intval($score);
-        $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . $display_score . '</li>';
+        $user_ranks[$user['user_id']] = [
+            'rank' => $display_rank,
+            'user' => $user
+        ];
+        $ranked_users[] = [
+            'rank' => $display_rank,
+            'user' => $user
+        ];
+    }
+    // Top X
+    $top_users = $top !== null ? array_slice($ranked_users, 0, $top) : $ranked_users;
+    // Collect user/friends (if not in top X)
+    $extra_users = [];
+    $added_ids = array_column($top_users, 'user_id');
+    if ($current_user_id && isset($user_ranks[$current_user_id]) && !in_array($current_user_id, $added_ids)) {
+        $extra_users[$current_user_id] = $user_ranks[$current_user_id];
+    }
+    foreach ($ranked_users as $entry) {
+        $u = $entry['user'];
+        if ($current_user_id && in_array($u['user_id'], $friends) && !in_array($u['user_id'], $added_ids) && $u['user_id'] !== $current_user_id) {
+            $extra_users[$u['user_id']] = $entry;
+        }
+    }
+    // Output
+    $output = '<ul class="oscars-leaderboard">';
+    $suffixes = function($n) {
+        if ($n % 10 == 1 && $n % 100 != 11) return 'st';
+        if ($n % 10 == 2 && $n % 100 != 12) return 'nd';
+        if ($n % 10 == 3 && $n % 100 != 13) return 'rd';
+        return 'th';
+    };
+    $shown_ids = [];
+    foreach ($top_users as $entry) {
+        $u = $entry['user'];
+        $shown_ids[] = $u['user_id'];
+        $username = esc_html($u['username']);
+        $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
+        $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($u[$sort_by]) ? (100 * $u[$sort_by]) . '%' : 'N/A') : intval($u[$sort_by]);
+        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . $display_score . '</li>';
+    }
+    // Show current user and friends if not already shown
+    foreach ($extra_users as $uid => $entry) {
+        if (in_array($uid, $shown_ids)) continue;
+        $u = $entry['user'];
+        $username = esc_html($u['username']);
+        $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : ' class="current-users-friend"';
+        $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($u[$sort_by]) ? (100 * $u[$sort_by]) . '%' : 'N/A') : intval($u[$sort_by]);
+        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . $display_score . '</li>';
     }
     $output .= '</ul>';
     if ($count > 0) {
