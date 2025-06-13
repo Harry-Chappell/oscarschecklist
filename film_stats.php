@@ -232,7 +232,9 @@ add_action('wp_ajax_oscars_publicise_data_toggle', function() {
  * Shortcode to display a leaderboard of users by total-watched, using all_user_stats.json.
  * Renamed to oscars_watched_leaderboard. Now includes average at the bottom.
  */
-function oscars_watched_leaderboard_shortcode() {
+function oscars_watched_leaderboard_shortcode($atts = []) {
+    $atts = shortcode_atts(['top' => null], $atts);
+    $top = is_numeric($atts['top']) && intval($atts['top']) > 0 ? intval($atts['top']) : null;
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
     if (!file_exists($output_path)) {
         return '<p>No leaderboard data found. Please generate it first.</p>';
@@ -246,6 +248,9 @@ function oscars_watched_leaderboard_shortcode() {
     usort($users, function($a, $b) {
         return $b['total-watched'] <=> $a['total-watched'];
     });
+    if ($top !== null) {
+        $users = array_slice($users, 0, $top);
+    }
     $output = '<ul class="oscars-leaderboard">';
     $last_score = null;
     $rank = 0;
@@ -334,7 +339,9 @@ add_shortcode('update_all_user_prediction_stats_button', 'oscars_update_all_user
 /**
  * Shortcode to display a leaderboard of users by correct predictions or correct prediction rate, with AJAX switch.
  */
-function oscars_predictions_leaderboard_shortcode() {
+function oscars_predictions_leaderboard_shortcode($atts = []) {
+    $atts = shortcode_atts(['top' => null], $atts);
+    $top = is_numeric($atts['top']) && intval($atts['top']) > 0 ? intval($atts['top']) : null;
     ob_start();
     ?>
     <form id="oscars-predictions-leaderboard-form" style="margin-bottom:1em">
@@ -358,7 +365,7 @@ function oscars_predictions_leaderboard_shortcode() {
                     }
                 }
             };
-            xhr.send('oscars_leaderboard_sort=' + encodeURIComponent(sort) + '&oscars_leaderboard_ajax=1');
+            xhr.send('oscars_leaderboard_sort=' + encodeURIComponent(sort) + '&oscars_leaderboard_ajax=1&oscars_leaderboard_top=<?php echo $top !== null ? intval($top) : ''; ?>');
         }
         var radios = document.querySelectorAll('#oscars-predictions-leaderboard-form input[type=radio]');
         radios.forEach(function(radio) {
@@ -371,16 +378,19 @@ function oscars_predictions_leaderboard_shortcode() {
     });
     </script>
     <div id="oscars-predictions-leaderboard-ajax" style="display:none">
-        <?php echo oscars_predictions_leaderboard_inner(); ?>
+        <?php echo oscars_predictions_leaderboard_inner($top); ?>
     </div>
     <?php
     return ob_get_clean();
 }
 add_shortcode('oscars_predictions_leaderboard', 'oscars_predictions_leaderboard_shortcode');
 
-function oscars_predictions_leaderboard_inner() {
+function oscars_predictions_leaderboard_inner($top = null) {
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
     $sort_by = isset($_POST['oscars_leaderboard_sort']) && $_POST['oscars_leaderboard_sort'] === 'rate' ? 'correct-prediction-rate' : 'correct-predictions';
+    if (isset($_POST['oscars_leaderboard_top']) && is_numeric($_POST['oscars_leaderboard_top']) && intval($_POST['oscars_leaderboard_top']) > 0) {
+        $top = intval($_POST['oscars_leaderboard_top']);
+    }
     if (!file_exists($output_path)) {
         return '<p>No leaderboard data found. Please generate it first.</p>';
     }
@@ -394,6 +404,9 @@ function oscars_predictions_leaderboard_inner() {
         $b_val = isset($b[$sort_by]) && $b[$sort_by] !== '' ? $b[$sort_by] : 0;
         return $b_val <=> $a_val;
     });
+    if ($top !== null) {
+        $users = array_slice($users, 0, $top);
+    }
     $last_score = null;
     $rank = 0;
     $display_rank = 0;
