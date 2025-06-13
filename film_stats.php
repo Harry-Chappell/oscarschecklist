@@ -244,6 +244,13 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
     if (!$users || !is_array($users)) {
         return '<p>Leaderboard data is invalid.</p>';
     }
+    // Calculate average from all users
+    $sum = 0;
+    $count = 0;
+    foreach ($users as $user) {
+        $sum += intval($user['total-watched']);
+        $count++;
+    }
     // Sort by total-watched descending
     usort($users, function($a, $b) {
         return $b['total-watched'] <=> $a['total-watched'];
@@ -255,8 +262,6 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
     $last_score = null;
     $rank = 0;
     $display_rank = 0;
-    $sum = 0;
-    $count = 0;
     foreach ($users as $i => $user) {
         $rank++;
         if ($last_score !== $user['total-watched']) {
@@ -267,12 +272,8 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
         if ($display_rank % 10 == 1 && $display_rank % 100 != 11) $suffix = 'st';
         elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
         elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
-        $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
-        // Force display username.
         $username = esc_html($user['username']);
         $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . intval($user['total-watched']) . '</li>';
-        $sum += intval($user['total-watched']);
-        $count++;
     }
     $output .= '</ul>';
     if ($count > 0) {
@@ -401,6 +402,19 @@ function oscars_predictions_leaderboard_inner($top = null) {
     if (!$users || !is_array($users)) {
         return '<p>Leaderboard data is invalid.</p>';
     }
+    // Calculate average from all users
+    $sum = 0;
+    $count = 0;
+    foreach ($users as $user) {
+        $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
+        if ($sort_by === 'correct-prediction-rate' && is_numeric($score)) {
+            $sum += $score;
+            $count++;
+        } elseif ($sort_by === 'correct-predictions') {
+            $sum += intval($score);
+            $count++;
+        }
+    }
     usort($users, function($a, $b) use ($sort_by) {
         $a_val = isset($a[$sort_by]) && $a[$sort_by] !== '' ? $a[$sort_by] : 0;
         $b_val = isset($b[$sort_by]) && $b[$sort_by] !== '' ? $b[$sort_by] : 0;
@@ -413,8 +427,6 @@ function oscars_predictions_leaderboard_inner($top = null) {
     $rank = 0;
     $display_rank = 0;
     $output = '<ul class="oscars-leaderboard">';
-    $sum = 0;
-    $count = 0;
     foreach ($users as $i => $user) {
         $rank++;
         $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
@@ -426,18 +438,9 @@ function oscars_predictions_leaderboard_inner($top = null) {
         if ($display_rank % 10 == 1 && $display_rank % 100 != 11) $suffix = 'st';
         elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
         elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
-        $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
-        // Force display username.
         $username = esc_html($user['username']);
         $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($score) ? (100 * $score) . '%' : 'N/A') : intval($score);
         $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . $display_score . '</li>';
-        if ($sort_by === 'correct-prediction-rate' && is_numeric($score)) {
-            $sum += $score;
-            $count++;
-        } elseif ($sort_by === 'correct-predictions') {
-            $sum += intval($score);
-            $count++;
-        }
     }
     $output .= '</ul>';
     if ($count > 0) {
