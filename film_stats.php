@@ -268,6 +268,8 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
         elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
         elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
         $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
+        // Force display username.
+        $username = esc_html($user['username']);
         $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . intval($user['total-watched']) . '</li>';
         $sum += intval($user['total-watched']);
         $count++;
@@ -425,6 +427,8 @@ function oscars_predictions_leaderboard_inner($top = null) {
         elseif ($display_rank % 10 == 2 && $display_rank % 100 != 12) $suffix = 'nd';
         elseif ($display_rank % 10 == 3 && $display_rank % 100 != 13) $suffix = 'rd';
         $username = (!empty($user['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
+        // Force display username.
+        $username = esc_html($user['username']);
         $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($score) ? (100 * $score) . '%' : 'N/A') : intval($score);
         $output .= '<li>' . $display_rank . $suffix . ': ' . $username . ' - ' . $display_score . '</li>';
         if ($sort_by === 'correct-prediction-rate' && is_numeric($score)) {
