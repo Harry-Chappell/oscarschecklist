@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('watched_post_id', filmId);
                 formData.append('watched_action', action);
     
-                fetch('https://stage.oscarschecklist.com/', {
+                fetch('https://stage2.oscarschecklist.com/', {
                     method: 'POST',
                     body: formData
                 })
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('fav_nom_id', nominationId);
                 formData.append('fav_action', favAction);
     
-                fetch('https://stage.oscarschecklist.com/', {
+                fetch('https://stage2.oscarschecklist.com/', {
                     method: 'POST',
                     body: formData,
                 })
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         unfavFormData.append('fav_nom_id', otherButton.getAttribute('data-nomination-id'));
                                         unfavFormData.append('fav_action', 'unfav');
     
-                                        fetch('https://stage.oscarschecklist.com/', {
+                                        fetch('https://stage2.oscarschecklist.com/', {
                                             method: 'POST',
                                             body: unfavFormData,
                                         }).catch(error => console.error('Error unfaving:', error));
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('predict_nom_id', nominationId);
                 formData.append('predict_action', predictAction);
     
-                fetch('https://stage.oscarschecklist.com/', {
+                fetch('https://stage2.oscarschecklist.com/', {
                     method: 'POST',
                     body: formData,
                 })
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         unpredictFormData.append('predict_nom_id', otherButton.getAttribute('data-nomination-id'));
                                         unpredictFormData.append('predict_action', 'unpredict');
     
-                                        fetch('https://stage.oscarschecklist.com/', {
+                                        fetch('https://stage2.oscarschecklist.com/', {
                                             method: 'POST',
                                             body: unpredictFormData,
                                         }).catch(error => console.error('Error unpredicting:', error));

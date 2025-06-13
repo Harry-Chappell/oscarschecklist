@@ -980,7 +980,7 @@ function oscars_user_watched_by_decade_shortcode() {
                 return strcasecmp($a['name'], $b['name']);
             });
             foreach ($films as $film) {
-                $url = esc_url('https://stage.oscarschecklist.com/films/' . ltrim($film['url'], '/'));
+                $url = esc_url('https://stage2.oscarschecklist.com/films/' . ltrim($film['url'], '/'));
                 $output .= '<li><a href="' . $url . '">' . esc_html($film['name']) . '</a></li>';
             }
             $output .= '</ul></li>';

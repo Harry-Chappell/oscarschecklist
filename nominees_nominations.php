@@ -102,12 +102,12 @@ function nominees_nominations_function() {
         
         // Output win icons
         for ($i = 0; $i < $winner_count; $i++) {
-            echo '<div class="icon winner">' . file_get_contents("https://stage.oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
+            echo '<div class="icon winner">' . file_get_contents("https://stage2.oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
         }
         
         // Output non-win icons
         for ($i = 0; $i < $non_wins_count; $i++) {
-            echo '<div class="icon nomination">' . file_get_contents("https://stage.oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
+            echo '<div class="icon nomination">' . file_get_contents("https://stage2.oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
         }
         echo '</div>'; // Close nominations-icons
         echo '</div>'; // Close nominations-summary
@@ -244,13 +244,13 @@ function nominees_nominations_function() {
             echo '<div class="year-category">';
             // Display the year with a link to the relevant year page
             if ($year) {
-                $year_link = 'https://stage.oscarschecklist.com/years/nominations-' . $year . '/';
+                $year_link = 'https://stage2.oscarschecklist.com/years/nominations-' . $year . '/';
                 echo '<a class="year" href="' . esc_url($year_link) . '">' . esc_html($year) . '</a><p> - </p>';
             }
 
             // Display categories without the "Category: " prefix and link them to their respective pages
             foreach ($categories as $category) {
-                $category_link = 'https://stage.oscarschecklist.com/category-pages/' . $category->slug;
+                $category_link = 'https://stage2.oscarschecklist.com/category-pages/' . $category->slug;
                 echo '<a class="category ' . esc_html($category->name) . '" href="' . esc_url($category_link) . '">' . esc_html($category->name) . '</a>';
             }
             echo '</div>';

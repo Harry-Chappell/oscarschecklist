@@ -391,7 +391,7 @@ function get_friends_list() {
 
         $output .= '</ul></div>';
     } else {
-        $output .= '<a class="add-friends-link" href="https://stage.oscarschecklist.com/members/"><p>Add friends to compare</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
+        $output .= '<a class="add-friends-link" href="https://stage2.oscarschecklist.com/members/"><p>Add friends to compare</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
     }
     return $output;
 }
@@ -410,7 +410,7 @@ function oscars_year_dropdown_shortcode() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('oscarsYearDropdown').addEventListener('change', function() {
         var year = this.value;
-        window.location.href = 'https://stage.oscarschecklist.com/years/nominations-' + year + '/';
+        window.location.href = 'https://stage2.oscarschecklist.com/years/nominations-' + year + '/';
     });
 });
 </script>
@@ -460,7 +460,7 @@ function oscar_nominations_navigation() {
 
     // Add the previous link if it's within the allowed range
     if ($prev_year >= $min_year) {
-        $prev_link = "https://stage.oscarschecklist.com/years/nominations-$prev_year/";
+        $prev_link = "https://stage2.oscarschecklist.com/years/nominations-$prev_year/";
         $output .= '<a title="Nominations ' . $prev_year . '" href="' . esc_url($prev_link) . '" class="nominations-nav-button">← ' . $prev_year . '</a>';
     }
 
@@ -474,7 +474,7 @@ function oscar_nominations_navigation() {
 
     // Add the next link if it's within the allowed range
     if ($next_year <= $max_year) {
-        $next_link = "https://stage.oscarschecklist.com/years/nominations-$next_year/";
+        $next_link = "https://stage2.oscarschecklist.com/years/nominations-$next_year/";
         $output .= '<a title="Nominations ' . $next_year . '" href="' . esc_url($next_link) . '" class="nominations-nav-button">' . $next_year . ' →</a>';
     }
 
@@ -486,7 +486,7 @@ function oscar_nominations_navigation() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('oscarsYearDropdown').addEventListener('change', function() {
         var year = this.value;
-        window.location.href = 'https://stage.oscarschecklist.com/years/nominations-' + year + '/';
+        window.location.href = 'https://stage2.oscarschecklist.com/years/nominations-' + year + '/';
     });
 });
 </script>
@@ -691,7 +691,7 @@ function wpb_login_logo() {
 ?>
     <style type="text/css">
         #login h1 a, .login h1 a {
-            background-image: url(https://stage.oscarschecklist.com/wp-content/uploads/2024/08/oscars-checklist-logo.png);
+            background-image: url(https://stage2.oscarschecklist.com/wp-content/uploads/2024/08/oscars-checklist-logo.png);
         height:100px;
         width:300px;
         background-size: 300px 100px;
