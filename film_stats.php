@@ -807,71 +807,78 @@ function oscars_user_count_active_days_inner() {
 
 /**
  * Shortcode: oscars_active_users_barchart
- * Displays a bar chart of number of users last active in each of the last 52 weeks.
+ * Displays a bar chart of number of users last active in each of the last N intervals (user-configurable).
  * Uses Chart.js (loads from CDN if not present).
+ * Now with input fields for interval and timeframe, AJAX-powered.
  */
-function oscars_active_users_barchart_shortcode() {
-    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    if (!file_exists($output_path)) {
-        return '<p>No user stats data found.</p>';
-    }
-    $json = file_get_contents($output_path);
-    $users = json_decode($json, true);
-    if (!$users || !is_array($users)) {
-        return '<p>User stats data is invalid.</p>';
-    }
-    $now = strtotime('today');
-    $bins = array_fill(0, 53, 0); // 0 = this week, 52 = 52 weeks ago
-    foreach ($users as $user) {
-        if (!empty($user['last-updated'])) {
-            $last = strtotime($user['last-updated']);
-            if ($last) {
-                $weeks_ago = floor(($now - $last) / (7 * 86400));
-                if ($weeks_ago >= 0 && $weeks_ago <= 52) {
-                    $bins[$weeks_ago]++;
-                }
-            }
-        }
-    }
-    // Prepare labels: 52 (left) to 0 (right)
-    $labels = [];
-    for ($i = 52; $i >= 0; $i--) {
-        $labels[] = $i . 'w ago';
-    }
-    // Reverse both bins and labels so left is 0w ago, right is 52w ago
-    // $labels = array_reverse($labels);
-    $bins = array_reverse($bins);
+function oscars_active_users_barchart_shortcode($atts = []) {
     ob_start();
     ?>
+    <div id="oscars-active-users-barchart-controls" style="margin-bottom:1em">
+        <label>Interval:
+            <select id="oscars-active-users-interval">
+                <option value="day" selected>Day</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                <option value="year">Year</option>
+            </select>
+        </label>
+        <label style="margin-left:1em;">Timeframe:
+            <input type="number" id="oscars-active-users-timeframe" value="7" min="1" max="365" style="width:60px">
+        </label>
+    </div>
     <canvas id="oscars-active-users-barchart" width="1000" height="300"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var ctx = document.getElementById('oscars-active-users-barchart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: <?php echo json_encode($labels); ?>,
-                datasets: [{
-                    label: 'Users last active',
-                    data: <?php echo json_encode($bins); ?>,
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: 'User Last Active by Week (past 52 weeks)' }
-                },
-                scales: {
-                    x: { title: { display: true, text: 'Weeks Ago' }, ticks: { maxTicksLimit: 13 } },
-                    y: { beginAtZero: true, title: { display: true, text: 'Number of Users' } }
+        var chart = null;
+        function fetchAndRenderChart() {
+            var interval = document.getElementById('oscars-active-users-interval').value;
+            var timeframe = document.getElementById('oscars-active-users-timeframe').value;
+            var data = new FormData();
+            data.append('action', 'oscars_active_users_barchart_ajax');
+            data.append('interval', interval);
+            data.append('timeframe', timeframe);
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: data
+            })
+            .then(response => response.json())
+            .then(json => {
+                if (json.success) {
+                    if (chart) chart.destroy();
+                    chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: json.data.labels,
+                            datasets: [{
+                                label: 'Users last active',
+                                data: json.data.bins,
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false },
+                                title: { display: true, text: 'User Last Active by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
+                            },
+                            scales: {
+                                x: { title: { display: true, text: interval.charAt(0).toUpperCase() + interval.slice(1) + 's Ago' }, ticks: { maxTicksLimit: 13 } },
+                                y: { beginAtZero: true, title: { display: true, text: 'Number of Users' } }
+                            }
+                        }
+                    });
                 }
-            }
-        });
+            });
+        }
+        document.getElementById('oscars-active-users-interval').addEventListener('change', fetchAndRenderChart);
+        document.getElementById('oscars-active-users-timeframe').addEventListener('input', fetchAndRenderChart);
+        fetchAndRenderChart();
     });
     </script>
     <?php
@@ -879,91 +886,140 @@ function oscars_active_users_barchart_shortcode() {
 }
 add_shortcode('oscars_active_users_barchart', 'oscars_active_users_barchart_shortcode');
 
-/**
- * Shortcode: oscars_user_watched_by_week_barchart
- * Shows a bar chart of how many films the current user watched in each of the last 52 weeks.
- * Uses Chart.js (loads from CDN if not present).
- */
-function oscars_user_watched_by_week_barchart_shortcode() {
-    if (!is_user_logged_in()) {
-        return '<p>Please log in to see your watched films by week.</p>';
+// AJAX handler for oscars_active_users_barchart
+add_action('wp_ajax_oscars_active_users_barchart_ajax', function() {
+    $interval = isset($_POST['interval']) ? strtolower($_POST['interval']) : 'day';
+    $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 7;
+    if (!in_array($interval, ['day', 'week', 'month', 'year'])) $interval = 'day';
+    if ($timeframe < 1) $timeframe = 7;
+    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+    if (!file_exists($output_path)) {
+        wp_send_json_error('No user stats data found.');
     }
-    $user_id = get_current_user_id();
-    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
-    if (!file_exists($file_path)) {
-        return '<p>No data found for current user.</p>';
-    }
-    $json = file_get_contents($file_path);
-    $data = json_decode($json, true);
-    if (!$data || empty($data['watched']) || !is_array($data['watched'])) {
-        return '<p>No watched films data found.</p>';
+    $json = file_get_contents($output_path);
+    $users = json_decode($json, true);
+    if (!$users || !is_array($users)) {
+        wp_send_json_error('User stats data is invalid.');
     }
     $now = strtotime('today');
-    $bins = array_fill(0, 53, 0); // 0 = this week, 52 = 52 weeks ago
-    foreach ($data['watched'] as $film) {
-        if (!empty($film['watched-date'])) {
-            $watched = strtotime($film['watched-date']);
-            if ($watched) {
-                $weeks_ago = floor(($now - $watched) / (7 * 86400));
-                if ($weeks_ago >= 0 && $weeks_ago <= 52) {
-                    $bins[$weeks_ago]++;
+    $bins = array_fill(0, $timeframe + 1, 0);
+    foreach ($users as $user) {
+        if (!empty($user['last-updated'])) {
+            $last = strtotime($user['last-updated']);
+            if ($last) {
+                switch ($interval) {
+                    case 'day':
+                        $diff = floor(($now - $last) / 86400);
+                        break;
+                    case 'week':
+                        $diff = floor(($now - $last) / (7 * 86400));
+                        break;
+                    case 'month':
+                        $now_y = (int)date('Y', $now);
+                        $now_m = (int)date('n', $now);
+                        $last_y = (int)date('Y', $last);
+                        $last_m = (int)date('n', $last);
+                        $diff = ($now_y - $last_y) * 12 + ($now_m - $last_m);
+                        break;
+                    case 'year':
+                        $diff = (int)date('Y', $now) - (int)date('Y', $last);
+                        break;
+                    default:
+                        $diff = floor(($now - $last) / 86400);
+                }
+                if ($diff >= 0 && $diff <= $timeframe) {
+                    $bins[$diff]++;
                 }
             }
         }
     }
-    // Prepare labels: 0 (left) to 52 (right)
     $labels = [];
-    for ($i = 0; $i <= 52; $i++) {
-        $labels[] = $i . 'w ago';
-    }
-    // Only reverse bins so left is 0w ago, right is 52w ago
-    $bins = array_reverse($bins);
-    $labels = array_reverse($labels);
-    ob_start();
-    ?>
-    <canvas id="oscars-user-watched-by-week-barchart" width="1000" height="300"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-    function renderUserWatchedByWeekChart() {
-        var canvas = document.getElementById('oscars-user-watched-by-week-barchart');
-        if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        // Wait until canvas is visible and has width
-        if (canvas.offsetWidth === 0 || canvas.offsetHeight === 0) {
-            setTimeout(renderUserWatchedByWeekChart, 100);
-            return;
+    for ($i = $timeframe; $i >= 0; $i--) {
+        switch ($interval) {
+            case 'day':
+                $labels[] = $i . 'd ago';
+                break;
+            case 'week':
+                $labels[] = $i . 'w ago';
+                break;
+            case 'month':
+                $labels[] = $i . 'mo ago';
+                break;
+            case 'year':
+                $labels[] = $i . 'y ago';
+                break;
         }
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: <?php echo json_encode($labels); ?>,
-                datasets: [{
-                    label: 'Films watched',
-                    data: <?php echo json_encode($bins); ?>,
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: 'Your Films Watched by Week (past 52 weeks)' }
-                },
-                scales: {
-                    x: { title: { display: true, text: 'Weeks Ago' }, ticks: { maxTicksLimit: 13 } },
-                    y: { beginAtZero: true, title: { display: true, text: 'Films Watched' } }
-                }
-            }
-        });
     }
-    document.addEventListener('DOMContentLoaded', renderUserWatchedByWeekChart);
-    </script>
-    <?php
-    return ob_get_clean();
+    $bins = array_reverse($bins);
+    // $labels = array_reverse($labels);
+    wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
+});
+
+/**
+ * Shortcode to display user activity log (admin only).
+ */
+function oscars_user_activity_log_shortcode() {
+    if (!current_user_can('manage_options')) {
+        return 'You do not have permission.';
+    }
+    $output_path = ABSPATH . 'wp-content/uploads/user_activity_log.json';
+    if (!file_exists($output_path)) {
+        return '<p>No activity log found.</p>';
+    }
+    $json = file_get_contents($output_path);
+    $logs = json_decode($json, true);
+    if (!$logs || !is_array($logs)) {
+        return '<p>Activity log is invalid.</p>';
+    }
+    // Sort by timestamp descending
+    usort($logs, function($a, $b) {
+        return $b['timestamp'] <=> $a['timestamp'];
+    });
+    $output = '<table class="oscars-activity-log">';
+    $output .= '<tr><th>User</th><th>Action</th><th>Timestamp</th></tr>';
+    foreach ($logs as $log) {
+        $user = esc_html($log['user'] ?? 'N/A');
+        $action = esc_html($log['action'] ?? 'N/A');
+        $timestamp = esc_html($log['timestamp'] ?? 'N/A');
+        $output .= "<tr><td>$user</td><td>$action</td><td>$timestamp</td></tr>";
+    }
+    $output .= '</table>';
+    return $output;
 }
-add_shortcode('user_watched_by_week_barchart', 'oscars_user_watched_by_week_barchart_shortcode');
+add_shortcode('oscars_user_activity_log', 'oscars_user_activity_log_shortcode');
+
+/**
+ * Log user activity (admin only).
+ */
+function oscars_log_user_activity($action) {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    $log = [
+        'user' => wp_get_current_user()->user_login,
+        'action' => $action,
+        'timestamp' => current_time('mysql'),
+    ];
+    $output_path = ABSPATH . 'wp-content/uploads/user_activity_log.json';
+    $logs = [];
+    if (file_exists($output_path)) {
+        $json = file_get_contents($output_path);
+        $logs = json_decode($json, true);
+        if (!$logs || !is_array($logs)) {
+            $logs = [];
+        }
+    }
+    $logs[] = $log;
+    file_put_contents($output_path, json_encode($logs, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+
+// Example: log when a user updates their profile
+add_action('personal_options_update', function($user_id) {
+    oscars_log_user_activity('Updated profile: ' . $user_id);
+});
+add_action('edit_user_profile_update', function($user_id) {
+    oscars_log_user_activity('Updated profile: ' . $user_id);
+});
 
 /**
  * Shortcode: oscars_user_stats
