@@ -317,6 +317,7 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
         $u = $entry['user'];
         $shown_ids[] = $u['user_id'];
         $username = esc_html($u['username']);
+        $username = (!empty($u['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
         $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
     }
@@ -535,6 +536,7 @@ function oscars_predictions_leaderboard_inner($top = null) {
         $u = $entry['user'];
         $shown_ids[] = $u['user_id'];
         $username = esc_html($u['username']);
+        $username = (!empty($u['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
         $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($u[$sort_by]) ? (100 * $u[$sort_by]) . '%' : 'N/A') : intval($u[$sort_by]);
         $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . $display_score . '</li>';
@@ -1106,7 +1108,7 @@ function oscars_user_watched_by_decade_shortcode() {
                 return strcasecmp($a['name'], $b['name']);
             });
             foreach ($films as $film) {
-                $url = esc_url('https://stage2.oscarschecklist.com/films/' . ltrim($film['url'], '/'));
+                $url = esc_url('https://oscarschecklist.com/films/' . ltrim($film['url'], '/'));
                 $output .= '<li><a href="' . $url . '">' . esc_html($film['name']) . '</a></li>';
             }
             $output .= '</ul></li>';

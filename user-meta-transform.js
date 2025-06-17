@@ -165,7 +165,7 @@ function displayWatchedFilmsByDecade(films) {
         const films = filmsByDecade[decade].sort((a, b) => a.year - b.year);
         html += `<details><summary><h3>${decade} (${films.length})</h3></summary><ul>`;
         films.forEach(film => {
-            html += `<li><a href="https://stage2.oscarschecklist.com/films/${film.url}">${film.title}</a></li>`;
+            html += `<li><a href="https://oscarschecklist.com/films/${film.url}">${film.title}</a></li>`;
         });
         html += `</ul></details>`;
     });
