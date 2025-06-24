@@ -112,53 +112,6 @@ function oscars_top10_watched_films_list_shortcode() {
 }
 add_shortcode('top10_watched_films', 'oscars_top10_watched_films_list_shortcode');
 
-/**
- * Compile user stats (last-updated, total-watched, user id) for all users into a single JSON file.
- */
-function oscars_compile_all_user_stats() {
-    $user_meta_dir = ABSPATH . 'wp-content/uploads/user_meta/';
-    $output = [];
-    if (is_dir($user_meta_dir)) {
-        foreach (glob($user_meta_dir . 'user_*.json') as $file) {
-            if (preg_match('/user_(\d+)\.json$/', $file, $matches)) {
-                $user_id = (int)$matches[1];
-                $json = file_get_contents($file);
-                $data = json_decode($json, true);
-                $output[] = [
-                    'user_id' => $user_id,
-                    'last-updated' => $data['last-updated'] ?? '',
-                    'total-watched' => $data['total-watched'] ?? 0,
-                    'username' => $data['username'] ?? '',
-                    'public' => $data['public'] ?? false,
-                    'correct-predictions' => $data['correct-predictions'] ?? '',
-                    'incorrect-predictions' => $data['incorrect-predictions'] ?? '',
-                    'correct-prediction-rate' => $data['correct-prediction-rate'] ?? '',
-                ];
-            }
-        }
-    }
-    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    file_put_contents($output_path, json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    return 'All user stats JSON generated!';
-}
-// 1. Add a custom schedule for every minute
-add_filter('cron_schedules', function($schedules) {
-    $schedules['every_minute'] = [
-        'interval' => 60,
-        'display'  => __('Every Minute')
-    ];
-    return $schedules;
-});
-
-// 2. Schedule the event if not already scheduled
-add_action('wp', function() {
-    if (!wp_next_scheduled('oscars_compile_all_user_stats_cron')) {
-        wp_schedule_event(time(), 'every_minute', 'oscars_compile_all_user_stats_cron');
-    }
-});
-
-// 3. Hook your function to the event
-add_action('oscars_compile_all_user_stats_cron', 'oscars_compile_all_user_stats');
 
 
 
@@ -166,6 +119,7 @@ add_action('oscars_compile_all_user_stats_cron', 'oscars_compile_all_user_stats'
 
 
 
+require_once get_stylesheet_directory() . '/film_stats/oscars_compile_all_user_stats.php';
 require_once get_stylesheet_directory() . '/film_stats/all_user_stats_button.php';
 require_once get_stylesheet_directory() . '/film_stats/publicise_data_checkbox.php';
 require_once get_stylesheet_directory() . '/film_stats/oscars_watched_leaderboard.php';
