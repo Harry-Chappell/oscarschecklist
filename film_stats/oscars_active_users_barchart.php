@@ -10,17 +10,16 @@ function oscars_active_users_barchart_shortcode($atts = []) {
     ob_start();
     ?>
     <div id="oscars-active-users-barchart-controls" style="margin-bottom:1em">
-        <label>Interval:
-            <select id="oscars-active-users-interval">
-                <option value="day" selected>Day</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="year">Year</option>
-            </select>
-        </label>
-        <label style="margin-left:1em;">Timeframe:
+        <h2>
+            Users who were most recently active in the last
             <input type="number" id="oscars-active-users-timeframe" value="7" min="1" max="365" style="width:60px">
-        </label>
+            <select id="oscars-active-users-interval">
+                <option value="day" selected>Days</option>
+                <option value="week">Weeks</option>
+                <option value="month">Months</option>
+                <option value="year">Years</option>
+            </select>.
+        </h2>
     </div>
     <canvas id="oscars-active-users-barchart" width="1000" height="300"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

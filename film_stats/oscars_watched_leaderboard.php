@@ -8,6 +8,7 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
     $atts = shortcode_atts(['top' => null], $atts);
     $top = is_numeric($atts['top']) && intval($atts['top']) > 0 ? intval($atts['top']) : null;
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+
     if (!file_exists($output_path)) {
         return '<p>No leaderboard data found. Please generate it first.</p>';
     }
@@ -64,20 +65,28 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
     }
     // Top X
     $top_users = $top !== null ? array_slice($ranked_users, 0, $top) : $ranked_users;
-    // Collect user/friends (if not in top X)
-    $extra_users = [];
-    $added_ids = array_column($top_users, 'user_id');
-    if ($current_user_id && isset($user_ranks[$current_user_id]) && !in_array($current_user_id, $added_ids)) {
-        $extra_users[$current_user_id] = $user_ranks[$current_user_id];
+    // Collect user and friends (if not in top X)
+    $user_and_friends_ids = [];
+    if ($current_user_id && isset($user_ranks[$current_user_id])) {
+        $user_and_friends_ids[] = $current_user_id;
     }
+    foreach ($friends as $fid) {
+        if (isset($user_ranks[$fid])) {
+            $user_and_friends_ids[] = $fid;
+        }
+    }
+    // Remove any already in top_users
+    $added_ids = array_map(function($entry) { return $entry['user']['user_id']; }, $top_users);
+    $user_and_friends_ids = array_diff($user_and_friends_ids, $added_ids);
+    // Get user/friend entries in leaderboard order
+    $user_and_friends_entries = [];
     foreach ($ranked_users as $entry) {
-        $u = $entry['user'];
-        if ($current_user_id && in_array($u['user_id'], $friends) && !in_array($u['user_id'], $added_ids) && $u['user_id'] !== $current_user_id) {
-            $extra_users[$u['user_id']] = $entry;
+        if (in_array($entry['user']['user_id'], $user_and_friends_ids)) {
+            $user_and_friends_entries[] = $entry;
         }
     }
     // Output
-    $output = '<ul class="oscars-leaderboard">';
+    $output = '<h2>Watched Leaderboard</h2><ul class="leaderboard">';
     $suffixes = function($n) {
         if ($n % 10 == 1 && $n % 100 != 11) return 'st';
         if ($n % 10 == 2 && $n % 100 != 12) return 'nd';
@@ -91,15 +100,16 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
         $username = esc_html($u['username']);
         $username = (!empty($u['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
-        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
+        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span> - ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
     }
-    // Show current user and friends if not already shown
-    foreach ($extra_users as $uid => $entry) {
-        if (in_array($uid, $shown_ids)) continue;
+    $output .= '<li class="spacer"></li>'; // Spacer
+    // Show current user and friends (in order) after top X
+    foreach ($user_and_friends_entries as $entry) {
         $u = $entry['user'];
+        $shown_ids[] = $u['user_id'];
         $username = esc_html($u['username']);
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : ' class="current-users-friend"';
-        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
+        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span> - ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
     }
     $output .= '</ul>';
     if ($count > 0) {

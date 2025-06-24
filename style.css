@@ -2207,14 +2207,40 @@ summary h3 {
 }
 
 li.current-user {
-    margin: 20px 0 0;
+    /* margin: 20px 0 0; */
     font-weight: bold;
-    color: var(--theme-palette-color-1);
+    /* color: var(--theme-palette-color-1); */
 }
-li.current-user:has(+.current-users-friend):after {
+/* li.current-user:has(+.current-users-friend):after {
     content: "Friends";
     display: block;
     font-size: 1.3em;
     margin: 20px 0 0;
     color: var(--theme-palette-color-3);
+} */
+
+
+
+h2 input,
+h2 select {
+    border: 0 !important;
+    background: var(--theme-palette-color-6) !important;
+    width: auto !important;
+    height: auto !important;
+    font-size: 16px !important;
+    text-align: center;
+    padding: 5px 0 2px !important;
+}
+
+ul.leaderboard {
+    list-style: none;
+    padding: 0;
+}
+ul.leaderboard span.rank {
+    width: 55px;
+    display: inline-block;
+    text-align: right;
+}
+ul.leaderboard li.spacer {
+    height: 20px;
 }
