@@ -141,6 +141,26 @@ function oscars_compile_all_user_stats() {
     file_put_contents($output_path, json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     return 'All user stats JSON generated!';
 }
+// 1. Add a custom schedule for every minute
+add_filter('cron_schedules', function($schedules) {
+    $schedules['every_minute'] = [
+        'interval' => 60,
+        'display'  => __('Every Minute')
+    ];
+    return $schedules;
+});
+
+// 2. Schedule the event if not already scheduled
+add_action('wp', function() {
+    if (!wp_next_scheduled('oscars_compile_all_user_stats_cron')) {
+        wp_schedule_event(time(), 'every_minute', 'oscars_compile_all_user_stats_cron');
+    }
+});
+
+// 3. Hook your function to the event
+add_action('oscars_compile_all_user_stats_cron', 'oscars_compile_all_user_stats');
+
+
 
 /**
  * Admin button/shortcode to trigger compiling all user stats JSON.
@@ -757,32 +777,3 @@ require_once get_stylesheet_directory() . '/film_stats/oscars_log_user_activity.
 require_once get_stylesheet_directory() . '/film_stats/oscars_user_stats.php';
 require_once get_stylesheet_directory() . '/film_stats/oscars_user_watched_chart.php';
 require_once get_stylesheet_directory() . '/film_stats/oscars_user_watched_by_decade.php';
-
-
-
-
-
-
-
-
-
-
-
-// 1. Add a custom schedule for every minute
-add_filter('cron_schedules', function($schedules) {
-    $schedules['every_minute'] = [
-        'interval' => 60,
-        'display'  => __('Every Minute')
-    ];
-    return $schedules;
-});
-
-// 2. Schedule the event if not already scheduled
-add_action('wp', function() {
-    if (!wp_next_scheduled('oscars_compile_all_user_stats_cron')) {
-        wp_schedule_event(time(), 'every_minute', 'oscars_compile_all_user_stats_cron');
-    }
-});
-
-// 3. Hook your function to the event
-add_action('oscars_compile_all_user_stats_cron', 'oscars_compile_all_user_stats');
