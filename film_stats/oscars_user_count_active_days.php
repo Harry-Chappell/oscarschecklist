@@ -7,8 +7,8 @@ function oscars_user_count_active_days_shortcode() {
     ob_start();
     ?>
     <div id="oscars-user-count-active-days-wrap">
-        <label>Active in last <input type="number" id="oscars-user-count-active-days-input" value="7" min="1" style="width:60px"> days:</label>
-        <span id="oscars-user-count-active-days-result"></span>
+        <span class="large" id="oscars-user-count-active-days-result"></span>
+        <label>Active in last <input type="number" id="oscars-user-count-active-days-input" value="7" min="1"> days:</label>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {

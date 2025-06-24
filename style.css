@@ -2221,11 +2221,13 @@ li.current-user {
 
 
 
+label input,
+label select,
 h2 input,
 h2 select {
     border: 0 !important;
     background: var(--theme-palette-color-6) !important;
-    width: auto !important;
+    width: 50px !important;
     height: auto !important;
     font-size: 16px !important;
     text-align: center;
@@ -2243,4 +2245,17 @@ ul.leaderboard span.rank {
 }
 ul.leaderboard li.spacer {
     height: 20px;
+}
+span.large {
+    display: flex;
+    justify-content: center;
+    font-size: 90px;
+    /* line-height: 1; */
+}
+span.large + label {
+    text-align: center !important;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    align-items: center;
 }

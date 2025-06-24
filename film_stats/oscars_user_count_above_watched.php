@@ -8,8 +8,8 @@ function oscars_user_count_above_watched_shortcode() {
     ob_start();
     ?>
     <div id="oscars-user-count-above-watched-wrap">
-        <label>Films watched more than: <input type="number" id="oscars-user-count-above-watched-input" value="0" min="0" style="width:60px"></label>
-        <span id="oscars-user-count-above-watched-result"></span>
+        <span class="large" id="oscars-user-count-above-watched-result"></span>
+        <label>Watched more than <input type="number" id="oscars-user-count-above-watched-input" value="0" min="0"> films.</label>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {

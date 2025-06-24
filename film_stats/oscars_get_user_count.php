@@ -14,6 +14,8 @@ function oscars_get_user_count_shortcode() {
     if (!$users || !is_array($users)) {
         return false;
     }
-    return count($users);
+    $output = '<span class="large">' . count($users) . '</span>';
+    $output .= '<label>Total users</label>';
+    return $output;
 }
 add_shortcode('oscars_get_user_count', 'oscars_get_user_count_shortcode');
