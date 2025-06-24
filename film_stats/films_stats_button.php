@@ -1,0 +1,77 @@
+<?php
+
+
+/**
+ * Compile all films and watched counts, save as JSON, and provide a shortcode button to trigger.
+ */
+function oscars_compile_films_stats() {
+    if (!current_user_can('manage_options')) {
+        return 'You do not have permission.';
+    }
+    $films = get_terms([
+        'taxonomy' => 'films',
+        'hide_empty' => false,
+    ]);
+    if (empty($films) || is_wp_error($films)) {
+        return 'No films found.';
+    }
+    $film_stats = [];
+    // Build initial film array
+    foreach ($films as $film) {
+        // Get year from first nomination post (if any)
+        $film_year = null;
+        $nominations = new WP_Query([
+            'post_type' => 'nominations',
+            'posts_per_page' => 1,
+            'tax_query' => [[
+                'taxonomy' => 'films',
+                'field' => 'term_id',
+                'terms' => $film->term_id,
+            ]],
+            'orderby' => 'date',
+            'order' => 'ASC',
+        ]);
+        if ($nominations->have_posts()) {
+            $nom = $nominations->posts[0];
+            $film_year = (int) date('Y', strtotime($nom->post_date));
+        }
+        wp_reset_postdata();
+        $film_stats[$film->term_id] = [
+            'film-id' => $film->term_id,
+            'film-name' => $film->name,
+            'film-year' => $film_year,
+            'film-url' => get_term_link($film),
+            'watched-count' => 0,
+        ];
+    }
+    // Count watched per user
+    $user_meta_dir = ABSPATH . 'wp-content/uploads/user_meta/';
+    if (is_dir($user_meta_dir)) {
+        foreach (glob($user_meta_dir . 'user_*.json') as $file) {
+            $json = file_get_contents($file);
+            $data = json_decode($json, true);
+            if (!empty($data['watched']) && is_array($data['watched'])) {
+                foreach ($data['watched'] as $watched) {
+                    $fid = $watched['film-id'] ?? null;
+                    if ($fid && isset($film_stats[$fid])) {
+                        $film_stats[$fid]['watched-count']++;
+                    }
+                }
+            }
+        }
+    }
+    // Save JSON
+    $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
+    file_put_contents($output_path, json_encode(array_values($film_stats), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    return 'Film stats JSON generated!';
+}
+
+function oscars_films_stats_button_shortcode() {
+    $output = '';
+    if (isset($_POST['oscars_films_stats_generate'])) {
+        $output .= '<div>' . oscars_compile_films_stats() . '</div>';
+    }
+    $output .= '<form method="post"><button type="submit" name="oscars_films_stats_generate">Generate Films Stats JSON</button></form>';
+    return $output;
+}
+add_shortcode('films_stats_button', 'oscars_films_stats_button_shortcode');
