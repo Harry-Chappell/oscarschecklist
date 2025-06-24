@@ -162,32 +162,11 @@ add_action('oscars_compile_all_user_stats_cron', 'oscars_compile_all_user_stats'
 
 
 
-/**
- * Admin button/shortcode to trigger compiling all user stats JSON.
- */
-function oscars_all_user_stats_button_shortcode() {
-    if (!current_user_can('manage_options')) {
-        return 'You do not have permission.';
-    }
-    $output = '';
-    if (isset($_POST['oscars_all_user_stats_generate'])) {
-        $output .= '<div>' . oscars_compile_all_user_stats() . '</div>';
-    }
-    $output .= '<form method="post"><button type="submit" name="oscars_all_user_stats_generate">Generate All User Stats JSON</button></form>';
-    return $output;
-}
-add_shortcode('all_user_stats_button', 'oscars_all_user_stats_button_shortcode');
 
 
 
 
-
-
-
-
-
-
-
+require_once get_stylesheet_directory() . '/film_stats/all_user_stats_button.php';
 require_once get_stylesheet_directory() . '/film_stats/publicise_data_checkbox.php';
 require_once get_stylesheet_directory() . '/film_stats/oscars_watched_leaderboard.php';
 require_once get_stylesheet_directory() . '/film_stats/update_all_user_prediction_stats_button.php';
