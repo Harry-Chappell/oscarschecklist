@@ -11,8 +11,12 @@ function oscars_active_users_barchart_shortcode($atts = []) {
         'timeframe' => 7,
         'interval' => 'day'
     ], $atts);
-    $timeframe = intval($atts['timeframe']);
-    if ($timeframe < 1) $timeframe = 7;
+    // Calculate default timeframe as days between June 16, 2025 and today
+    $today = new DateTime();
+    $start = new DateTime('2025-06-16');
+    $interval_days = $start->diff($today)->days;
+    $timeframe = isset($atts['timeframe']) && $atts['timeframe'] !== '' ? intval($atts['timeframe']) : $interval_days;
+    if ($timeframe < 1) $timeframe = 1;
     $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
     ob_start();
     ?>

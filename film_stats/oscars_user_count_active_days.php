@@ -8,7 +8,12 @@ function oscars_user_count_active_days_shortcode($atts = []) {
         'timeframe' => 0,
         'interval' =>  'day'
     ], $atts);
-    $default_timeframe = intval($atts['timeframe']);
+    // Calculate default timeframe as days between June 16, 2025 and today
+    $today = new DateTime();
+    $start = new DateTime('2025-06-16');
+    $interval_days = $start->diff($today)->days;
+    $default_timeframe = isset($atts['timeframe']) && $atts['timeframe'] !== '' ? intval($atts['timeframe']) : $interval_days;
+    if ($default_timeframe < 1) $default_timeframe = $interval_days;
     $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
     ob_start();
     ?>
@@ -66,7 +71,7 @@ add_shortcode('oscars_user_count_active_days', 'oscars_user_count_active_days_sh
 
 function oscars_user_count_active_days_inner($show_total = false) {
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    $timeframe = isset($_POST['oscars_user_count_active_days']) ? intval($_POST['oscars_user_count_active_days']) : 7;
+    $timeframe = isset($_POST['oscars_user_count_active_days']) ? intval($_POST['oscars_user_count_active_days']) + 1 : 7;
     $interval = isset($_POST['interval']) && in_array(strtolower($_POST['interval']), ['day','week','month','year']) ? strtolower($_POST['interval']) : 'day';
     if (!file_exists($output_path)) return $show_total ? '0/0' : '0';
     $json = file_get_contents($output_path);
