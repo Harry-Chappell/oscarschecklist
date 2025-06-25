@@ -14,6 +14,7 @@ function oscars_user_count_active_days_shortcode($atts = []) {
     ?>
     <div id="oscars-user-count-active-days-wrap">
         <span class="large" id="oscars-user-count-active-days-result"></span>
+        <span class="small" id="oscars-user-count-active-days-percent"></span>
         <label>Active in last <input type="number" id="oscars-user-count-active-days-input" value="<?php echo esc_attr($default_timeframe); ?>" min="1">
             <select id="oscars-count-active-users-interval">
                 <option value="day"<?php if($interval==='day') echo ' selected'; ?>>Days</option>
@@ -28,6 +29,7 @@ function oscars_user_count_active_days_shortcode($atts = []) {
         var input = document.getElementById('oscars-user-count-active-days-input');
         var intervalSelect = document.getElementById('oscars-count-active-users-interval');
         var result = document.getElementById('oscars-user-count-active-days-result');
+        var percent = document.getElementById('oscars-user-count-active-days-percent');
         function updateCount() {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', window.location.href, true);
@@ -37,7 +39,16 @@ function oscars_user_count_active_days_shortcode($atts = []) {
                     var parser = new DOMParser();
                     var doc = parser.parseFromString(xhr.responseText, 'text/html');
                     var el = doc.querySelector('#oscars-user-count-active-days-ajax');
-                    if (el) result.textContent = el.textContent;
+                    if (el) {
+                        var val = el.textContent.split('/');
+                        result.textContent = val[0];
+                        if (val.length > 1 && parseInt(val[1]) > 0) {
+                            var pct = (100 * parseInt(val[0]) / parseInt(val[1])).toFixed(1);
+                            percent.textContent = pct + '%';
+                        } else {
+                            percent.textContent = '';
+                        }
+                    }
                 }
             };
             xhr.send('oscars_user_count_active_days=' + encodeURIComponent(input.value) + '&interval=' + encodeURIComponent(intervalSelect.value) + '&oscars_user_count_active_days_ajax=1');
@@ -47,20 +58,20 @@ function oscars_user_count_active_days_shortcode($atts = []) {
         updateCount();
     });
     </script>
-    <span id="oscars-user-count-active-days-ajax" style="display:none"><?php echo oscars_user_count_active_days_inner(); ?></span>
+    <span id="oscars-user-count-active-days-ajax" style="display:none"><?php echo oscars_user_count_active_days_inner(true); ?></span>
     <?php
     return ob_get_clean();
 }
 add_shortcode('oscars_user_count_active_days', 'oscars_user_count_active_days_shortcode');
 
-function oscars_user_count_active_days_inner() {
+function oscars_user_count_active_days_inner($show_total = false) {
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
     $timeframe = isset($_POST['oscars_user_count_active_days']) ? intval($_POST['oscars_user_count_active_days']) : 7;
     $interval = isset($_POST['interval']) && in_array(strtolower($_POST['interval']), ['day','week','month','year']) ? strtolower($_POST['interval']) : 'day';
-    if (!file_exists($output_path)) return '0';
+    if (!file_exists($output_path)) return $show_total ? '0/0' : '0';
     $json = file_get_contents($output_path);
     $users = json_decode($json, true);
-    if (!$users || !is_array($users)) return '0';
+    if (!$users || !is_array($users)) return $show_total ? '0/0' : '0';
     $count = 0;
     $now = time();
     foreach ($users as $user) {
@@ -93,5 +104,6 @@ function oscars_user_count_active_days_inner() {
             }
         }
     }
-    return $count;
+    $total = is_array($users) ? count($users) : 0;
+    return $show_total ? ($count . '/' . $total) : $count;
 }

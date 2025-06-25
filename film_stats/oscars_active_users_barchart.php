@@ -59,8 +59,8 @@ function oscars_active_users_barchart_shortcode($atts = []) {
                             datasets: [{
                                 label: 'Users last active',
                                 data: json.data.bins,
-                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: '#c7a34f',
+                                borderColor: '#987e40',
                                 borderWidth: 1
                             }]
                         },
@@ -68,11 +68,11 @@ function oscars_active_users_barchart_shortcode($atts = []) {
                             responsive: true,
                             plugins: {
                                 legend: { display: false },
-                                title: { display: true, text: 'User Last Active by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
+                                title: { display: false, text: 'User Last Active by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
                             },
                             scales: {
-                                x: { title: { display: true, text: interval.charAt(0).toUpperCase() + interval.slice(1) + 's Ago' }, ticks: { maxTicksLimit: 13 } },
-                                y: { beginAtZero: true, title: { display: true, text: 'Number of Users' } }
+                                x: { display: false, title: { display: false, text: interval.charAt(0).toUpperCase() + interval.slice(1) + 's Ago' }, ticks: { maxTicksLimit: 13 } },
+                                y: { display: false, beginAtZero: true, title: { display: false, text: 'Number of Users' } }
                             }
                         }
                     });
