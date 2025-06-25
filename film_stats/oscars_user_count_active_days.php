@@ -3,16 +3,30 @@
  * Shortcode: oscars_user_count_active_days
  * Shows a number input and displays the count of users active in the last X days (AJAX, live update).
  */
-function oscars_user_count_active_days_shortcode() {
+function oscars_user_count_active_days_shortcode($atts = []) {
+    $atts = shortcode_atts([
+        'timeframe' => 0,
+        'interval' =>  'day'
+    ], $atts);
+    $default_timeframe = intval($atts['timeframe']);
+    $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
     ob_start();
     ?>
     <div id="oscars-user-count-active-days-wrap">
         <span class="large" id="oscars-user-count-active-days-result"></span>
-        <label>Active in last <input type="number" id="oscars-user-count-active-days-input" value="7" min="1"> days:</label>
+        <label>Active in last <input type="number" id="oscars-user-count-active-days-input" value="<?php echo esc_attr($default_timeframe); ?>" min="1">
+            <select id="oscars-count-active-users-interval">
+                <option value="day"<?php if($interval==='day') echo ' selected'; ?>>Days</option>
+                <option value="week"<?php if($interval==='week') echo ' selected'; ?>>Weeks</option>
+                <option value="month"<?php if($interval==='month') echo ' selected'; ?>>Months</option>
+                <option value="year"<?php if($interval==='year') echo ' selected'; ?>>Years</option>
+            </select>
+        </label>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var input = document.getElementById('oscars-user-count-active-days-input');
+        var intervalSelect = document.getElementById('oscars-count-active-users-interval');
         var result = document.getElementById('oscars-user-count-active-days-result');
         function updateCount() {
             var xhr = new XMLHttpRequest();
@@ -26,9 +40,10 @@ function oscars_user_count_active_days_shortcode() {
                     if (el) result.textContent = el.textContent;
                 }
             };
-            xhr.send('oscars_user_count_active_days=' + encodeURIComponent(input.value) + '&oscars_user_count_active_days_ajax=1');
+            xhr.send('oscars_user_count_active_days=' + encodeURIComponent(input.value) + '&interval=' + encodeURIComponent(intervalSelect.value) + '&oscars_user_count_active_days_ajax=1');
         }
         input.addEventListener('input', updateCount);
+        intervalSelect.addEventListener('change', updateCount);
         updateCount();
     });
     </script>
@@ -40,7 +55,8 @@ add_shortcode('oscars_user_count_active_days', 'oscars_user_count_active_days_sh
 
 function oscars_user_count_active_days_inner() {
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    $days = isset($_POST['oscars_user_count_active_days']) ? intval($_POST['oscars_user_count_active_days']) : 7;
+    $timeframe = isset($_POST['oscars_user_count_active_days']) ? intval($_POST['oscars_user_count_active_days']) : 7;
+    $interval = isset($_POST['interval']) && in_array(strtolower($_POST['interval']), ['day','week','month','year']) ? strtolower($_POST['interval']) : 'day';
     if (!file_exists($output_path)) return '0';
     $json = file_get_contents($output_path);
     $users = json_decode($json, true);
@@ -50,8 +66,30 @@ function oscars_user_count_active_days_inner() {
     foreach ($users as $user) {
         if (!empty($user['last-updated'])) {
             $last = strtotime($user['last-updated']);
-            if ($last && ($now - $last) <= ($days * 86400)) {
-                $count++;
+            if ($last) {
+                switch ($interval) {
+                    case 'day':
+                        $diff = ($now - $last) / 86400;
+                        break;
+                    case 'week':
+                        $diff = ($now - $last) / (7 * 86400);
+                        break;
+                    case 'month':
+                        $now_y = (int)date('Y', $now);
+                        $now_m = (int)date('n', $now);
+                        $last_y = (int)date('Y', $last);
+                        $last_m = (int)date('n', $last);
+                        $diff = ($now_y - $last_y) * 12 + ($now_m - $last_m);
+                        break;
+                    case 'year':
+                        $diff = (int)date('Y', $now) - (int)date('Y', $last);
+                        break;
+                    default:
+                        $diff = ($now - $last) / 86400;
+                }
+                if ($diff >= 0 && $diff < $timeframe) {
+                    $count++;
+                }
             }
         }
     }

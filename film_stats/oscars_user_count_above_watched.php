@@ -4,12 +4,16 @@
  * Shortcode: oscars_user_count_above_watched
  * Shows a number input and displays the count of users who have watched more than X films (AJAX, live update).
  */
-function oscars_user_count_above_watched_shortcode() {
+function oscars_user_count_above_watched_shortcode($atts = []) {
+    $atts = shortcode_atts([
+        'films' => 0
+    ], $atts);
+    $default_films = intval($atts['films']);
     ob_start();
     ?>
     <div id="oscars-user-count-above-watched-wrap">
         <span class="large" id="oscars-user-count-above-watched-result"></span>
-        <label>Watched more than <input type="number" id="oscars-user-count-above-watched-input" value="0" min="0"> films.</label>
+        <label>Watched more than <input type="number" id="oscars-user-count-above-watched-input" value="<?php echo esc_attr($default_films); ?>" min="0"> films.</label>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
