@@ -2233,15 +2233,41 @@ h2 select {
     text-align: center;
     padding: 5px 0 2px !important;
 }
-
+label select,
+h2 select {
+    width: auto !important;
+    padding: 5px 5px 2px 5px !important
+}
 ul.leaderboard {
     list-style: none;
     padding: 0;
 }
+ul.leaderboard li {
+    padding: 5px 10px 2px 5px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+ul.leaderboard li:nth-of-type(even):before {
+    background: var(--theme-palette-color-4);
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+}
 ul.leaderboard span.rank {
-    width: 55px;
+    width: 60px;
     display: inline-block;
-    text-align: right;
+    text-align: center;
+}
+ul.leaderboard span.username {
+    margin-left: 5px;
+    font-size: 1.2em;
+    line-height: 1;
+}
+ul.leaderboard span.total-watched {
+    margin-left: auto;
+    font-size: 0.8em;
 }
 ul.leaderboard li.spacer {
     height: 20px;

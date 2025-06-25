@@ -98,9 +98,9 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
         $u = $entry['user'];
         $shown_ids[] = $u['user_id'];
         $username = esc_html($u['username']);
-        $username = (!empty($u['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
+        $username = (!empty($u['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'Anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
-        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span> - ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
+        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span><span class="username">' . $username . '</span><span class="total-watched">' . intval($u['total-watched']) . '</span></li>';
     }
     $output .= '<li class="spacer"></li>'; // Spacer
     // Show current user and friends (in order) after top X
@@ -109,7 +109,7 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
         $shown_ids[] = $u['user_id'];
         $username = esc_html($u['username']);
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : ' class="current-users-friend"';
-        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span> - ' . $username . ' - ' . intval($u['total-watched']) . '</li>';
+        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span><span class="username">' . $username . '</span><span class="total-watched">' . intval($u['total-watched']) . '</span></li>';
     }
     $output .= '</ul>';
     if ($count > 0) {

@@ -7,21 +7,30 @@
  * Now with input fields for interval and timeframe, AJAX-powered.
  */
 function oscars_active_users_barchart_shortcode($atts = []) {
+    $atts = shortcode_atts([
+        'timeframe' => 7,
+        'interval' => 'day'
+    ], $atts);
+    $timeframe = intval($atts['timeframe']);
+    if ($timeframe < 1) $timeframe = 7;
+    $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
     ob_start();
     ?>
     <div id="oscars-active-users-barchart-controls" style="margin-bottom:1em">
         <h2>
             Users who were most recently active in the last
-            <input type="number" id="oscars-active-users-timeframe" value="7" min="1" max="365" style="width:60px">
+            <input type="number" id="oscars-active-users-timeframe" value="<?php echo esc_attr($timeframe); ?>" min="1" max="365" style="width:60px">
             <select id="oscars-active-users-interval">
-                <option value="day" selected>Days</option>
-                <option value="week">Weeks</option>
-                <option value="month">Months</option>
-                <option value="year">Years</option>
+                <option value="day"<?php if($interval==='day') echo ' selected'; ?>>Days</option>
+                <option value="week"<?php if($interval==='week') echo ' selected'; ?>>Weeks</option>
+                <option value="month"<?php if($interval==='month') echo ' selected'; ?>>Months</option>
+                <option value="year"<?php if($interval==='year') echo ' selected'; ?>>Years</option>
             </select>.
         </h2>
     </div>
-    <canvas id="oscars-active-users-barchart" width="1000" height="300"></canvas>
+    <div style="width:100%;">
+        <canvas id="oscars-active-users-barchart" style="display:block;max-height:400px;height:400px;"></canvas>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
