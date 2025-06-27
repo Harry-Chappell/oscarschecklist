@@ -14,7 +14,7 @@ function oscars_user_count_above_rate_shortcode($atts = []) {
     <div id="oscars-user-count-above-rate-wrap">
         <span id="oscars-user-count-above-rate-result" class="large"></span>
         <span id="oscars-user-count-above-rate-percent" class="small"></span>
-        <label>Prediction rate above (%): <input type="number" id="oscars-user-count-above-rate-input" value="<?php echo esc_attr($default); ?>" min="0" max="100" style="width:60px"></label>
+        <label>Have a prediction rate above <input type="number" id="oscars-user-count-above-rate-input" value="<?php echo esc_attr($default); ?>" min="0" max="100" style="width:60px"> (%)</label>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -57,10 +57,10 @@ function oscars_user_count_above_rate_inner($default = 0) {
     $users = json_decode($json, true);
     if (!$users || !is_array($users)) return '0|';
     $count = 0;
-    $total = 0;
+    $total = get_site_user_count();
     foreach ($users as $user) {
         if (isset($user['correct-prediction-rate']) && is_numeric($user['correct-prediction-rate'])) {
-            $total++;
+            // $total++;
             if ((100 * floatval($user['correct-prediction-rate'])) > $threshold) {
                 $count++;
             }
