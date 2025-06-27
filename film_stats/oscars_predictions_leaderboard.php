@@ -1,60 +1,22 @@
 <?php
 
 /**
- * Shortcode to display a leaderboard of users by correct predictions or correct prediction rate, with AJAX switch.
+ * Shortcode to display a leaderboard of users by correct predictions or prediction rate.
+ * Usage: [oscars_predictions_leaderboard stat="correct-predictions"|"prediction-rate" top="10"]
  */
 function oscars_predictions_leaderboard_shortcode($atts = []) {
-    $atts = shortcode_atts(['top' => null], $atts);
+    $atts = shortcode_atts([
+        'top' => null,
+        'stat' => 'correct-predictions',
+    ], $atts);
     $top = is_numeric($atts['top']) && intval($atts['top']) > 0 ? intval($atts['top']) : null;
-    ob_start();
-    ?>
-    <form id="oscars-predictions-leaderboard-form" style="margin-bottom:1em">
-        <label><input type="radio" name="oscars_leaderboard_sort" value="correct" checked> Correct Predictions</label>
-        <label><input type="radio" name="oscars_leaderboard_sort" value="rate"> Prediction Rate</label>
-    </form>
-    <div id="oscars-predictions-leaderboard-results"></div>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function fetchLeaderboard(sort) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', window.location.href, true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    var parser = new DOMParser();
-                    var doc = parser.parseFromString(xhr.responseText, 'text/html');
-                    var leaderboard = doc.querySelector('#oscars-predictions-leaderboard-ajax');
-                    if (leaderboard) {
-                        document.getElementById('oscars-predictions-leaderboard-results').innerHTML = leaderboard.innerHTML;
-                    }
-                }
-            };
-            xhr.send('oscars_leaderboard_sort=' + encodeURIComponent(sort) + '&oscars_leaderboard_ajax=1&oscars_leaderboard_top=<?php echo $top !== null ? intval($top) : ''; ?>');
-        }
-        var radios = document.querySelectorAll('#oscars-predictions-leaderboard-form input[type=radio]');
-        radios.forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                fetchLeaderboard(this.value);
-            });
-        });
-        // Initial load
-        fetchLeaderboard(document.querySelector('#oscars-predictions-leaderboard-form input[type=radio]:checked').value);
-    });
-    </script>
-    <div id="oscars-predictions-leaderboard-ajax" style="display:none">
-        <?php echo oscars_predictions_leaderboard_inner($top); ?>
-    </div>
-    <?php
-    return ob_get_clean();
+    $stat = $atts['stat'] === 'prediction-rate' ? 'correct-prediction-rate' : 'correct-predictions';
+    return oscars_predictions_leaderboard_inner($top, $stat);
 }
 add_shortcode('oscars_predictions_leaderboard', 'oscars_predictions_leaderboard_shortcode');
 
-function oscars_predictions_leaderboard_inner($top = null) {
+function oscars_predictions_leaderboard_inner($top = null, $stat = 'correct-predictions') {
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    $sort_by = isset($_POST['oscars_leaderboard_sort']) && $_POST['oscars_leaderboard_sort'] === 'rate' ? 'correct-prediction-rate' : 'correct-predictions';
-    if (isset($_POST['oscars_leaderboard_top']) && is_numeric($_POST['oscars_leaderboard_top']) && intval($_POST['oscars_leaderboard_top']) > 0) {
-        $top = intval($_POST['oscars_leaderboard_top']);
-    }
     if (!file_exists($output_path)) {
         return '<p>No leaderboard data found. Please generate it first.</p>';
     }
@@ -67,18 +29,19 @@ function oscars_predictions_leaderboard_inner($top = null) {
     $sum = 0;
     $count = 0;
     foreach ($users as $user) {
-        $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
-        if ($sort_by === 'correct-prediction-rate' && is_numeric($score)) {
+        $score = isset($user[$stat]) && $user[$stat] !== '' ? $user[$stat] : 0;
+        if ($stat === 'correct-prediction-rate' && is_numeric($score)) {
             $sum += $score;
             $count++;
-        } elseif ($sort_by === 'correct-predictions') {
+        } elseif ($stat === 'correct-predictions') {
             $sum += intval($score);
             $count++;
         }
     }
-    usort($users, function($a, $b) use ($sort_by) {
-        $a_val = isset($a[$sort_by]) && $a[$sort_by] !== '' ? $a[$sort_by] : 0;
-        $b_val = isset($b[$sort_by]) && $b[$sort_by] !== '' ? $b[$sort_by] : 0;
+    // Sort users by stat descending
+    usort($users, function($a, $b) use ($stat) {
+        $a_val = isset($a[$stat]) && $a[$stat] !== '' ? $a[$stat] : 0;
+        $b_val = isset($b[$stat]) && $b[$stat] !== '' ? $b[$stat] : 0;
         return $b_val <=> $a_val;
     });
     // Prepare user/friends logic
@@ -102,7 +65,7 @@ function oscars_predictions_leaderboard_inner($top = null) {
     $display_rank = 0;
     foreach ($users as $i => $user) {
         $rank++;
-        $score = isset($user[$sort_by]) && $user[$sort_by] !== '' ? $user[$sort_by] : 0;
+        $score = isset($user[$stat]) && $user[$stat] !== '' ? $user[$stat] : 0;
         if ($last_score !== $score) {
             $display_rank = $rank;
             $last_score = $score;
@@ -118,20 +81,31 @@ function oscars_predictions_leaderboard_inner($top = null) {
     }
     // Top X
     $top_users = $top !== null ? array_slice($ranked_users, 0, $top) : $ranked_users;
-    // Collect user/friends (if not in top X)
-    $extra_users = [];
-    $added_ids = array_column($top_users, 'user_id');
-    if ($current_user_id && isset($user_ranks[$current_user_id]) && !in_array($current_user_id, $added_ids)) {
-        $extra_users[$current_user_id] = $user_ranks[$current_user_id];
+    // Collect user and friends (if not in top X)
+    $user_and_friends_ids = [];
+    if ($current_user_id && isset($user_ranks[$current_user_id])) {
+        $user_and_friends_ids[] = $current_user_id;
     }
+    foreach ($friends as $fid) {
+        if (isset($user_ranks[$fid])) {
+            $user_and_friends_ids[] = $fid;
+        }
+    }
+    // Remove any already in top_users
+    $added_ids = array_map(function($entry) { return $entry['user']['user_id']; }, $top_users);
+    $user_and_friends_ids = array_diff($user_and_friends_ids, $added_ids);
+    // Get user/friend entries in leaderboard order
+    $user_and_friends_entries = [];
     foreach ($ranked_users as $entry) {
-        $u = $entry['user'];
-        if ($current_user_id && in_array($u['user_id'], $friends) && !in_array($u['user_id'], $added_ids) && $u['user_id'] !== $current_user_id) {
-            $extra_users[$u['user_id']] = $entry;
+        if (in_array($entry['user']['user_id'], $user_and_friends_ids)) {
+            $user_and_friends_entries[] = $entry;
         }
     }
     // Output
-    $output = '<ul class="oscars-leaderboard">';
+    $heading = $stat === 'correct-prediction-rate' ? 'Prediction Rate' : 'Correct Predictions';
+    $output = '<h2>' . esc_html($heading) . '</h2>';
+    $output .= '<h3>Top ' . $top . ' & Friends</h3>';
+    $output .= '<ul class="leaderboard">';
     $suffixes = function($n) {
         if ($n % 10 == 1 && $n % 100 != 11) return 'st';
         if ($n % 10 == 2 && $n % 100 != 12) return 'nd';
@@ -143,23 +117,25 @@ function oscars_predictions_leaderboard_inner($top = null) {
         $u = $entry['user'];
         $shown_ids[] = $u['user_id'];
         $username = esc_html($u['username']);
-        $username = (!empty($u['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'anonymous';
+        $username = (!empty($u['public']) && !empty($u['username'])) ? esc_html($u['username']) : 'Anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
-        $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($u[$sort_by]) ? (100 * $u[$sort_by]) . '%' : 'N/A') : intval($u[$sort_by]);
-        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . $display_score . '</li>';
+        $display_score = $stat === 'correct-prediction-rate' ? (is_numeric($u[$stat]) ? (round(100 * $u[$stat], 1) . '%') : 'N/A') : intval($u[$stat]);
+        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span><span class="username">' . $username . '</span><span class="stat-value">' . $display_score . '</span></li>';
     }
-    // Show current user and friends if not already shown
-    foreach ($extra_users as $uid => $entry) {
-        if (in_array($uid, $shown_ids)) continue;
+    $output .= '<li class="spacer"></li>';
+    // Show current user and friends (in order) after top X
+    foreach ($user_and_friends_entries as $entry) {
         $u = $entry['user'];
+        $shown_ids[] = $u['user_id'];
         $username = esc_html($u['username']);
+        // $username = (!empty($u['public']) && !empty($u['username'])) ? esc_html($u['username']) : 'Anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : ' class="current-users-friend"';
-        $display_score = $sort_by === 'correct-prediction-rate' ? (is_numeric($u[$sort_by]) ? (100 * $u[$sort_by]) . '%' : 'N/A') : intval($u[$sort_by]);
-        $output .= '<li' . $highlight . '>' . $entry['rank'] . $suffixes($entry['rank']) . ': ' . $username . ' - ' . $display_score . '</li>';
+        $display_score = $stat === 'correct-prediction-rate' ? (is_numeric($u[$stat]) ? (round(100 * $u[$stat], 1) . '%') : 'N/A') : intval($u[$stat]);
+        $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span><span class="username">' . $username . '</span><span class="stat-value">' . $display_score . '</span></li>';
     }
     $output .= '</ul>';
     if ($count > 0) {
-        if ($sort_by === 'correct-prediction-rate') {
+        if ($stat === 'correct-prediction-rate') {
             $avg = round(100 * $sum / $count, 1);
             $output .= '<div class="oscars-leaderboard-avg">Average: ' . $avg . '%</div>';
         } else {
