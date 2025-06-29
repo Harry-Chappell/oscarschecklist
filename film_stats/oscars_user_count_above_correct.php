@@ -12,9 +12,9 @@ function oscars_user_count_above_correct_shortcode($atts = []) {
     ob_start();
     ?>
     <div id="oscars-user-count-above-correct-wrap">
-        <span id="oscars-user-count-above-correct-result" class="large"></span>
+        <label><h3>Have more than <input type="number" id="oscars-user-count-above-correct-input" value="<?php echo esc_attr($default); ?>" min="0" style="width:60px"> correct predictions</h3></label>
         <span id="oscars-user-count-above-correct-percent" class="small"></span>
-        <label>Have more than <input type="number" id="oscars-user-count-above-correct-input" value="<?php echo esc_attr($default); ?>" min="0" style="width:60px"> correct predictions</label>
+        <span id="oscars-user-count-above-correct-result" class="large"></span>
         <canvas id="oscars-user-count-above-correct-chart" width="400" height="180" style="display:block;margin-top:1em;"></canvas>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -41,7 +41,7 @@ function oscars_user_count_above_correct_shortcode($atts = []) {
                         var main = data[0].split('|');
                         result.textContent = main[0] || '0';
                         percent.textContent = (main.length > 1 ? main[1] : '');
-                        if (data.length > 1 && !chartDataCache) {
+                        if (data.length > 1) {
                             var chartPayload = JSON.parse(data[1]);
                             chartDataCache = chartPayload.bins;
                             chartLabelsCache = chartPayload.labels;
@@ -55,31 +55,47 @@ function oscars_user_count_above_correct_shortcode($atts = []) {
         function renderChart(chartData, chartLabels) {
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(chartCanvas, {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: chartLabels,
                     datasets: [{
-                        label: '',
+                        label: 'Number of Users',
                         data: chartData,
-                        borderColor: 'rgba(199,163,78,0.5)',
-                        backgroundColor: 'rgba(199,163,78,0.1)',
-                        fill: true,
-                        pointRadius: 0,
-                        tension: 0.1
+                        backgroundColor: 'rgba(199,163,78,0.75)',
+                        // borderColor: 'rgba(199,163,78,1)',
+                        borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    },
                     scales: {
-                        x: { display: false },
-                        y: { display: false }
+                        x: {
+                            display: false,
+                            title: {
+                                display: true,
+                                text: 'Number of Correct Predictions'
+                            },
+                            grid: { display: false },
+                            ticks: { display: true }
+                        },
+                        y: {
+                            display: false,
+                            title: {
+                                display: true,
+                                text: 'Number of Users'
+                            },
+                            beginAtZero: true
+                        }
                     }
                 }
             });
         }
         input.addEventListener('input', function() {
-            // Only update the result and percent, not the chart
+            // Only update the result and percent, and update chart
             var xhr = new XMLHttpRequest();
             xhr.open('POST', window.location.href, true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -93,12 +109,18 @@ function oscars_user_count_above_correct_shortcode($atts = []) {
                         var main = data[0].split('|');
                         result.textContent = main[0] || '0';
                         percent.textContent = (main.length > 1 ? main[1] : '');
+                        if (data.length > 1) {
+                            var chartPayload = JSON.parse(data[1]);
+                            chartDataCache = chartPayload.bins;
+                            chartLabelsCache = chartPayload.labels;
+                            renderChart(chartDataCache, chartLabelsCache);
+                        }
                     }
                 }
             };
             xhr.send('oscars_user_count_above_correct=' + encodeURIComponent(input.value) + '&oscars_user_count_above_correct_ajax=1');
         });
-        // Initial load: get everything and render chart
+        // Initial load
         updateCount();
     });
     </script>

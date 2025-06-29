@@ -2293,3 +2293,9 @@ span.large + label {
     gap: 5px;
     align-items: center;
 }
+span.small + span.large {
+    margin-top: 10px !important;
+}
+span.small:has( + span.large) {
+    margin-bottom: 10px !important;
+}

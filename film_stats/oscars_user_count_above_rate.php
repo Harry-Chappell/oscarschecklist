@@ -12,9 +12,9 @@ function oscars_user_count_above_rate_shortcode($atts = []) {
     ob_start();
     ?>
     <div id="oscars-user-count-above-rate-wrap">
-        <span id="oscars-user-count-above-rate-result" class="large"></span>
+        <label><h3>Have a prediction rate above <input type="number" id="oscars-user-count-above-rate-input" value="<?php echo esc_attr($default); ?>" min="0" max="100" style="width:60px"> (%)</h3></label>
         <span id="oscars-user-count-above-rate-percent" class="small"></span>
-        <label>Have a prediction rate above <input type="number" id="oscars-user-count-above-rate-input" value="<?php echo esc_attr($default); ?>" min="0" max="100" style="width:60px"> (%)</label>
+        <span id="oscars-user-count-above-rate-result" class="large"></span>
         <canvas id="oscars-user-count-above-rate-chart" width="400" height="180" style="display:block;margin-top:1em;"></canvas>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -26,6 +26,7 @@ function oscars_user_count_above_rate_shortcode($atts = []) {
         var chartCanvas = document.getElementById('oscars-user-count-above-rate-chart');
         var chartInstance = null;
         var chartDataCache = null;
+        var chartLabelsCache = null;
         function updateCount() {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', window.location.href, true);
@@ -40,48 +41,60 @@ function oscars_user_count_above_rate_shortcode($atts = []) {
                         var main = data[0].split('|');
                         result.textContent = main[0] || '0';
                         percent.textContent = (main.length > 1 ? main[1] : '');
-                        if (data.length > 1 && !chartDataCache) {
-                            var chartData = JSON.parse(data[1]);
-                            chartDataCache = chartData;
-                            renderChart(chartDataCache);
+                        if (data.length > 1) {
+                            var chartPayload = JSON.parse(data[1]);
+                            chartDataCache = chartPayload.bins;
+                            chartLabelsCache = chartPayload.labels;
+                            renderChart(chartDataCache, chartLabelsCache);
                         }
                     }
                 }
             };
             xhr.send('oscars_user_count_above_rate=' + encodeURIComponent(input.value) + '&oscars_user_count_above_rate_ajax=1');
         }
-        function renderChart(chartData) {
-            var labels = [
-                '0-4', '5-9', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49',
-                '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80-84', '85-89', '90-94', '95-100'
-            ];
+        function renderChart(chartData, chartLabels) {
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(chartCanvas, {
-                type: 'line',
+                type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: chartLabels,
                     datasets: [{
-                        label: '',
+                        label: 'Number of Users',
                         data: chartData,
-                        borderColor: 'rgba(199,163,78,0.5)',
-                        backgroundColor: 'rgba(199,163,78,0.1)',
-                        fill: true,
-                        pointRadius: 0,
-                        tension: 0.1
+                        backgroundColor: 'rgba(199,163,78,0.75)',
+                        borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    },
                     scales: {
-                        x: { display: false },
-                        y: { display: false }
+                        x: {
+                            display: false,
+                            title: {
+                                display: true,
+                                text: 'Prediction Rate (%)'
+                            },
+                            grid: { display: false },
+                            ticks: { display: true }
+                        },
+                        y: {
+                            display: false,
+                            title: {
+                                display: true,
+                                text: 'Number of Users'
+                            },
+                            beginAtZero: true
+                        }
                     }
                 }
             });
         }
         input.addEventListener('input', function() {
-            // Only update the result and percent, not the chart
+            // Only update the result and percent, and update chart
             var xhr = new XMLHttpRequest();
             xhr.open('POST', window.location.href, true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -95,12 +108,18 @@ function oscars_user_count_above_rate_shortcode($atts = []) {
                         var main = data[0].split('|');
                         result.textContent = main[0] || '0';
                         percent.textContent = (main.length > 1 ? main[1] : '');
+                        if (data.length > 1) {
+                            var chartPayload = JSON.parse(data[1]);
+                            chartDataCache = chartPayload.bins;
+                            chartLabelsCache = chartPayload.labels;
+                            renderChart(chartDataCache, chartLabelsCache);
+                        }
                     }
                 }
             };
             xhr.send('oscars_user_count_above_rate=' + encodeURIComponent(input.value) + '&oscars_user_count_above_rate_ajax=1');
         });
-        // Initial load: get everything and render chart
+        // Initial load
         updateCount();
     });
     </script>
@@ -119,6 +138,11 @@ function oscars_user_count_above_rate_inner($default = 0) {
     if (!$users || !is_array($users)) return '0|';
     $count = 0;
     $bins = array_fill(0, 20, 0); // 20 bins for 0-4, 5-9, ..., 95-100
+    $labels = [];
+    for ($i = 0; $i < 19; $i++) {
+        $labels[] = ($i*5) . '-' . ($i*5+4) . '%';
+    }
+    $labels[] = '95-100%';
     $total = 0;
     foreach ($users as $user) {
         if (isset($user['correct-prediction-rate']) && is_numeric($user['correct-prediction-rate'])) {
@@ -134,5 +158,6 @@ function oscars_user_count_above_rate_inner($default = 0) {
         }
     }
     $percent = $total > 0 ? round(100 * $count / $total, 1) : 0;
-    return $count . '|' . ($total > 0 ? $percent . '% of users' : '') . '||' . json_encode($bins);
+    $chartPayload = json_encode([ 'bins' => $bins, 'labels' => $labels ]);
+    return $count . '|' . ($total > 0 ? $percent . '% of users' : '') . '||' . $chartPayload;
 }
