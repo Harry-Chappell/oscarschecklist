@@ -161,3 +161,70 @@ add_action('wp_ajax_oscars_active_users_barchart_ajax', function() {
     // $labels = array_reverse($labels);
     wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
 });
+add_action('wp_ajax_nopriv_oscars_active_users_barchart_ajax', function() {
+    // Duplicate the same handler for non-logged-in users
+    $interval = isset($_POST['interval']) ? strtolower($_POST['interval']) : 'day';
+    $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 7;
+    if (!in_array($interval, ['day', 'week', 'month', 'year'])) $interval = 'day';
+    if ($timeframe < 1) $timeframe = 7;
+    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
+    if (!file_exists($output_path)) {
+        wp_send_json_error('No user stats data found.');
+    }
+    $json = file_get_contents($output_path);
+    $users = json_decode($json, true);
+    if (!$users || !is_array($users)) {
+        wp_send_json_error('User stats data is invalid.');
+    }
+    $now = strtotime('today');
+    $bins = array_fill(0, $timeframe + 1, 0);
+    foreach ($users as $user) {
+        if (!empty($user['last-updated'])) {
+            $last = strtotime($user['last-updated']);
+            if ($last) {
+                switch ($interval) {
+                    case 'day':
+                        $diff = floor(($now - $last) / 86400);
+                        break;
+                    case 'week':
+                        $diff = floor(($now - $last) / (7 * 86400));
+                        break;
+                    case 'month':
+                        $now_y = (int)date('Y', $now);
+                        $now_m = (int)date('n', $now);
+                        $last_y = (int)date('Y', $last);
+                        $last_m = (int)date('n', $last);
+                        $diff = ($now_y - $last_y) * 12 + ($now_m - $last_m);
+                        break;
+                    case 'year':
+                        $diff = (int)date('Y', $now) - (int)date('Y', $last);
+                        break;
+                    default:
+                        $diff = floor(($now - $last) / 86400);
+                }
+                if ($diff >= 0 && $diff <= $timeframe) {
+                    $bins[$diff]++;
+                }
+            }
+        }
+    }
+    $labels = [];
+    for ($i = $timeframe; $i >= 0; $i--) {
+        switch ($interval) {
+            case 'day':
+                $labels[] = $i . 'd ago';
+                break;
+            case 'week':
+                $labels[] = $i . 'w ago';
+                break;
+            case 'month':
+                $labels[] = $i . 'mo ago';
+                break;
+            case 'year':
+                $labels[] = $i . 'y ago';
+                break;
+        }
+    }
+    $bins = array_reverse($bins);
+    wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
+});
