@@ -22,13 +22,13 @@ function oscars_watched_films_list_shortcode($atts = []) {
     if (isset($_POST['oscars_watched_films_year']) && is_numeric($_POST['oscars_watched_films_year'])) {
         $selected_year = intval($_POST['oscars_watched_films_year']);
     }
-    $label = $has_exact_year ? 'from' : 'from 1927 to';
+    $label = $has_exact_year ? 'from' : 'from 1929 to';
     $uid = uniqid('oscars_watched_films_');
     // Allow AJAX to pass the UID so the response div matches the JS selector
     if (isset($_POST['oscars_watched_films_uid']) && preg_match('/^oscars_watched_films_[a-zA-Z0-9]+$/', $_POST['oscars_watched_films_uid'])) {
         $uid = $_POST['oscars_watched_films_uid'];
     }
-    $start_year = 1927;
+    $start_year = 1929;
     if (isset($_POST['oscars_watched_films_start_year']) && is_numeric($_POST['oscars_watched_films_start_year'])) {
         $start_year = intval($_POST['oscars_watched_films_start_year']);
     }
@@ -39,11 +39,11 @@ function oscars_watched_films_list_shortcode($atts = []) {
     <div id="<?php echo $uid; ?>-filter-wrap">
         <label><h3>
         <?php if (!$has_exact_year): ?>
-            from <input type="number" id="<?php echo $uid; ?>-start-year-input" value="<?php echo esc_attr($start_year); ?>" min="1927" max="<?php echo esc_attr($selected_year); ?>" style="width:80px"> to 
+            from <input type="number" id="<?php echo $uid; ?>-start-year-input" value="<?php echo esc_attr($start_year); ?>" min="1929" max="<?php echo esc_attr($selected_year); ?>" style="width:80px"> to 
         <?php else: ?>
             from
         <?php endif; ?>
-        <input type="number" id="<?php echo $uid; ?>-year-input" value="<?php echo esc_attr($selected_year); ?>" min="1927" max="<?php echo esc_attr(date('Y')); ?>" style="width:80px">
+        <input type="number" id="<?php echo $uid; ?>-year-input" value="<?php echo esc_attr($selected_year); ?>" min="1929" max="<?php echo esc_attr(date('Y')); ?>" style="width:80px">
         </h3></label>
     </div>
     <div id="<?php echo $uid; ?>-list-wrap"><?php echo oscars_watched_films_list_inner($top, $selected_year, $has_exact_year, $uid, $start_year); ?></div>
@@ -87,7 +87,7 @@ function oscars_watched_films_list_shortcode($atts = []) {
 }
 add_shortcode('watched_films', 'oscars_watched_films_list_shortcode');
 
-function oscars_watched_films_list_inner($top = 10, $year = null, $exact = false, $uid = null, $start_year = 1927) {
+function oscars_watched_films_list_inner($top = 10, $year = null, $exact = false, $uid = null, $start_year = 1929) {
     $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
     if (isset($_POST['oscars_watched_films_top']) && is_numeric($_POST['oscars_watched_films_top'])) {
         $top = intval($_POST['oscars_watched_films_top']);
@@ -114,7 +114,7 @@ function oscars_watched_films_list_inner($top = 10, $year = null, $exact = false
         $year = date('Y');
     }
     if (!$start_year) {
-        $start_year = 1927;
+        $start_year = 1929;
     }
     $json = file_get_contents($output_path);
     $films = json_decode($json, true);

@@ -19,3 +19,4 @@ require_once get_stylesheet_directory() . '/film_stats/oscars_log_user_activity.
 require_once get_stylesheet_directory() . '/film_stats/oscars_user_stats.php';
 require_once get_stylesheet_directory() . '/film_stats/oscars_user_watched_chart.php';
 require_once get_stylesheet_directory() . '/film_stats/oscars_user_watched_by_decade.php';
+require_once get_stylesheet_directory() . '/film_stats/watches_per_year_shortcode.php';

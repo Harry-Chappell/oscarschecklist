@@ -84,13 +84,6 @@ li.watched > .buttons-cntr {
 }
 
 ul.nominations-list button {
-	/* position: absolute; */
-	/* inset: auto auto 0 50%; */
-	/* translate: -50% 50%; */
-    /* z-index: 2; */
-}
-
-ul.nominations-list button {
 	/* padding: 3px 15px 0 35px; */
 	/* border-radius: 50px; */
 	/* height: 30px; */
@@ -151,10 +144,6 @@ ul.nominations-list button.mark-as-unfav-button svg path {
 ul.nominations-list > li.watched .mark-as-unwatched-button {
 	border-color: var(--theme-palette-color-9);
 	background: var(--theme-palette-color-10);
-}
-
-ul.nominations-list > li.watched .mark-as-unwatched-button svg  {
-	/* background: var(--theme-palette-color-10); */
 }
 
 ul.nominations-list > li.watched .mark-as-unwatched-button svg path {
@@ -316,15 +305,9 @@ width: calc((100% - (5px * 1)) / 2);
 	ul.nominations-list > li {
 		padding: 5px 5px 50px;
 	}
-    ul.nominations-list÷ button svg {
-
-    }
 	ul.nominations-list .nominee-photo {
         width: calc((100% - 5px) / 2);
 	}
-    ul.nominations-list button svg {
-        /* height: 24px; */
-    }
 }
 
 
@@ -1389,11 +1372,6 @@ body:has(* li.winner) aside#sidebar > * > div:first-child button.toggle-predicte
     ul.nominations-list a:hover {
         text-decoration: underline;
         text-decoration-color: var(--theme-palette-color-4);
-    }
-
-    ul.nominations-list button:hover svg {
-        /* background-color: var(--theme-palette-color-5); */
-        /* border: 1px solid var(--theme-palette-color-6); */
     }
 
     ul.nominations-list button:hover svg path,
