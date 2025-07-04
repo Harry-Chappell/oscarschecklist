@@ -68,7 +68,7 @@ function oscars_watches_per_year_shortcode() {
         <label>From <input type="number" name="watches_per_year_start" id="<?php echo $uid; ?>-start" value="<?php echo esc_attr($selected_start_year); ?>" min="<?php echo $default_start_year; ?>" max="<?php echo $default_end_year; ?>" style="width:80px"></label>
         <label>to <input type="number" name="watches_per_year_end" id="<?php echo $uid; ?>-end" value="<?php echo esc_attr($selected_end_year); ?>" min="<?php echo $default_start_year; ?>" max="<?php echo $default_end_year; ?>" style="width:80px"></label>
     </form>
-    <div style="max-width:100%; max-height:600px; overflow:auto;"><canvas id="<?php echo $uid; ?>" style="max-height:600px;width:100%;height:400px;"></canvas></div>
+    <div style="max-width:100%; max-height:400px; overflow:auto;"><canvas id="<?php echo $uid; ?>" style="max-height:400px;width:100%;height:400px;"></canvas></div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
     window.addEventListener('DOMContentLoaded', function() {
@@ -118,8 +118,8 @@ function oscars_watches_per_year_shortcode() {
             var minText = (minmax.minYears.length && minmax.min !== minmax.max) ? (minmax.minYears.join(', ') + ' (' + minmax.min + ' watches)') : 'N/A';
             var maxText = (minmax.maxYears.length && minmax.max !== 0) ? (minmax.maxYears.join(', ') + ' (' + minmax.max + ' watches)') : 'N/A';
             document.getElementById(uid + '-minmax').innerHTML =
-                '<strong>Most watched year(s):</strong> ' + maxText + '<br>' +
-                '<strong>Least watched year(s):</strong> ' + minText;
+                '<strong>Most watched year:</strong> ' + maxText + '<br>' +
+                '<strong>Least watched year:</strong> ' + minText;
         }
         chart = new Chart(ctx, {
             type: "bar",

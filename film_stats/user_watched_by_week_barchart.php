@@ -10,17 +10,18 @@ function oscars_user_watched_by_week_barchart_shortcode() {
     }
     ob_start();
     ?>
+    <h2>You and Your Friends' Films Watched</h2>
     <div id="oscars-user-watched-by-interval-controls" style="margin-bottom:1em">
         <label>Interval:
             <select id="oscars-user-watched-interval">
-                <option value="day">Day</option>
-                <option value="week" selected>Week</option>
+                <option value="day" selected>Day</option>
+                <option value="week">Week</option>
                 <option value="month">Month</option>
                 <option value="year">Year</option>
             </select>
         </label>
         <label style="margin-left:1em;">Timeframe:
-            <input type="number" id="oscars-user-watched-timeframe" value="52" min="1" max="365" style="width:60px">
+            <input type="number" id="oscars-user-watched-timeframe" value="<?php echo max(1, floor((strtotime('today')-strtotime(date('Y') . '-06-16'))/86400)); ?>" min="1" max="365" style="width:60px">
         </label>
     </div>
     <canvas id="oscars-user-watched-by-interval-barchart" width="1000" height="300"></canvas>
@@ -43,25 +44,56 @@ function oscars_user_watched_by_week_barchart_shortcode() {
             })
             .then(response => response.json())
             .then(json => {
+                console.log('AJAX response:', json);
                 if (json.success) {
                     if (chart) chart.destroy();
+                    // Prepare datasets: current user and friends
+                    var datasets = [];
+                    if (json.data.friends && Array.isArray(json.data.friends)) {
+                        console.log('Friends data:', json.data.friends);
+                        var friendColors = [
+                            '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab'
+                        ];
+                        json.data.friends.forEach(function(friend, idx) {
+                            datasets.push({
+                                label: friend.display_name || 'Friend ' + (idx+1),
+                                data: friend.bins,
+                                fill: true,
+                                backgroundColor: friendColors[idx % friendColors.length] + '22', // 13% opacity
+                                borderColor: friendColors[idx % friendColors.length],
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                tension: 0.3
+                            });
+                        });
+                    } else {
+                        console.log('No friends data found in AJAX response.');
+                    }
+                    // Current user on top
+                    datasets.push({
+                        label: 'You',
+                        data: json.data.bins,
+                        fill: true,
+                        backgroundColor: 'rgba(199, 163, 79, 0.3)',
+                        borderColor: '#c7a34f',
+                        borderWidth: 3,
+                        pointRadius: 2,
+                        tension: 0.3
+                    });
                     chart = new Chart(ctx, {
-                        type: 'bar',
+                        type: 'line',
                         data: {
                             labels: json.data.labels,
-                            datasets: [{
-                                label: 'Films watched',
-                                data: json.data.bins,
-                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 1
-                            }]
+                            datasets: datasets
                         },
                         options: {
                             responsive: true,
                             plugins: {
-                                legend: { display: false },
-                                title: { display: true, text: 'Your Films Watched by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
+                                legend: { display: true },
+                                // title: { display: true, text: 'Your Films Watched by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
+                            },
+                            elements: {
+                                line: { borderJoinStyle: 'round' }
                             },
                             scales: {
                                 x: { title: { display: true, text: interval.charAt(0).toUpperCase() + interval.slice(1) + 's Ago' }, ticks: { maxTicksLimit: 13 } },
@@ -69,6 +101,8 @@ function oscars_user_watched_by_week_barchart_shortcode() {
                             }
                         }
                     });
+                } else {
+                    console.log('AJAX error:', json);
                 }
             });
         }
@@ -151,6 +185,59 @@ add_action('wp_ajax_oscars_user_watched_by_interval_barchart_ajax', function() {
         }
     }
     $bins = array_reverse($bins);
-    // $labels = array_reverse($labels);
-    wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
+    // --- BuddyPress friends ---
+    $friends_data = [];
+    if (function_exists('friends_get_friend_user_ids')) {
+        $friend_ids = friends_get_friend_user_ids($user_id);
+        foreach ($friend_ids as $fid) {
+            $fpath = wp_upload_dir()['basedir'] . "/user_meta/user_{$fid}.json";
+            if (!file_exists($fpath)) {
+                continue;
+            }
+            $fjson = file_get_contents($fpath);
+            $fdata = json_decode($fjson, true);
+            if (!$fdata || empty($fdata['watched']) || !is_array($fdata['watched'])) {
+                continue;
+            }
+            $fbins = array_fill(0, $timeframe + 1, 0);
+            foreach ($fdata['watched'] as $film) {
+                if (!empty($film['watched-date'])) {
+                    $watched = strtotime($film['watched-date']);
+                    if ($watched) {
+                        switch ($interval) {
+                            case 'day':
+                                $diff = floor(($now - $watched) / 86400);
+                                break;
+                            case 'week':
+                                $diff = floor(($now - $watched) / (7 * 86400));
+                                break;
+                            case 'month':
+                                $now_y = (int)date('Y', $now);
+                                $now_m = (int)date('n', $now);
+                                $watched_y = (int)date('Y', $watched);
+                                $watched_m = (int)date('n', $watched);
+                                $diff = ($now_y - $watched_y) * 12 + ($now_m - $watched_m);
+                                break;
+                            case 'year':
+                                $diff = (int)date('Y', $now) - (int)date('Y', $watched);
+                                break;
+                            default:
+                                $diff = floor(($now - $watched) / (7 * 86400));
+                        }
+                        if ($diff >= 0 && $diff <= $timeframe) {
+                            $fbins[$diff]++;
+                        }
+                    }
+                }
+            }
+            $friend_user = get_userdata($fid);
+            $display_name = $friend_user ? $friend_user->user_login : '';
+            $friends_data[] = [
+                'id' => $fid,
+                'display_name' => $display_name,
+                'bins' => array_reverse($fbins)
+            ];
+        }
+    }
+    wp_send_json_success(['labels' => $labels, 'bins' => $bins, 'friends' => $friends_data]);
 });
