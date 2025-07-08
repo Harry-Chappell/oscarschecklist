@@ -52,7 +52,6 @@ function oscars_films_with_n_watches_per_year_shortcode($atts = array()) {
                 $film_year = intval($film['film-year']);
                 $watched_count = intval($film['watched-count']);
                 if ($film_year >= $start_year && $film_year <= $end_year && $watched_count === $selected_n) {
-                    // Use 'film-name' as title if available, fallback to 'film-title', 'title', or 'Untitled'
                     $title = isset($film['film-name']) ? $film['film-name'] : (isset($film['film-title']) ? $film['film-title'] : (isset($film['title']) ? $film['title'] : 'Untitled'));
                     $url = isset($film['film-url']) ? $film['film-url'] : (isset($film['url']) ? $film['url'] : '#');
                     $films_list_per_year[$film_year][] = array(
@@ -62,6 +61,15 @@ function oscars_films_with_n_watches_per_year_shortcode($atts = array()) {
                 }
             }
         }
+        // Group by decade after populating per-year
+        $films_list_per_decade = array();
+        foreach ($films_list_per_year as $year => $films_in_year) {
+            if (count($films_in_year) === 0) continue;
+            $decade = floor($year / 10) * 10;
+            if (!isset($films_list_per_decade[$decade])) $films_list_per_decade[$decade] = array();
+            $films_list_per_decade[$decade][$year] = $films_in_year;
+        }
+        krsort($films_list_per_decade); // Most recent decade first
     }
     $uid = uniqid('films_with_n_watches_');
     ob_start();
@@ -75,20 +83,36 @@ function oscars_films_with_n_watches_per_year_shortcode($atts = array()) {
     <details style="margin-top:1em;">
         <summary>Show films with exactly <?php echo esc_html($selected_n); ?> watches per year</summary>
         <div id="<?php echo $uid; ?>-films-list">
-        <?php foreach ($films_list_per_year as $year => $films_in_year):
-            if (count($films_in_year) === 0) continue;
-            // Sort films alphabetically by title
-            usort($films_in_year, function($a, $b) {
-                return strcasecmp($a['title'], $b['title']);
-            });
-        ?>
-            <li><strong><?php echo $year; ?></strong> (<?php echo count($films_in_year); ?>): <ul>
-                <?php foreach ($films_in_year as $film): ?>
-                    <li><a href="<?php echo esc_url($film['url']); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($film['title']); ?></a></li>
-                <?php endforeach; ?>
-            </ul></li>
-        <?php endforeach; ?>
-        <?php if (empty(array_filter($films_list_per_year))): ?>
+        <?php if (!empty($films_list_per_decade)): ?>
+            <?php foreach ($films_list_per_decade as $decade => $years):
+                $decade_count = 0;
+                foreach ($years as $films_in_year) { $decade_count += count($films_in_year); }
+                krsort($years); // Most recent year first
+            ?>
+                <details>
+                    <summary><strong><?php echo $decade; ?>s</strong> (<?php echo $decade_count; ?>)</summary>
+                    <ul>
+                    <?php
+                    // Always render a <ul> for every year in the decade, even if empty
+                    $decade_years = range($decade + 9, $decade, -1); // Most recent year first
+                    foreach ($decade_years as $year):
+                        $films_in_year = isset($years[$year]) ? $years[$year] : array();
+                        usort($films_in_year, function($a, $b) { return strcasecmp($a['title'], $b['title']); });
+                    ?>
+                        <li><strong><?php echo $year; ?></strong> (<?php echo count($films_in_year); ?>):
+                            <ul>
+                            <?php if (!empty($films_in_year)): ?>
+                                <?php foreach ($films_in_year as $film): ?>
+                                    <li><a href="<?php echo esc_url($film['url']); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($film['title']); ?></a></li>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            </ul>
+                        </li>
+                    <?php endforeach; ?>
+                    </ul>
+                </details>
+            <?php endforeach; ?>
+        <?php else: ?>
             <p>No films found for this criteria.</p>
         <?php endif; ?>
         </div>
