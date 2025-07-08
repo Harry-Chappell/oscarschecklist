@@ -75,10 +75,10 @@ function oscars_films_with_n_watches_per_year_shortcode($atts = array()) {
     ob_start();
     ?>
     <h2>Films Per Year with Exactly <span id="<?php echo $uid; ?>-n-label"><?php echo esc_html($selected_n); ?></span> Watches</h2>
+    <div style="max-width:100%; max-height:300px; overflow:auto;"><canvas id="<?php echo $uid; ?>" style="max-height:300px;width:100%;height:300px;"></canvas></div>
     <form id="<?php echo $uid; ?>-form" style="margin-bottom:1em;" onsubmit="return false;">
         <label>Films that have been watched <input type="number" name="films_with_n_watches_n" id="<?php echo $uid; ?>-n" value="<?php echo esc_attr($selected_n); ?>" min="0" style="width:80px"> times: <span id="<?php echo $uid; ?>-total-label"></span> (out of <?php echo count($films); ?> films)</label>
     </form>
-    <div style="max-width:100%; max-height:400px; overflow:auto;"><canvas id="<?php echo $uid; ?>" style="max-height:400px;width:100%;height:400px;"></canvas></div>
     <?php if ($show_films): ?>
     <?php
         // Get all decades from 1920s to current decade
