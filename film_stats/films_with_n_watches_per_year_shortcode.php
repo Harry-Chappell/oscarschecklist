@@ -80,43 +80,71 @@ function oscars_films_with_n_watches_per_year_shortcode($atts = array()) {
     </form>
     <div style="max-width:100%; max-height:400px; overflow:auto;"><canvas id="<?php echo $uid; ?>" style="max-height:400px;width:100%;height:400px;"></canvas></div>
     <?php if ($show_films): ?>
-    <details style="margin-top:1em;">
-        <summary>Show films with exactly <?php echo esc_html($selected_n); ?> watches per year</summary>
-        <div id="<?php echo $uid; ?>-films-list">
-        <?php if (!empty($films_list_per_decade)): ?>
-            <?php foreach ($films_list_per_decade as $decade => $years):
+    <?php
+        // Get all decades from 1920s to current decade
+        $first_decade = 1920;
+        $last_decade = floor($end_year / 10) * 10;
+        $all_decades = range($last_decade, $first_decade, -10); // Most recent first
+    ?>
+    <div id="<?php echo $uid; ?>-decade-tabs" class="decade-tabs" style="margin-top:1em;">
+        <div class="tab-buttons">
+            <?php foreach (
+                $all_decades as $i => $decade):
+                $years = isset($films_list_per_decade[$decade]) ? $films_list_per_decade[$decade] : array();
                 $decade_count = 0;
                 foreach ($years as $films_in_year) { $decade_count += count($films_in_year); }
-                krsort($years); // Most recent year first
             ?>
-                <details>
-                    <summary><strong><?php echo $decade; ?>s</strong> (<?php echo $decade_count; ?>)</summary>
-                    <ul>
-                    <?php
-                    // Always render a <ul> for every year in the decade, even if empty
-                    $decade_years = range($decade + 9, $decade, -1); // Most recent year first
-                    foreach ($decade_years as $year):
-                        $films_in_year = isset($years[$year]) ? $years[$year] : array();
-                        usort($films_in_year, function($a, $b) { return strcasecmp($a['title'], $b['title']); });
-                    ?>
-                        <li><strong><?php echo $year; ?></strong> (<?php echo count($films_in_year); ?>):
-                            <ul>
-                            <?php if (!empty($films_in_year)): ?>
-                                <?php foreach ($films_in_year as $film): ?>
-                                    <li><a href="<?php echo esc_url($film['url']); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($film['title']); ?></a></li>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                            </ul>
-                        </li>
-                    <?php endforeach; ?>
-                    </ul>
-                </details>
+                <button type="button" class="tab-btn" data-tab="<?php echo $uid . '-tab-' . $decade; ?>"><?php echo $decade; ?>s (<?php echo $decade_count; ?>)</button>
             <?php endforeach; ?>
-        <?php else: ?>
-            <p>No films found for this criteria.</p>
-        <?php endif; ?>
         </div>
-    </details>
+        <div class="tab-contents">
+            <?php foreach ($all_decades as $i => $decade):
+                $years = isset($films_list_per_decade[$decade]) ? $films_list_per_decade[$decade] : array();
+                $decade_years = range($decade + 9, $decade, -1); // Most recent year first
+            ?>
+            <div class="tab-content" id="<?php echo $uid . '-tab-' . $decade; ?>">
+                <ul>
+                <?php foreach ($decade_years as $year):
+                    $films_in_year = isset($years[$year]) ? $years[$year] : array();
+                    usort($films_in_year, function($a, $b) { return strcasecmp($a['title'], $b['title']); });
+                ?>
+                    <li><strong><?php echo $year; ?></strong> (<?php echo count($films_in_year); ?>):
+                        <ul>
+                        <?php foreach ($films_in_year as $film): ?>
+                            <li><a href="<?php echo esc_url($film['url']); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($film['title']); ?></a></li>
+                        <?php endforeach; ?>
+                        </ul>
+                    </li>
+                <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <script type="text/javascript">
+    (function(){
+        var tabContainer = document.getElementById('<?php echo $uid; ?>-decade-tabs');
+        if (!tabContainer) return;
+        var btns = tabContainer.querySelectorAll('.tab-btn');
+        var tabs = tabContainer.querySelectorAll('.tab-content');
+        btns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var tabId = btn.getAttribute('data-tab');
+                var tab = document.getElementById(tabId);
+                var isActive = btn.classList.contains('active');
+                // Close all tabs
+                btns.forEach(function(b) { b.classList.remove('active'); });
+                tabs.forEach(function(t) { t.classList.remove('active'); });
+                // If not already active, open it
+                if (!isActive) {
+                    btn.classList.add('active');
+                    if (tab) tab.classList.add('active');
+                }
+                // If already active, leave all closed
+            });
+        });
+    })();
+    </script>
     <?php endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
@@ -186,11 +214,35 @@ function oscars_films_with_n_watches_per_year_shortcode($atts = array()) {
                     var newCounts = JSON.parse(scriptTag.textContent);
                     updateChart(newCounts);
                 }
-                // Update films list if present
-                var newFilmsList = temp.querySelector('details > div[id$="-films-list"]');
-                var filmsList = document.getElementById(uid + '-films-list');
-                if (newFilmsList && filmsList) {
-                    filmsList.innerHTML = newFilmsList.innerHTML;
+                // Update films tab container if present
+                var newTabs = temp.querySelector('div[id$="-decade-tabs"]');
+                var oldTabs = document.getElementById(uid + '-decade-tabs');
+                if (newTabs && oldTabs) {
+                    // Get new UID from the newTabs id
+                    var newUid = newTabs.id.replace(/-decade-tabs$/, '');
+                    oldTabs.parentNode.replaceChild(newTabs, oldTabs);
+                    // Update uid variable for future updates
+                    uid = newUid;
+                    // Re-initialize tab JS for the new tab container
+                    (function(){
+                        var tabContainer = document.getElementById(uid + '-decade-tabs');
+                        if (!tabContainer) return;
+                        var btns = tabContainer.querySelectorAll('.tab-btn');
+                        var tabs = tabContainer.querySelectorAll('.tab-content');
+                        btns.forEach(function(btn) {
+                            btn.addEventListener('click', function() {
+                                var tabId = btn.getAttribute('data-tab');
+                                var tab = document.getElementById(tabId);
+                                var isActive = btn.classList.contains('active');
+                                btns.forEach(function(b) { b.classList.remove('active'); });
+                                tabs.forEach(function(t) { t.classList.remove('active'); });
+                                if (!isActive) {
+                                    btn.classList.add('active');
+                                    if (tab) tab.classList.add('active');
+                                }
+                            });
+                        });
+                    })();
                 }
             });
         });
