@@ -21,7 +21,7 @@ function oscars_publicise_data_checkbox_shortcode() {
         <input type="hidden" name="oscars_publicise_data_form_user" value="<?php echo esc_attr($user_id); ?>">
         <label>
             <input type="checkbox" name="oscars_publicise_data" value="1" <?php echo $checked; ?> onchange="oscarsTogglePublicise(this)">
-            Publish my username in leaderboards
+            Publish my username.
         </label>
         <span id="oscars-publicise-status" style="margin-left:10px;color:green;display:none;">Saved!</span>
     </form>

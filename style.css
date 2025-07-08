@@ -2334,3 +2334,6 @@ span.small:has( + span.large) {
     padding: 3px 3px 1px;
     border-radius: 3px;
 }
+form#oscars-publicise-form input {
+    width: 20px !important;
+}

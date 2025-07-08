@@ -20,13 +20,13 @@ function oscars_user_stats_shortcode($atts) {
             $value = intval($data['total-watched'] ?? 0);
             break;
         case 'correct-predictions':
-            $value = intval($data['correct-predictions'] ?? 0);
+            $value = intval($data['correct-predictions'] ?? 0) . '/' . count($data['predictions'] ?? []);
             break;
         case 'predictions':
             $value = count($data['predictions'] ?? []);
             break;
         case 'correct-prediction-rate':
-            $value = isset($data['correct-prediction-rate']) ? round($data['correct-prediction-rate'] * 100, 2) : 0;
+            $value = isset($data['correct-prediction-rate']) ? round($data['correct-prediction-rate'] * 100, 2) . '%' : 0;
             break;
         default:
             $value = isset($data[$a['field']]) ? esc_html($data[$a['field']]) : 0;

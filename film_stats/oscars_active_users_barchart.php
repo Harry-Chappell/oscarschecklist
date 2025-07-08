@@ -29,7 +29,7 @@ function oscars_active_users_barchart_shortcode($atts = []) {
                 <option value="week"<?php if($interval==='week') echo ' selected'; ?>>Weeks</option>
                 <option value="month"<?php if($interval==='month') echo ' selected'; ?>>Months</option>
                 <option value="year"<?php if($interval==='year') echo ' selected'; ?>>Years</option>
-            </select>.
+            </select>
         </h2>
     </div>
     <div style="width:100%;">
