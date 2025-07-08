@@ -3,7 +3,12 @@
  * Shortcode to output the number of films per year with exactly N watches (default N=0).
  * Usage: [films_with_n_watches_per_year]
  */
-function oscars_films_with_n_watches_per_year_shortcode() {
+function oscars_films_with_n_watches_per_year_shortcode($atts = array()) {
+    $atts = shortcode_atts([
+        'showfilms' => 'false',
+    ], $atts, 'films_with_n_watches_per_year');
+    $show_films = ($atts['showfilms'] === 'true');
+
     $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
     if (!file_exists($output_path)) {
         return '<p>Stats file not found.</p>';
@@ -36,14 +41,59 @@ function oscars_films_with_n_watches_per_year_shortcode() {
             }
         }
     }
+    // Collect films per year if needed
+    $films_list_per_year = array();
+    if ($show_films) {
+        for ($year = $start_year; $year <= $end_year; $year++) {
+            $films_list_per_year[$year] = array();
+        }
+        foreach ($films as $film) {
+            if (isset($film['film-year']) && isset($film['watched-count'])) {
+                $film_year = intval($film['film-year']);
+                $watched_count = intval($film['watched-count']);
+                if ($film_year >= $start_year && $film_year <= $end_year && $watched_count === $selected_n) {
+                    // Use 'film-name' as title if available, fallback to 'film-title', 'title', or 'Untitled'
+                    $title = isset($film['film-name']) ? $film['film-name'] : (isset($film['film-title']) ? $film['film-title'] : (isset($film['title']) ? $film['title'] : 'Untitled'));
+                    $url = isset($film['film-url']) ? $film['film-url'] : (isset($film['url']) ? $film['url'] : '#');
+                    $films_list_per_year[$film_year][] = array(
+                        'title' => $title,
+                        'url' => $url
+                    );
+                }
+            }
+        }
+    }
     $uid = uniqid('films_with_n_watches_');
     ob_start();
     ?>
     <h2>Films Per Year with Exactly <span id="<?php echo $uid; ?>-n-label"><?php echo esc_html($selected_n); ?></span> Watches</h2>
     <form id="<?php echo $uid; ?>-form" style="margin-bottom:1em;" onsubmit="return false;">
-        <label>Films that have been watched <input type="number" name="films_with_n_watches_n" id="<?php echo $uid; ?>-n" value="<?php echo esc_attr($selected_n); ?>" min="0" style="width:80px"> times: <span id="<?php echo $uid; ?>-total-label"></span></label>
+        <label>Films that have been watched <input type="number" name="films_with_n_watches_n" id="<?php echo $uid; ?>-n" value="<?php echo esc_attr($selected_n); ?>" min="0" style="width:80px"> times: <span id="<?php echo $uid; ?>-total-label"></span> (out of <?php echo count($films); ?> films)</label>
     </form>
     <div style="max-width:100%; max-height:400px; overflow:auto;"><canvas id="<?php echo $uid; ?>" style="max-height:400px;width:100%;height:400px;"></canvas></div>
+    <?php if ($show_films): ?>
+    <details style="margin-top:1em;">
+        <summary>Show films with exactly <?php echo esc_html($selected_n); ?> watches per year</summary>
+        <div id="<?php echo $uid; ?>-films-list">
+        <?php foreach ($films_list_per_year as $year => $films_in_year):
+            if (count($films_in_year) === 0) continue;
+            // Sort films alphabetically by title
+            usort($films_in_year, function($a, $b) {
+                return strcasecmp($a['title'], $b['title']);
+            });
+        ?>
+            <li><strong><?php echo $year; ?></strong> (<?php echo count($films_in_year); ?>): <ul>
+                <?php foreach ($films_in_year as $film): ?>
+                    <li><a href="<?php echo esc_url($film['url']); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($film['title']); ?></a></li>
+                <?php endforeach; ?>
+            </ul></li>
+        <?php endforeach; ?>
+        <?php if (empty(array_filter($films_list_per_year))): ?>
+            <p>No films found for this criteria.</p>
+        <?php endif; ?>
+        </div>
+    </details>
+    <?php endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
     window.addEventListener('DOMContentLoaded', function() {
@@ -96,10 +146,10 @@ function oscars_films_with_n_watches_per_year_shortcode() {
             var n = parseInt(nInput.value);
             if (isNaN(n) || n < 0) return;
             nLabel.textContent = n;
-            // AJAX to reload just the chart data, like watches_per_year_shortcode.php
             var formData = new FormData();
             formData.append('films_with_n_watches_n', n);
-            fetch(window.location.pathname, {
+            formData.append('showfilms', <?php echo $show_films ? '"true"' : '"false"'; ?>);
+            fetch(window.location.pathname + window.location.search, {
                 method: 'POST',
                 body: formData
             })
@@ -111,6 +161,12 @@ function oscars_films_with_n_watches_per_year_shortcode() {
                 if (scriptTag) {
                     var newCounts = JSON.parse(scriptTag.textContent);
                     updateChart(newCounts);
+                }
+                // Update films list if present
+                var newFilmsList = temp.querySelector('details > div[id$="-films-list"]');
+                var filmsList = document.getElementById(uid + '-films-list');
+                if (newFilmsList && filmsList) {
+                    filmsList.innerHTML = newFilmsList.innerHTML;
                 }
             });
         });
