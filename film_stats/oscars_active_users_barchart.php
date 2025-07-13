@@ -11,6 +11,8 @@ function oscars_active_users_barchart_shortcode($atts = []) {
         'timeframe' => 7,
         'interval' => 'day'
     ], $atts);
+    // Generate a unique ID for this instance
+    $uid = uniqid('oscars-active-users-barchart-');
     // Calculate default timeframe as days between June 16, 2025 and today
     $today = new DateTime();
     $start = new DateTime('2025-06-16');
@@ -20,11 +22,11 @@ function oscars_active_users_barchart_shortcode($atts = []) {
     $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
     ob_start();
     ?>
-    <div id="oscars-active-users-barchart-controls" style="margin-bottom:1em">
+    <div id="<?php echo $uid; ?>-controls" class="oscars-active-users-barchart-controls" style="margin-bottom:1em">
         <h2>
             Users who were most recently active in the last
-            <input type="number" id="oscars-active-users-timeframe" value="<?php echo esc_attr($timeframe); ?>" min="1" max="365" style="width:60px">
-            <select id="oscars-active-users-interval">
+            <input type="number" id="<?php echo $uid; ?>-timeframe" value="<?php echo esc_attr($timeframe); ?>" min="1" max="365" style="width:60px">
+            <select id="<?php echo $uid; ?>-interval">
                 <option value="day"<?php if($interval==='day') echo ' selected'; ?>>Days</option>
                 <option value="week"<?php if($interval==='week') echo ' selected'; ?>>Weeks</option>
                 <option value="month"<?php if($interval==='month') echo ' selected'; ?>>Months</option>
@@ -33,59 +35,62 @@ function oscars_active_users_barchart_shortcode($atts = []) {
         </h2>
     </div>
     <div style="width:100%;">
-        <canvas id="oscars-active-users-barchart" style="display:block;max-height:400px;height:400px;"></canvas>
+        <canvas id="<?php echo $uid; ?>" style="display:block;max-height:400px;height:400px;"></canvas>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('oscars-active-users-barchart').getContext('2d');
-        var chart = null;
-        function fetchAndRenderChart() {
-            var interval = document.getElementById('oscars-active-users-interval').value;
-            var timeframe = document.getElementById('oscars-active-users-timeframe').value;
-            var data = new FormData();
-            data.append('action', 'oscars_active_users_barchart_ajax');
-            data.append('interval', interval);
-            data.append('timeframe', timeframe);
-            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                method: 'POST',
-                credentials: 'same-origin',
-                body: data
-            })
-            .then(response => response.json())
-            .then(json => {
-                if (json.success) {
-                    if (chart) chart.destroy();
-                    chart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: json.data.labels,
-                            datasets: [{
-                                label: 'Users last active',
-                                data: json.data.bins,
-                                backgroundColor: '#c7a34f',
-                                borderColor: '#987e40',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { display: false },
-                                title: { display: false, text: 'User Last Active by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
+        (function() {
+            var uid = <?php echo json_encode($uid); ?>;
+            var ctx = document.getElementById(uid).getContext('2d');
+            var chart = null;
+            function fetchAndRenderChart() {
+                var interval = document.getElementById(uid+'-interval').value;
+                var timeframe = document.getElementById(uid+'-timeframe').value;
+                var data = new FormData();
+                data.append('action', 'oscars_active_users_barchart_ajax');
+                data.append('interval', interval);
+                data.append('timeframe', timeframe);
+                fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: data
+                })
+                .then(response => response.json())
+                .then(json => {
+                    if (json.success) {
+                        if (chart) chart.destroy();
+                        chart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: json.data.labels,
+                                datasets: [{
+                                    label: 'Users last active',
+                                    data: json.data.bins,
+                                    backgroundColor: '#c7a34f',
+                                    borderColor: '#987e40',
+                                    borderWidth: 1
+                                }]
                             },
-                            scales: {
-                                x: { display: false, title: { display: false, text: interval.charAt(0).toUpperCase() + interval.slice(1) + 's Ago' }, ticks: { maxTicksLimit: 13 } },
-                                y: { display: false, beginAtZero: true, title: { display: false, text: 'Number of Users' } }
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { display: false },
+                                    title: { display: false, text: 'User Last Active by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
+                                },
+                                scales: {
+                                    x: { display: false, title: { display: false, text: interval.charAt(0).toUpperCase() + interval.slice(1) + 's Ago' }, ticks: { maxTicksLimit: 13 } },
+                                    y: { display: false, beginAtZero: true, title: { display: false, text: 'Number of Users' } }
+                                }
                             }
-                        }
-                    });
-                }
-            });
-        }
-        document.getElementById('oscars-active-users-interval').addEventListener('change', fetchAndRenderChart);
-        document.getElementById('oscars-active-users-timeframe').addEventListener('input', fetchAndRenderChart);
-        fetchAndRenderChart();
+                        });
+                    }
+                });
+            }
+            document.getElementById(uid+'-interval').addEventListener('change', fetchAndRenderChart);
+            document.getElementById(uid+'-timeframe').addEventListener('input', fetchAndRenderChart);
+            fetchAndRenderChart();
+        })();
     });
     </script>
     <?php
