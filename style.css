@@ -2309,17 +2309,35 @@ span.small:has( + span.large) {
 }
 .decade-tabs .tab-content.active { 
     display: block;
+    position: relative;
+}
+@media screen and (max-width: 999px) {
+    .decade-tabs .tab-content:before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        height: 100%;
+        width: 7px;
+        background: linear-gradient(to right, rgb(0 0 0 / 10%), rgba(0, 0, 0, 0));
+    }
 }
 .decade-tabs ul {
+    overflow: scroll;
     list-style-type: none;
     padding: 0;
     display: flex;
-    flex-flow: row-reverse wrap;
+    flex-flow: row-reverse nowrap;
     gap: 5px;
 }
 .decade-tabs .tab-content > ul > li {
     font-size: 14px;
     width: calc((100% - (5px * 9)) / 10);
+    min-width: 40px;
+    opacity: 0.3;
+}
+.decade-tabs .tab-content > ul > li:has(>ul>li) {
+    min-width: 80px;
+    opacity: 1;
 }
 .decade-tabs .tab-content > ul > li > ul {
     flex-direction: column;

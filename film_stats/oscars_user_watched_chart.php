@@ -77,6 +77,7 @@ function oscars_user_watched_chart_shortcode() {
             <div class="tab-content" id="<?php echo $uid . '-tab-' . $decade; ?>">
                 <ul>
                 <?php foreach ($decade_years as $year):
+                    if ($year > $max_year) continue; // Skip future years
                     $films_in_year = isset($years[$year]) ? $years[$year] : array();
                     usort($films_in_year, function($a, $b) { return strcasecmp($a['title'], $b['title']); });
                 ?>
