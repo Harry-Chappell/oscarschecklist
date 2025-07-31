@@ -97,8 +97,7 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
     foreach ($top_users as $entry) {
         $u = $entry['user'];
         $shown_ids[] = $u['user_id'];
-        $username = esc_html($u['username']);
-        $username = (!empty($u['public']) && !empty($user['username'])) ? esc_html($user['username']) : 'Anonymous';
+        $username = (!empty($u['public'])) ? esc_html($u['username']) : 'Anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : '';
         $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span><span class="username">' . $username . '</span><span class="total-watched">' . intval($u['total-watched']) . '</span></li>';
     }
@@ -107,7 +106,7 @@ function oscars_watched_leaderboard_shortcode($atts = []) {
     foreach ($user_and_friends_entries as $entry) {
         $u = $entry['user'];
         $shown_ids[] = $u['user_id'];
-        $username = esc_html($u['username']);
+        $username = (!empty($u['public'])) ? esc_html($u['username']) : 'Anonymous';
         $highlight = ($current_user_id && $u['user_id'] == $current_user_id) ? ' class="current-user"' : ' class="current-users-friend"';
         $output .= '<li' . $highlight . '><span class="rank">' . $entry['rank'] . '<sup>' . $suffixes($entry['rank']) . '</sup> </span><span class="username">' . $username . '</span><span class="total-watched">' . intval($u['total-watched']) . '</span></li>';
     }
