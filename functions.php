@@ -1358,3 +1358,102 @@ add_shortcode('prediction_count', 'prediction_count_shortcode');
 
 require_once get_stylesheet_directory() . '/update_meta.php';
 require_once get_stylesheet_directory() . '/film_stats.php';
+
+
+
+
+
+
+function aggregate_watched_dates_to_by_day_json() {
+    if ( ! current_user_can('manage_options') ) {
+        return;
+    }
+
+    $upload_dir = wp_upload_dir();
+    $user_meta_dir = $upload_dir['basedir'] . '/user_meta';
+    $watched_by_day_path = $upload_dir['basedir'] . '/watched_by_day.json';
+
+    // Load or initialize watched_by_day data
+    if (file_exists($watched_by_day_path)) {
+        $json = file_get_contents($watched_by_day_path);
+        $data = json_decode($json, true);
+        if (!is_array($data)) $data = [];
+    } else {
+        $data = [];
+    }
+    if (!isset($data['days'])) $data['days'] = [];
+    if (!isset($data['films'])) $data['films'] = [];
+
+    // Loop through all user json files
+    foreach (glob($user_meta_dir . '/user_*.json') as $user_file) {
+        $user_json = file_get_contents($user_file);
+        $user_data = json_decode($user_json, true);
+        if (!isset($user_data['watched']) || !is_array($user_data['watched'])) continue;
+
+        foreach ($user_data['watched'] as $film) {
+            if (!empty($film['watched-date']) && !empty($film['film-id'])) {
+                $date = $film['watched-date'];
+                $film_id = $film['film-id'];
+
+                // Increment total watched for this date
+                if (!isset($data['days'][$date])) {
+                    $data['days'][$date] = 1;
+                } else {
+                    $data['days'][$date]++;
+                }
+
+                // Increment watched for this film for this date
+                if (!isset($data['films'][$film_id])) $data['films'][$film_id] = [];
+                if (!isset($data['films'][$film_id][$date])) {
+                    $data['films'][$film_id][$date] = 1;
+                } else {
+                    $data['films'][$film_id][$date]++;
+                }
+            }
+        }
+    }
+
+    // Save back to file
+    file_put_contents($watched_by_day_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+
+function watched_by_day_admin_button() {
+    if (!current_user_can('manage_options')) return '';
+    $nonce = wp_create_nonce('aggregate_watched_dates');
+    return '
+        <div style="margin-bottom:1em;">
+            <button id="aggregate-watched-dates" style="padding:8px 16px;font-size:16px;">Aggregate Watched Dates</button>
+            <span id="aggregate-watched-dates-status"></span>
+        </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var btn = document.getElementById("aggregate-watched-dates");
+            if(btn){
+                btn.addEventListener("click", function() {
+                    btn.disabled = true;
+                    document.getElementById("aggregate-watched-dates-status").textContent = "Processing...";
+                    fetch("' . admin_url('admin-ajax.php') . '?action=aggregate_watched_dates&nonce=' . $nonce . '")
+                        .then(r => r.text())
+                        .then(txt => {
+                            document.getElementById("aggregate-watched-dates-status").textContent = txt;
+                            btn.disabled = false;
+                        });
+                });
+            }
+        });
+        </script>
+    ';
+}
+add_shortcode('watched_by_day_admin_button', 'watched_by_day_admin_button');
+
+// AJAX handler
+add_action('wp_ajax_aggregate_watched_dates', function() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Not allowed');
+    }
+    if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'aggregate_watched_dates')) {
+        wp_die('Invalid nonce');
+    }
+    aggregate_watched_dates_to_by_day_json();
+    wp_die('Aggregation complete!');
+});
