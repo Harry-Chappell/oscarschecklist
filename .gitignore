@@ -1,2 +1,4 @@
 .vscode/sftp.json
 user-meta/all_user_stats.json
+user-meta/example.json
+.gitignore

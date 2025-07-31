@@ -1,215 +1,105 @@
+
 {
     "watched": [
         {
-            "film-id": 51933,
-            "film-name": "The Substance",
-            "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/the_substance\/"
-        },
-        {
-            "film-id": 51858,
-            "film-name": "Conclave",
-            "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/conclave_film\/"
-        },
-        {
-            "film-id": 51845,
-            "film-name": "A Complete Unknown",
-            "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/a_complete_unknown\/"
-        },
-        {
-            "film-id": 51850,
+            "film-id": 51854,
             "film-name": "Anora",
             "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/anora\/"
+            "film-url": "anora",
+            "watched-date": "2025-07-31"
         },
         {
-            "film-id": 51887,
+            "film-id": 51903,
+            "film-name": "Wicked",
+            "film-year": 2025,
+            "film-url": "wicked_2024_film",
+            "watched-date": "2025-07-31"
+        },
+        {
+            "film-id": 51891,
             "film-name": "The Brutalist",
             "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/the_brutalist\/"
+            "film-url": "the_brutalist",
+            "watched-date": "2025-07-31"
+        },
+        {
+            "film-id": 51849,
+            "film-name": "A Complete Unknown",
+            "film-year": 2025,
+            "film-url": "a_complete_unknown",
+            "watched-date": "2025-07-31"
+        },
+        {
+            "film-id": 51862,
+            "film-name": "Conclave",
+            "film-year": 2025,
+            "film-url": "conclave_film",
+            "watched-date": "2025-07-31"
         },
         {
             "film-id": 51899,
-            "film-name": "Wicked",
+            "film-name": "The Substance",
             "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/wicked_2024_film\/"
+            "film-url": "the_substance",
+            "watched-date": "2025-07-31"
         },
         {
-            "film-id": 51877,
+            "film-id": 51881,
             "film-name": "Nickel Boys",
             "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/nickel_boys\/"
+            "film-url": "nickel_boys",
+            "watched-date": "2025-07-31"
         },
         {
-            "film-id": 51860,
-            "film-name": "Dune: Part Two",
-            "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/dune_part_two\/"
-        },
-        {
-            "film-id": 51870,
+            "film-id": 51874,
             "film-name": "I'm Still Here",
             "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/i%27m_still_here_2024_film\/"
+            "film-url": "i%27m_still_here_2024_film",
+            "watched-date": "2025-07-31"
         },
         {
-            "film-id": 51861,
+            "film-id": 51865,
             "film-name": "Emilia P\u00e9rez",
             "film-year": 2025,
-            "film-url": "https:\/\/oscarschecklist.com\/films\/emilia_perez\/"
+            "film-url": "emilia_perez",
+            "watched-date": "2025-07-31"
+        },
+        {
+            "film-id": 51864,
+            "film-name": "Dune: Part Two",
+            "film-year": 2025,
+            "film-url": "dune_part_two",
+            "watched-date": "2025-07-31"
+        },
+        {
+            "film-id": 51888,
+            "film-name": "Sing Sing",
+            "film-year": 2025,
+            "film-url": "sing_sing_2023_film",
+            "watched-date": "2025-07-31"
+        },
+        {
+            "film-id": 51851,
+            "film-name": "A Real Pain",
+            "film-year": 2025,
+            "film-url": "a_real_pain",
+            "watched-date": "2025-07-31"
         }
     ],
     "favourites": [
-        123868,
-        123790,
-        123795,
-        123799,
-        123805,
-        123810,
-        123815,
-        123822,
-        123824,
-        123829,
-        123834,
-        123840,
-        123844,
-        123850,
-        123885,
-        123855,
-        123858,
-        123863,
-        123882,
-        123891,
-        123893,
-        123898,
-        123906
+        123569,
+        123482,
+        123489
     ],
-    "predictions": [
-        123877,
-        123791,
-        123794,
-        123799,
-        123805,
-        123809,
-        123816,
-        123821,
-        123825,
-        123829,
-        123835,
-        123841,
-        123843,
-        123849,
-        123886,
-        123856,
-        123859,
-        123864,
-        123878,
-        123888,
-        123896,
-        123901,
-        123906
-    ],
-    "meta": {
-        "nickname": [
-            "H"
-        ],
-        "first_name": [
-            "H"
-        ],
-        "last_name": [
-            ""
-        ],
-        "description": [
-            ""
-        ],
-        "rich_editing": [
-            "true"
-        ],
-        "syntax_highlighting": [
-            "true"
-        ],
-        "comment_shortcuts": [
-            "false"
-        ],
-        "admin_color": [
-            "fresh"
-        ],
-        "use_ssl": [
-            "0"
-        ],
-        "show_admin_bar_front": [
-            "true"
-        ],
-        "locale": [
-            ""
-        ],
-        "wp0u_capabilities": [
-            "a:1:{s:10:\"subscriber\";b:1;}"
-        ],
-        "wp0u_user_level": [
-            "0"
-        ],
-        "facebook": [
-            ""
-        ],
-        "twitter": [
-            ""
-        ],
-        "linkedin": [
-            ""
-        ],
-        "dribbble": [
-            ""
-        ],
-        "instagram": [
-            ""
-        ],
-        "pinterest": [
-            ""
-        ],
-        "wordpress": [
-            ""
-        ],
-        "github": [
-            ""
-        ],
-        "medium": [
-            ""
-        ],
-        "youtube": [
-            ""
-        ],
-        "vimeo": [
-            ""
-        ],
-        "vkontakte": [
-            ""
-        ],
-        "odnoklassniki": [
-            ""
-        ],
-        "tiktok": [
-            ""
-        ],
-        "mastodon": [
-            ""
-        ],
-        "last_update": [
-            "1736031574"
-        ],
-        "dismissed_wp_pointers": [
-            ""
-        ],
-        "bp_xprofile_visibility_levels": [
-            "a:2:{i:1;s:6:\"public\";i:3;s:10:\"adminsonly\";}"
-        ],
-        "total_friend_count": [
-            "1"
-        ],
-        "session_tokens": [
-            "a:1:{s:64:\"d7612883b4e28dda7e74f1b353b8d6200b577f5e1ede9fbca5099123e61029f1\";a:4:{s:10:\"expiration\";i:1747607027;s:2:\"ip\";s:12:\"80.4.138.176\";s:2:\"ua\";s:117:\"Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/136.0.0.0 Safari\/537.36\";s:5:\"login\";i:1747434227;}}"
-        ]
-    }
+    "predictions": [],
+    "watchlist": [],
+    "favourite-categories": [],
+    "hidden-categories": [],
+    "correct-predictions": "",
+    "incorrect-predictions": "",
+    "correct-prediction-rate": "",
+    "public": false,
+    "username": "Harry-Chappell",
+    "total-watched": 12,
+    "last-updated": "2025-07-31"
 }

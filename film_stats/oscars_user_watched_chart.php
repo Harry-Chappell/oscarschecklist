@@ -84,7 +84,7 @@ function oscars_user_watched_chart_shortcode() {
                     <li><strong><?php echo $year; ?></strong> (<?php echo count($films_in_year); ?>):
                         <ul>
                         <?php foreach ($films_in_year as $film): ?>
-                            <li><a href="<?php echo esc_url($film['url']); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($film['title']); ?></a></li>
+                            <li><a href="https://oscarschecklist.com/films/<?php echo $film['url']; ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($film['title']); ?></a></li>
                         <?php endforeach; ?>
                         </ul>
                     </li>

@@ -136,8 +136,7 @@ function oscars_update_film_stats_json($film_id, $action) {
     file_put_contents($output_path, json_encode($films, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
-function markAsWatched()
-{
+function markAsWatched() {
     $post_id = $_POST['watched_post_id'] ?? null;
     $action = $_POST['watched_action'] ?? null;
 
@@ -194,6 +193,8 @@ function markAsWatched()
             ];
             $json['watched'][] = $entry;
             $changed = true;
+
+            update_watched_by_day_json($post_id);
         }
     } elseif ($action === 'unwatched') {
         $before = count($json['watched']);
@@ -213,6 +214,43 @@ function markAsWatched()
     }
 }
 add_action('init', 'markAsWatched', 30);
+
+function update_watched_by_day_json($film_id) {
+    $upload_dir = wp_upload_dir();
+    $file_path = $upload_dir['basedir'] . '/watched_by_day.json';
+    $today = date('Y-m-d');
+
+    // Load or initialize data
+    if (file_exists($file_path)) {
+        $json = file_get_contents($file_path);
+        $data = json_decode($json, true);
+        if (!is_array($data)) $data = [];
+    } else {
+        $data = [];
+    }
+
+    // Ensure structure
+    if (!isset($data['days'])) $data['days'] = [];
+    if (!isset($data['films'])) $data['films'] = [];
+
+    // Increment total watched for today
+    if (!isset($data['days'][$today])) {
+        $data['days'][$today] = 1;
+    } else {
+        $data['days'][$today]++;
+    }
+
+    // Increment watched for this film for today
+    if (!isset($data['films'][$film_id])) $data['films'][$film_id] = [];
+    if (!isset($data['films'][$film_id][$today])) {
+        $data['films'][$film_id][$today] = 1;
+    } else {
+        $data['films'][$film_id][$today]++;
+    }
+
+    // Save back to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
 
 function markAsFav()
 {
