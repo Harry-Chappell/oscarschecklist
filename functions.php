@@ -60,6 +60,8 @@ function get_user_pred_fav_json_path($user_id) {
 
 function load_user_meta_json($user_id) {
     $file_path = get_user_meta_json_path($user_id);
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
     if (!file_exists($file_path)) {
         return [
             'watched' => [],
@@ -68,16 +70,40 @@ function load_user_meta_json($user_id) {
             'watchlist' => [],
             'favourite-categories' => [],
             'hidden-categories' => [],
+            'correct-predictions' => "",
+            'incorrect-predictions' => "",
+            'correct-prediction-rate' => "",
+            'public' => false,
+            'username' => $username,
         ];
     }
     $json = file_get_contents($file_path);
-    return json_decode($json, true) ?: [
+    $data = json_decode($json, true) ?: [];
+    // Ensure username and public are always present
+    $updated = false;
+    if (!isset($data['username']) || $data['username'] === '') {
+        $data['username'] = $username;
+        $updated = true;
+    }
+    if (!isset($data['public'])) {
+        $data['public'] = false;
+        $updated = true;
+    }
+    if ($updated) {
+        file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
+    }
+    return $data + [
         'watched' => [],
         'favourites' => [],
         'predictions' => [],
         'watchlist' => [],
         'favourite-categories' => [],
         'hidden-categories' => [],
+        'correct-predictions' => "",
+        'incorrect-predictions' => "",
+        'correct-prediction-rate' => "",
+        'public' => false,
+        'username' => $username,
     ];
 }
 
