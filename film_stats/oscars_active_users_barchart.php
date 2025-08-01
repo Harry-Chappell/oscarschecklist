@@ -11,9 +11,7 @@ function oscars_active_users_barchart_shortcode($atts = []) {
         'timeframe' => 7,
         'interval' => 'day'
     ], $atts);
-    // Generate a unique ID for this instance
     $uid = uniqid('oscars-active-users-barchart-');
-    // Calculate default timeframe as days between June 16, 2025 and today
     $today = new DateTime();
     $start = new DateTime('2025-06-16');
     $interval_days = $start->diff($today)->days;
@@ -24,14 +22,9 @@ function oscars_active_users_barchart_shortcode($atts = []) {
     ?>
     <div id="<?php echo $uid; ?>-controls" class="oscars-active-users-barchart-controls" style="margin-bottom:1em">
         <h2>
-            Users who were most recently active in the last
+            Users watched in the last
             <input type="number" id="<?php echo $uid; ?>-timeframe" value="<?php echo esc_attr($timeframe); ?>" min="1" max="365" style="width:60px">
-            <select id="<?php echo $uid; ?>-interval">
-                <option value="day"<?php if($interval==='day') echo ' selected'; ?>>Days</option>
-                <option value="week"<?php if($interval==='week') echo ' selected'; ?>>Weeks</option>
-                <option value="month"<?php if($interval==='month') echo ' selected'; ?>>Months</option>
-                <option value="year"<?php if($interval==='year') echo ' selected'; ?>>Years</option>
-            </select>
+            <span>Days</span>
         </h2>
     </div>
     <div style="width:100%;">
@@ -45,11 +38,9 @@ function oscars_active_users_barchart_shortcode($atts = []) {
             var ctx = document.getElementById(uid).getContext('2d');
             var chart = null;
             function fetchAndRenderChart() {
-                var interval = document.getElementById(uid+'-interval').value;
                 var timeframe = document.getElementById(uid+'-timeframe').value;
                 var data = new FormData();
                 data.append('action', 'oscars_active_users_barchart_ajax');
-                data.append('interval', interval);
                 data.append('timeframe', timeframe);
                 fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                     method: 'POST',
@@ -65,7 +56,7 @@ function oscars_active_users_barchart_shortcode($atts = []) {
                             data: {
                                 labels: json.data.labels,
                                 datasets: [{
-                                    label: 'Users last active',
+                                    label: 'Watches',
                                     data: json.data.bins,
                                     backgroundColor: '#c7a34f',
                                     borderColor: '#987e40',
@@ -76,18 +67,17 @@ function oscars_active_users_barchart_shortcode($atts = []) {
                                 responsive: true,
                                 plugins: {
                                     legend: { display: false },
-                                    title: { display: false, text: 'User Last Active by ' + interval.charAt(0).toUpperCase() + interval.slice(1) + ' (past ' + timeframe + ')'}
+                                    title: { display: false }
                                 },
                                 scales: {
-                                    x: { display: false, title: { display: false, text: interval.charAt(0).toUpperCase() + interval.slice(1) + 's Ago' }, ticks: { maxTicksLimit: 13 } },
-                                    y: { display: false, beginAtZero: true, title: { display: false, text: 'Number of Users' } }
+                                    x: { display: false },
+                                    y: { display: false, beginAtZero: true }
                                 }
                             }
                         });
                     }
                 });
             }
-            document.getElementById(uid+'-interval').addEventListener('change', fetchAndRenderChart);
             document.getElementById(uid+'-timeframe').addEventListener('input', fetchAndRenderChart);
             fetchAndRenderChart();
         })();
@@ -100,136 +90,78 @@ add_shortcode('oscars_active_users_barchart', 'oscars_active_users_barchart_shor
 
 // AJAX handler for oscars_active_users_barchart
 add_action('wp_ajax_oscars_active_users_barchart_ajax', function() {
-    $interval = isset($_POST['interval']) ? strtolower($_POST['interval']) : 'day';
     $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 7;
-    if (!in_array($interval, ['day', 'week', 'month', 'year'])) $interval = 'day';
     if ($timeframe < 1) $timeframe = 7;
-    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    if (!file_exists($output_path)) {
-        wp_send_json_error('No user stats data found.');
+    $watched_path = ABSPATH . 'wp-content/uploads/watched_by_day.json';
+    if (!file_exists($watched_path)) {
+        wp_send_json_error('No watched_by_day data found.');
     }
-    $json = file_get_contents($output_path);
-    $users = json_decode($json, true);
-    if (!$users || !is_array($users)) {
-        wp_send_json_error('User stats data is invalid.');
+    $json = file_get_contents($watched_path);
+    $watched = json_decode($json, true);
+    if (!$watched || !is_array($watched)) {
+        wp_send_json_error('watched_by_day data is invalid.');
     }
-    $now = strtotime('today');
-    $bins = array_fill(0, $timeframe + 1, 0);
-    foreach ($users as $user) {
-        if (!empty($user['last-updated'])) {
-            $last = strtotime($user['last-updated']);
-            if ($last) {
-                switch ($interval) {
-                    case 'day':
-                        $diff = floor(($now - $last) / 86400);
-                        break;
-                    case 'week':
-                        $diff = floor(($now - $last) / (7 * 86400));
-                        break;
-                    case 'month':
-                        $now_y = (int)date('Y', $now);
-                        $now_m = (int)date('n', $now);
-                        $last_y = (int)date('Y', $last);
-                        $last_m = (int)date('n', $last);
-                        $diff = ($now_y - $last_y) * 12 + ($now_m - $last_m);
-                        break;
-                    case 'year':
-                        $diff = (int)date('Y', $now) - (int)date('Y', $last);
-                        break;
-                    default:
-                        $diff = floor(($now - $last) / 86400);
-                }
-                if ($diff >= 0 && $diff <= $timeframe) {
-                    $bins[$diff]++;
-                }
-            }
-        }
+    // Determine if we are on a film taxonomy term
+    $queried_object = get_queried_object();
+    $film_id = null;
+    if (isset($queried_object->taxonomy) && $queried_object->taxonomy === 'films' && isset($queried_object->term_id)) {
+        $film_id = (string)$queried_object->term_id;
     }
+    $data = [];
+    if ($film_id && isset($watched['films'][$film_id])) {
+        $data = $watched['films'][$film_id];
+    } else {
+        $data = $watched['days'];
+    }
+    // Sort by date descending
+    krsort($data);
     $labels = [];
-    for ($i = $timeframe; $i >= 0; $i--) {
-        switch ($interval) {
-            case 'day':
-                $labels[] = $i . 'd ago';
-                break;
-            case 'week':
-                $labels[] = $i . 'w ago';
-                break;
-            case 'month':
-                $labels[] = $i . 'mo ago';
-                break;
-            case 'year':
-                $labels[] = $i . 'y ago';
-                break;
-        }
+    $bins = [];
+    $i = 0;
+    foreach ($data as $date => $count) {
+        if ($i >= $timeframe) break;
+        $labels[] = $date;
+        $bins[] = $count;
+        $i++;
     }
+    $labels = array_reverse($labels);
     $bins = array_reverse($bins);
-    // $labels = array_reverse($labels);
     wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
 });
 add_action('wp_ajax_nopriv_oscars_active_users_barchart_ajax', function() {
-    // Duplicate the same handler for non-logged-in users
-    $interval = isset($_POST['interval']) ? strtolower($_POST['interval']) : 'day';
     $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 7;
-    if (!in_array($interval, ['day', 'week', 'month', 'year'])) $interval = 'day';
     if ($timeframe < 1) $timeframe = 7;
-    $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    if (!file_exists($output_path)) {
-        wp_send_json_error('No user stats data found.');
+    $watched_path = ABSPATH . 'wp-content/uploads/watched_by_day.json';
+    if (!file_exists($watched_path)) {
+        wp_send_json_error('No watched_by_day data found.');
     }
-    $json = file_get_contents($output_path);
-    $users = json_decode($json, true);
-    if (!$users || !is_array($users)) {
-        wp_send_json_error('User stats data is invalid.');
+    $json = file_get_contents($watched_path);
+    $watched = json_decode($json, true);
+    if (!$watched || !is_array($watched)) {
+        wp_send_json_error('watched_by_day data is invalid.');
     }
-    $now = strtotime('today');
-    $bins = array_fill(0, $timeframe + 1, 0);
-    foreach ($users as $user) {
-        if (!empty($user['last-updated'])) {
-            $last = strtotime($user['last-updated']);
-            if ($last) {
-                switch ($interval) {
-                    case 'day':
-                        $diff = floor(($now - $last) / 86400);
-                        break;
-                    case 'week':
-                        $diff = floor(($now - $last) / (7 * 86400));
-                        break;
-                    case 'month':
-                        $now_y = (int)date('Y', $now);
-                        $now_m = (int)date('n', $now);
-                        $last_y = (int)date('Y', $last);
-                        $last_m = (int)date('n', $last);
-                        $diff = ($now_y - $last_y) * 12 + ($now_m - $last_m);
-                        break;
-                    case 'year':
-                        $diff = (int)date('Y', $now) - (int)date('Y', $last);
-                        break;
-                    default:
-                        $diff = floor(($now - $last) / 86400);
-                }
-                if ($diff >= 0 && $diff <= $timeframe) {
-                    $bins[$diff]++;
-                }
-            }
-        }
+    $queried_object = get_queried_object();
+    $film_id = null;
+    if (isset($queried_object->taxonomy) && $queried_object->taxonomy === 'films' && isset($queried_object->term_id)) {
+        $film_id = (string)$queried_object->term_id;
     }
+    $data = [];
+    if ($film_id && isset($watched['films'][$film_id])) {
+        $data = $watched['films'][$film_id];
+    } else {
+        $data = $watched['days'];
+    }
+    krsort($data);
     $labels = [];
-    for ($i = $timeframe; $i >= 0; $i--) {
-        switch ($interval) {
-            case 'day':
-                $labels[] = $i . 'd ago';
-                break;
-            case 'week':
-                $labels[] = $i . 'w ago';
-                break;
-            case 'month':
-                $labels[] = $i . 'mo ago';
-                break;
-            case 'year':
-                $labels[] = $i . 'y ago';
-                break;
-        }
+    $bins = [];
+    $i = 0;
+    foreach ($data as $date => $count) {
+        if ($i >= $timeframe) break;
+        $labels[] = $date;
+        $bins[] = $count;
+        $i++;
     }
+    $labels = array_reverse($labels);
     $bins = array_reverse($bins);
     wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
 });
