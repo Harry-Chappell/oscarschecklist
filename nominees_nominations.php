@@ -60,11 +60,6 @@ function nominees_nominations_function() {
         echo '<h1>' . esc_html($term->name) . '</h1>'; // Display term title
     
 
-        if (category_description() != "") {
-            echo '<details class="description"><summary>Bio:</summary>';
-            echo '<p>' . category_description() . '</p>'; // Display term description
-            echo '</details>';
-        }
 
 
         // Query nominations and count winners
@@ -115,7 +110,7 @@ function nominees_nominations_function() {
 
 
 
-        
+        echo '<div class="details-blocks">';
         
         if ($taxonomy == 'films') {
 
@@ -148,6 +143,21 @@ function nominees_nominations_function() {
             
             echo "</details>";
         }
+
+
+        if (category_description() != "") {
+            echo '<details class="description"><summary>Bio</summary>';
+            echo '<p>' . category_description() . '</p>'; // Display term description
+            echo '</details>';
+        }
+
+        if ($taxonomy == 'films') {
+            echo '<details class="watch-history"><summary>Watched History</summary>';
+            echo do_shortcode('[oscars_active_users_barchart interval="day" timeframe="" film_id="' . esc_attr($term->term_id) . '"]');
+            echo '</details>';
+        }
+
+        echo '</div>'; // Close details-blocks
     }
 
     if ($query->have_posts()) {

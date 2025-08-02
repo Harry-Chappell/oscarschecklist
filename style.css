@@ -1974,13 +1974,13 @@ body.registration.register.buddypress input#signup_submit:hover {
     display: block;
     border-radius: 5px;
 }
-.tax-films details.description,
+/* .tax-films details.description,
 .tax-nominees details.description {
     max-width: 600px;
     line-height: 1;
     font-size: 13px;
-    /* margin-bottom: 50px; */
-}
+    margin-bottom: 50px;
+} */
 .tax-films details.info summary,
 .tax-nominees details.description summary {
     width: 200px;
@@ -1991,15 +1991,36 @@ ul.nominees-nominations-list {
     margin-top: 50px;
 }
 
-.tax-films details.info {
+.tax-films .details-blocks {
     max-width: clamp(300px, 85vw, 400px);
     margin: auto;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+.tax-films .details-blocks:has(>details[open]) > details:not([open]) {
+    display: none;
+}
+
+details.watch-history canvas {
+    height: 300px !important;
+    width: 100% !important;
+}
+
+.tax-films .details-blocks details[open], 
+.tax-films .details-blocks details[open] summary {
+    width: 100%;
+}
+
+.tax-films .details-blocks details {
+    /* max-width: clamp(300px, 85vw, 400px); */
+    /* margin: auto; */
     border-left: 3px solid var(--theme-palette-color-1);
-    padding: 50px 0px 0px;
+    padding: 0px 0px 0px;
     position: relative;
 }
-.tax-films details.info summary {
-    position: absolute;
+.tax-films .details-blocks details summary {
+    /* position: absolute; */
     inset: 0 0 auto 0;
     height: 50px;
     width: max-content;
@@ -2008,18 +2029,29 @@ ul.nominees-nominations-list {
     padding: 15px 20px;
     margin: 0;
     background: var(--theme-palette-color-7);
+    cursor: pointer;
 }
-.tax-films details.info[open] {
-    padding: 50px 20px 10px;
+.tax-films .details-blocks details[open] {
+    padding: 0px 20px 10px;
     background: var(--theme-palette-color-7);
     border-left: 3px solid var(--theme-palette-color-1);
 }
-.tax-films details.info[open] summary {
+.tax-films .details-blocks details[open] summary {
     background: none;
     border-left: 0px solid var(--theme-palette-color-1);
+    padding-left: 0px;
 }
-.tax-films details.info p {
+.tax-films .details-blocks details p {
     margin-bottom: 5px;
+}
+
+.tax-films .details-blocks:has(> details.bio[open]) {
+    max-width: 600px;
+    /* padding: 0 20px; */
+}
+.tax-films .details-blocks:has(> details.watch-history[open]) {
+    max-width: 100%;
+    padding: 0 20px;
 }
 
 
@@ -2232,6 +2264,7 @@ ul.leaderboard li:nth-of-type(even):before {
     position: absolute;
     inset: 0;
     opacity: 0.05;
+    pointer-events: none;
 }
 ul.leaderboard span.rank {
     width: 60px;
@@ -2368,3 +2401,6 @@ form#oscars-publicise-form input {
         font-size: 40px;
     }   
 }
+
+
+
