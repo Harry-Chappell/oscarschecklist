@@ -92,7 +92,11 @@
         123489
     ],
     "predictions": [],
-    "watchlist": [],
+    "watchlist": [
+        123569,
+        123482,
+        123489
+    ],
     "favourite-categories": [],
     "hidden-categories": [],
     "correct-predictions": "",

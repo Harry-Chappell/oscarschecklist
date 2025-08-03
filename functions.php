@@ -1457,3 +1457,6 @@ add_action('wp_ajax_aggregate_watched_dates', function() {
     aggregate_watched_dates_to_by_day_json();
     wp_die('Aggregation complete!');
 });
+
+
+require_once get_stylesheet_directory() . '/watchlist/watchlist.php';

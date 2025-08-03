@@ -180,9 +180,9 @@ ul.nominations-list:has(>.winner) .buttons-cntr:has(button:last-child:nth-child(
     width: calc((100% - 1px) / 2);
 }
 
-ul.nominations-list:has(>.winner) button:nth-child(2) {
+/* ul.nominations-list:has(>.winner) button:nth-child(2) {
     border-bottom-right-radius: 10px;
-}
+} */
 
 ul.nominations-list:has(>.winner) .predict .buttons-cntr:before {
     content: "Your prediction";
@@ -2404,3 +2404,22 @@ form#oscars-publicise-form input {
 
 
 
+body:not(.admin-bar) button.mark-as-watchlist-button {
+    display: none !important;
+}
+button.mark-as-watchlist-button svg:first-child, 
+button.mark-as-unwatchlist-button svg:last-child {
+    display: none;
+}
+/* ul.nominations-list button.mark-as-watchlist-button,  */
+ul.nominations-list button.mark-as-unwatchlist-button {
+    background: #5b78cd;
+}
+ul.nominations-list button.mark-as-watchlist-button:hover, 
+ul.nominations-list button.mark-as-unwatchlist-button:hover {
+    background: #82a8f2;
+}
+ul.nominations-list button.mark-as-unwatchlist-button svg path {
+    fill: black !important;
+    opacity: 0.5;
+}
