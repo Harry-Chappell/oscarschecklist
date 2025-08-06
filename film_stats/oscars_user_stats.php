@@ -26,7 +26,12 @@ function oscars_user_stats_shortcode($atts) {
             $value = count($data['predictions'] ?? []);
             break;
         case 'correct-prediction-rate':
-            $value = isset($data['correct-prediction-rate']) ? round($data['correct-prediction-rate'] * 100, 2) . '%' : 0;
+            $rate = $data['correct-prediction-rate'] ?? null;
+            if (is_numeric($rate)) {
+                $value = round($rate * 100, 2) . '%';
+            } else {
+                $value = '0%';
+            }
             break;
         default:
             $value = isset($data[$a['field']]) ? esc_html($data[$a['field']]) : 0;
