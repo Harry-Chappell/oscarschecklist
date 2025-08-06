@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     listItem.classList.toggle('watched', isWatched);
     
                     // Update all other elements with the same film ID
-                    document.querySelectorAll('button[data-film-id="' + filmId + '"]').forEach(function(duplicateButton) {
+                    document.querySelectorAll('button.mark-as-watched-button[data-film-id="' + filmId + '"], button.mark-as-unwatched-button[data-film-id="' + filmId + '"]').forEach(function(duplicateButton) {
                         var duplicateListItem = duplicateButton.closest('li');
                         if (duplicateButton !== button) {
                             duplicateButton.classList.toggle('mark-as-watched-button', !isWatched);
