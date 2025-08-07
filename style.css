@@ -2404,7 +2404,8 @@ form#oscars-publicise-form input {
 
 
 
-body:not(.admin-bar) button.mark-as-watchlist-button {
+body:not(.admin-bar) button.mark-as-watchlist-button,
+body:not(.admin-bar) button#toggle-watchlist {
     display: none !important;
 }
 button.mark-as-watchlist-button svg:first-child, 
@@ -2424,6 +2425,17 @@ ul.nominations-list button.mark-as-unwatchlist-button svg path {
     opacity: 0.5;
 }
 
-ul.nominations-list:has(>.winner) button.mark-as-unwatchlist-button, ul.nominations-list:has(>.winner) button.mark-as-unwatchlist-button, ul.nominations-list:has(>.winner) button.mark-as-watchlist-button, ul.nominations-list:has(>.winner) button.mark-as-watchlist-button {
+ul.nominations-list:has(>.winner) button.mark-as-unwatchlist-button,
+ul.nominations-list:has(>.winner) button.mark-as-unwatchlist-button,
+ul.nominations-list:has(>.winner) button.mark-as-watchlist-button,
+ul.nominations-list:has(>.winner) button.mark-as-watchlist-button {
     border-bottom-right-radius: 9px;
+}
+
+#sidebar.watchlist-mode .watchlist-cntr {
+    display: flex;
+}
+#sidebar.watchlist-mode div:has(>.watchlist-cntr) ~ *,
+#sidebar:not(.watchlist-mode) .watchlist-cntr {
+    display: none;
 }

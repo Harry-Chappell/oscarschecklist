@@ -484,8 +484,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+let activeToggle = null;
+const sidebar = document.getElementById('sidebar');
+
+function handleToggle(buttonName) {
+    if (activeToggle === buttonName) {
+        // Same button → toggle open/close
+        sidebar.classList.toggle('open');
+        if (!sidebar.classList.contains('open')) {
+            activeToggle = null; // reset when closing
+            sidebar.classList.remove('progress-mode', 'watchlist-mode');
+        }
+    } else {
+        // Different button → ensure open, switch mode
+        sidebar.classList.add('open');
+        sidebar.classList.remove('progress-mode', 'watchlist-mode'); // clear old mode
+        sidebar.classList.add(buttonName + '-mode'); // e.g. 'progress-mode'
+        activeToggle = buttonName;
+    }
+}
+
 document.querySelector('.progress-toggle').addEventListener('click', function() {
-    document.getElementById('sidebar').classList.toggle('open');
+    handleToggle('progress');
+});
+
+document.querySelector('.watchlist-toggle').addEventListener('click', function() {
+    handleToggle('watchlist');
 });
 
 
@@ -499,23 +523,6 @@ document.querySelectorAll('body:not(.logged-in) .buttons-cntr').forEach(function
 document.querySelector('.dismiss').addEventListener('click', function() {
     document.querySelector('body').classList.add('close-logged-in-notice');
 });
-
-
-// document.querySelector('.ct-account-item').addEventListener('click', function() {
-//     const observer = new MutationObserver(function(mutations) {
-//         mutations.forEach(function(mutation) {
-//             if (mutation.addedNodes.length > 0) {
-//                 const label = document.querySelector('label[for="user_login_register"]');
-//                 if (label) {
-//                     label.innerHTML = "Full Name";
-//                     observer.disconnect();  // Stop observing after the change
-//                 }
-//             }
-//         });
-//     });
-
-//     observer.observe(document.body, { childList: true, subtree: true });
-// });
 
 
 

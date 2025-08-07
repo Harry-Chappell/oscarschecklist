@@ -71,3 +71,48 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
     wp_send_json_success(['watchlist' => $json['watchlist']]);
 });
 
+
+/**
+ * Shortcode: watchlist
+ * Outputs the user's watchlist.
+ */
+function oscars_watchlist_shortcode() {
+    if ( current_user_can( 'administrator' ) ) {
+        $output = '<div class="watchlist-cntr">';
+        $output .= '<h2>Your Watchlist</h2>';
+        if (!is_user_logged_in()) {
+            $output .= '<p>Please log in to view your watchlist.</p>';
+        } else {
+            $output .= '<p>Welcome to your watchlist.</p>';
+            $user_id = get_current_user_id();
+            $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
+            if (!file_exists($file_path)) { '<p>No user data found.</p>'; }
+            $data = json_decode(file_get_contents($file_path), true);
+            if (!$data || !isset($data['watchlist']) || !is_array($data['watchlist'])) {
+                $output .= '<p>Your watchlist is empty.</p>';
+            }
+            $watchlist = $data['watchlist'];
+            if (empty($watchlist)) {
+                $output .= '<p>Your watchlist is empty</p>';
+            } else {
+                $output .= '<p>Your watch list is not empty.</p>';
+                $output .= '<ul class="watchlist">';
+                foreach ($watchlist as $film_id) {
+                    $film = get_post($film_id);
+                    if ($film) {
+                        $output .= '<li>';
+                        $output .= '<span class="film-title">' . esc_html($film->post_title) . '</span>';
+                        $output .= '<button class="mark-as-watched-button" data-film-id="' . esc_attr($film_id) . '">Mark as Watched</button>';
+                        $output .= '<button class="mark-as-unwatched-button" data-film-id="' . esc_attr($film_id) . '">Mark as Unwatched</button>';
+                        $output .= '</li>';
+                    }
+                }
+                $output .= '</ul>';
+            }
+        }
+        // print_r($watchlist);
+        $output .= '</div>';
+        return $output;
+    }
+}
+add_shortcode('watchlist', 'oscars_watchlist_shortcode');
