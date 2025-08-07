@@ -72,47 +72,73 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
 });
 
 
-/**
- * Shortcode: watchlist
- * Outputs the user's watchlist.
- */
+
+
+
 function oscars_watchlist_shortcode() {
-    if ( current_user_can( 'administrator' ) ) {
-        $output = '<div class="watchlist-cntr">';
-        $output .= '<h2>Your Watchlist</h2>';
-        if (!is_user_logged_in()) {
-            $output .= '<p>Please log in to view your watchlist.</p>';
-        } else {
-            $output .= '<p>Welcome to your watchlist.</p>';
-            $user_id = get_current_user_id();
-            $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
-            if (!file_exists($file_path)) { '<p>No user data found.</p>'; }
-            $data = json_decode(file_get_contents($file_path), true);
-            if (!$data || !isset($data['watchlist']) || !is_array($data['watchlist'])) {
-                $output .= '<p>Your watchlist is empty.</p>';
-            }
-            $watchlist = $data['watchlist'];
-            if (empty($watchlist)) {
-                $output .= '<p>Your watchlist is empty</p>';
-            } else {
-                $output .= '<p>Your watch list is not empty.</p>';
-                $output .= '<ul class="watchlist">';
-                foreach ($watchlist as $film_id) {
-                    $film = get_post($film_id);
-                    if ($film) {
-                        $output .= '<li>';
-                        $output .= '<span class="film-title">' . esc_html($film->post_title) . '</span>';
-                        $output .= '<button class="mark-as-watched-button" data-film-id="' . esc_attr($film_id) . '">Mark as Watched</button>';
-                        $output .= '<button class="mark-as-unwatched-button" data-film-id="' . esc_attr($film_id) . '">Mark as Unwatched</button>';
-                        $output .= '</li>';
-                    }
-                }
-                $output .= '</ul>';
+    if ( ! is_user_logged_in() ) {
+        return '<p>Please log in to view your watchlist.</p>';
+    }
+
+    $user_id = get_current_user_id();
+    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
+
+    if ( ! file_exists( $file_path ) ) {
+        return '<p>No user data found.</p>';
+    }
+
+    $data = json_decode( file_get_contents( $file_path ), true );
+
+    if ( ! $data || ! isset( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) || empty( $data['watchlist'] ) ) {
+        return '<p>Your watchlist is empty.</p>';
+    }
+
+    // Build array of watched film IDs for quick lookup
+    $watched_ids = [];
+    if ( isset( $data['watched'] ) && is_array( $data['watched'] ) ) {
+        foreach ( $data['watched'] as $watched_item ) {
+            if ( isset( $watched_item['film-id'] ) ) {
+                $watched_ids[] = (int) $watched_item['film-id'];
             }
         }
-        // print_r($watchlist);
-        $output .= '</div>';
-        return $output;
     }
+
+    // SVG icon markup
+    $svg_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path></svg>';
+
+    $output  = '<div class="watchlist-cntr">';
+    $output .= '<h2>Your Watchlist</h2>';
+    $output .= '<ul class="watchlist">';
+
+    foreach ( $data['watchlist'] as $film_id ) {
+        $film_term = get_term( $film_id, 'films' );
+
+        if ( ! $film_term || is_wp_error( $film_term ) ) {
+            continue;
+        }
+
+        // Get ACF poster
+        $poster = get_field( 'poster', 'films_' . $film_id );
+        $poster_html = $poster ? '<img src="' . esc_url( $poster ) . '" alt="' . esc_attr( $film_term->name ) . '">' : '';
+
+        // Watched status
+        $is_watched = in_array( (int) $film_id, $watched_ids, true );
+
+        if ( $is_watched ) {
+            $buttons = '<button title="Watched" class="mark-as-unwatched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="unwatched">' . $svg_icon . '</button>';
+        } else {
+            $buttons = '<button title="Watched" class="mark-as-watched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="watched">' . $svg_icon . '</button>';
+        }
+
+        $output .= '<li class="' . ( $is_watched ? 'watched' : 'unwatched' ) . ' film-id="' . esc_attr( $film_id ) . '">';
+        $output .= $poster_html;
+        $output .= '<span class="film-title">' . esc_html( $film_term->name ) . '</span>';
+        $output .= $buttons;
+        $output .= '</li>';
+    }
+
+    $output .= '</ul></div>';
+
+    return $output;
 }
-add_shortcode('watchlist', 'oscars_watchlist_shortcode');
+add_shortcode( 'watchlist', 'oscars_watchlist_shortcode' );

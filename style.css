@@ -2434,8 +2434,31 @@ ul.nominations-list:has(>.winner) button.mark-as-watchlist-button {
 
 #sidebar.watchlist-mode .watchlist-cntr {
     display: flex;
+    flex-direction: column;
 }
 #sidebar.watchlist-mode div:has(>.watchlist-cntr) ~ *,
 #sidebar:not(.watchlist-mode) .watchlist-cntr {
     display: none;
+}
+ul.watchlist > li {
+    background: var(--theme-palette-color-7);
+    margin-bottom: 1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+ul.watchlist > li.watched {
+    background: var(--theme-palette-color-11);
+}
+ul.watchlist > li img {
+    max-height: 70px;
+    margin-right: 1em;
+}
+ul.watchlist > li button {
+    margin-left: auto;
+    background-color: var(--theme-palette-color-10);
+}
+ul.watchlist > li svg {
+    height: 20px;
+    fill: white;
 }
