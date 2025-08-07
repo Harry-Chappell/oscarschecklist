@@ -2423,3 +2423,7 @@ ul.nominations-list button.mark-as-unwatchlist-button svg path {
     fill: black !important;
     opacity: 0.5;
 }
+
+ul.nominations-list:has(>.winner) button.mark-as-unwatchlist-button, ul.nominations-list:has(>.winner) button.mark-as-unwatchlist-button, ul.nominations-list:has(>.winner) button.mark-as-watchlist-button, ul.nominations-list:has(>.winner) button.mark-as-watchlist-button {
+    border-bottom-right-radius: 9px;
+}
