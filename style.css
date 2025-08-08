@@ -2446,9 +2446,13 @@ ul.watchlist > li {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid var(--theme-palette-color-6);
 }
 ul.watchlist > li.watched {
     background: var(--theme-palette-color-11);
+    border: 1px solid var(--theme-palette-color-10);
 }
 ul.watchlist > li img {
     max-height: 70px;
@@ -2456,9 +2460,31 @@ ul.watchlist > li img {
 }
 ul.watchlist > li button {
     margin-left: auto;
+    margin-right: 1em;
+    aspect-ratio: 1;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+    background-color: var(--theme-palette-color-7);
+    border: 1px solid var(--theme-palette-color-6);
+    cursor: pointer;
+}
+ul.watchlist > li.watched button {
     background-color: var(--theme-palette-color-10);
+    border: 1px solid hsl(112 51% 32% / 1);
 }
 ul.watchlist > li svg {
     height: 20px;
-    fill: white;
+    fill: var(--theme-palette-color-6);
+}
+ul.watchlist > li.watched svg {
+    fill: var(--theme-palette-color-4);
+}
+
+ul.watchlist > li button:hover {
+    /* background-color: var(--theme-palette-color-6); */
+    /* border: 1px solid var(--theme-palette-color-5); */
+    scale: 1.1;
 }
