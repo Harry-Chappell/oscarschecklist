@@ -2449,6 +2449,7 @@ ul.watchlist > li {
     border-radius: 5px;
     overflow: hidden;
     border: 1px solid var(--theme-palette-color-6);
+    position: relative;
 }
 ul.watchlist > li.watched {
     background: var(--theme-palette-color-11);
@@ -2458,7 +2459,7 @@ ul.watchlist > li img {
     max-height: 70px;
     margin-right: 1em;
 }
-ul.watchlist > li button {
+ul.watchlist > li button[title="Watched"] {
     margin-left: auto;
     margin-right: 1em;
     aspect-ratio: 1;
@@ -2470,8 +2471,11 @@ ul.watchlist > li button {
     background-color: var(--theme-palette-color-7);
     border: 1px solid var(--theme-palette-color-6);
     cursor: pointer;
+    z-index: 2;
+    position: relative;
 }
-ul.watchlist > li.watched button {
+ul.watchlist > li button:hover,
+ul.watchlist > li.watched button[title="Watched"] {
     background-color: var(--theme-palette-color-10);
     border: 1px solid hsl(112 51% 32% / 1);
 }
@@ -2484,7 +2488,26 @@ ul.watchlist > li.watched svg {
 }
 
 ul.watchlist > li button:hover {
-    /* background-color: var(--theme-palette-color-6); */
-    /* border: 1px solid var(--theme-palette-color-5); */
     scale: 1.1;
+}
+ul.watchlist > li button.remove-from-watchlist-button {
+    background: none;
+    position: absolute;
+    z-index: 1;
+    inset: 5px 5px auto auto;
+    height: 25px;
+    width: 25px;
+    border-radius: 50px;
+    border: 1px solid var(--theme-palette-color-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+ul.watchlist > li.watched button.remove-from-watchlist-button {
+    border: 1px solid var(--theme-palette-color-10);
+}
+ul.watchlist > li button.remove-from-watchlist-button svg {
+    aspect-ratio: 1;
+    height: 15px;
 }

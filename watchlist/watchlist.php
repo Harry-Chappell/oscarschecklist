@@ -125,7 +125,7 @@ function oscars_watchlist_shortcode() {
 
         // SVG icons
         $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path></svg>';
-        $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M312 375c9.4-9.4 9.4-24.6 0-33.9L201 230.1 312 119c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0L167 196.1 56.9 85c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9L133.1 230.1 23 341.1c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0L167 264.1l110.1 110.1c9.4 9.4 24.6 9.4 33.9 0z"/></svg>';
+        $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"></path></svg>';
 
         if ( $is_watched ) {
             $buttons  = '<button title="Watched" class="mark-as-unwatched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="unwatched">' . $svg_icon_check . '</button>';
