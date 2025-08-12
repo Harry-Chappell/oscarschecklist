@@ -2442,7 +2442,7 @@ ul.nominations-list:has(>.winner) button.mark-as-watchlist-button {
 }
 ul.watchlist > li {
     background: var(--theme-palette-color-7);
-    margin-bottom: 1em;
+    /* margin-bottom: 1em; */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2514,4 +2514,12 @@ ul.watchlist > li button.remove-from-watchlist-button svg {
 
 ul.watchlist:has(li) + p {
     display: none;
+}
+ul.watchlist {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+ul.watchlist li.unwatched {
+    order: -1;
 }
