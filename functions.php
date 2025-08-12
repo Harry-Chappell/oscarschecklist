@@ -563,8 +563,6 @@ EOT;
 // Register the shortcode
 add_shortcode('oscar_navigation', 'oscar_nominations_navigation');
 
-
-
 function unique_films_shortcode($atts) {
     // Get the 'year' from ACF (Advanced Custom Fields)
     $year = get_field('year');

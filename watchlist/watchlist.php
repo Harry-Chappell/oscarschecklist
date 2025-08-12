@@ -88,9 +88,9 @@ function oscars_watchlist_shortcode() {
 
     $data = json_decode( file_get_contents( $file_path ), true );
 
-    if ( ! $data || ! isset( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) || empty( $data['watchlist'] ) ) {
-        return '<p>Your watchlist is empty.</p>';
-    }
+    // if ( ! $data || ! isset( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) || empty( $data['watchlist'] ) ) {
+    //     return '<p>Your watchlist is empty.</p>';
+    // }
 
     // Build array of watched film IDs for quick lookup
     $watched_ids = [];
@@ -143,7 +143,7 @@ function oscars_watchlist_shortcode() {
         $output .= '</li>';
     }
 
-    $output .= '</ul></div>';
+    $output .= '</ul><p>Your watchlist is empty.</p></div>';
 
     return $output;
 }

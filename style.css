@@ -2511,3 +2511,7 @@ ul.watchlist > li button.remove-from-watchlist-button svg {
     aspect-ratio: 1;
     height: 15px;
 }
+
+ul.watchlist:has(li) + p {
+    display: none;
+}
