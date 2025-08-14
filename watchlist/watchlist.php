@@ -88,11 +88,37 @@ function oscars_watchlist_shortcode() {
 
     $data = json_decode( file_get_contents( $file_path ), true );
 
-    // if ( ! $data || ! isset( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) || empty( $data['watchlist'] ) ) {
-    //     return '<p>Your watchlist is empty.</p>';
-    // }
+    // Settings we want to expose as toggles
+    $settings = [
+        'public'        => 'Make profile public',
+        'hide_watched'  => 'Hide watched films',
+        'compact_view'  => 'Enable compact view',
+    ];
 
-    // Build array of watched film IDs for quick lookup
+    $output  = '<div class="watchlist-cntr">';
+    $output .= '<h2>Your Watchlist</h2>';
+
+    // Settings UI
+    $output .= '<div class="watchlist-settings"><h3>Settings</h3><ul>';
+    foreach ( $settings as $key => $label ) {
+        $checked = ( isset($data[$key]) && $data[$key] ) ? 'checked' : '';
+        $output .= '<li>
+            <label>
+                <input type="checkbox" class="watchlist-setting-toggle" 
+                       data-setting="' . esc_attr($key) . '" ' . $checked . '> 
+                ' . esc_html($label) . '
+            </label>
+        </li>';
+    }
+    $output .= '</ul></div>';
+
+    // If no watchlist, show empty message
+    if ( ! isset($data['watchlist']) || ! is_array($data['watchlist']) || empty($data['watchlist']) ) {
+        $output .= '<p>Your watchlist is empty.</p></div>';
+        return $output;
+    }
+
+    // Build array of watched IDs for lookup
     $watched_ids = [];
     if ( isset( $data['watched'] ) && is_array( $data['watched'] ) ) {
         foreach ( $data['watched'] as $watched_item ) {
@@ -102,30 +128,19 @@ function oscars_watchlist_shortcode() {
         }
     }
 
-    // SVG icon markup
-    $svg_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path></svg>';
-
-    $output  = '<div class="watchlist-cntr">';
-    $output .= '<h2>Your Watchlist</h2>';
     $output .= '<ul class="watchlist">';
 
     foreach ( $data['watchlist'] as $film_id ) {
         $film_term = get_term( $film_id, 'films' );
+        if ( ! $film_term || is_wp_error( $film_term ) ) continue;
 
-        if ( ! $film_term || is_wp_error( $film_term ) ) {
-            continue;
-        }
-
-        // Get ACF poster
         $poster = get_field( 'poster', 'films_' . $film_id );
         $poster_html = $poster ? '<img src="' . esc_url( $poster ) . '" alt="' . esc_attr( $film_term->name ) . '">' : '';
 
-        // Watched status
         $is_watched = in_array( (int) $film_id, $watched_ids, true );
 
-        // SVG icons
-        $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path></svg>';
-        $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"></path></svg>';
+        $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5..."></path></svg>';
+        $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M96 320C96..."></path></svg>';
 
         if ( $is_watched ) {
             $buttons  = '<button title="Watched" class="mark-as-unwatched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="unwatched">' . $svg_icon_check . '</button>';
@@ -133,7 +148,6 @@ function oscars_watchlist_shortcode() {
             $buttons  = '<button title="Watched" class="mark-as-watched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="watched">' . $svg_icon_check . '</button>';
         }
 
-        // Remove button
         $buttons .= '<button title="Remove from Watchlist" class="remove-from-watchlist-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="remove">' . $svg_icon_remove . '</button>';
 
         $output .= '<li class="' . ( $is_watched ? 'watched' : 'unwatched' ) . '" data-film-id="' . esc_attr( $film_id ) . '">';
@@ -143,8 +157,36 @@ function oscars_watchlist_shortcode() {
         $output .= '</li>';
     }
 
-    $output .= '</ul><p>Your watchlist is empty.</p></div>';
-
+    $output .= '</ul></div>';
     return $output;
 }
 add_shortcode( 'watchlist', 'oscars_watchlist_shortcode' );
+
+add_action('wp_ajax_oscars_update_setting', function() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Not logged in.');
+    }
+
+    $user_id = get_current_user_id();
+    $setting = isset($_POST['setting']) ? sanitize_text_field($_POST['setting']) : '';
+    $value   = isset($_POST['value']) ? filter_var($_POST['value'], FILTER_VALIDATE_BOOLEAN) : false;
+
+    if (!$setting) {
+        wp_send_json_error('No setting provided.');
+    }
+
+    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
+    if (!file_exists($file_path)) {
+        wp_send_json_error('User data not found.');
+    }
+
+    $json = json_decode(file_get_contents($file_path), true);
+    if (!is_array($json)) $json = [];
+
+    $json[$setting] = $value;
+    $json['last-updated'] = date('Y-m-d');
+
+    file_put_contents($file_path, wp_json_encode($json, JSON_PRETTY_PRINT));
+
+    wp_send_json_success(['setting' => $setting, 'value' => $value]);
+});

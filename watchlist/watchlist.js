@@ -232,3 +232,37 @@ document.addEventListener('click', function (e) {
     e.stopPropagation();
   }
 });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Listen for toggle changes
+  document.body.addEventListener("change", (e) => {
+    const toggle = e.target.closest(".watchlist-setting-toggle");
+    if (!toggle) return;
+
+    const setting = toggle.getAttribute("data-setting");
+    const value = toggle.checked;
+
+    const formData = new FormData();
+    formData.append("action", "oscars_update_setting");
+    formData.append("setting", setting);
+    formData.append("value", value);
+
+    fetch(ajaxurl, {
+      method: "POST",
+      credentials: "same-origin",
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((response) => {
+        if (response.success) {
+          console.log("Updated setting:", response.data);
+        } else {
+          alert("Error saving setting: " + response.data);
+        }
+      })
+      .catch((err) => {
+        console.error("AJAX error:", err);
+      });
+  });
+});
