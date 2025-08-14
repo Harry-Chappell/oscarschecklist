@@ -79,7 +79,7 @@ function oscars_watchlist_shortcode() {
         return '<p>Please log in to view your watchlist.</p>';
     }
 
-    $user_id = get_current_user_id();
+    $user_id   = get_current_user_id();
     $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
 
     if ( ! file_exists( $file_path ) ) {
@@ -88,39 +88,62 @@ function oscars_watchlist_shortcode() {
 
     $data = json_decode( file_get_contents( $file_path ), true );
 
-    // Settings we want to expose as toggles
+    // Define settings and their default states
     $settings = [
-        'public'        => 'Make profile public',
-        'hide_watched'  => 'Hide watched films',
-        'compact_view'  => 'Enable compact view',
+        'auto_remove_watched' => [
+            'label'   => 'Automatically remove watched films',
+            'default' => true,
+        ],
+        'this_page_only' => [
+            'label'   => 'Show films from this page only',
+            'default' => false,
+        ],
+        'compact_view' => [
+            'label'   => 'Compact view',
+            'default' => false,
+        ],
     ];
 
-    $output  = '<div class="watchlist-cntr">';
+    // Build list of classes from active settings
+    $settings_classes = [];
+    foreach ( $settings as $key => $meta ) {
+        if ( ! isset( $data[ $key ] ) ) {
+            $data[ $key ] = $meta['default']; // apply default if missing
+        }
+        if ( $data[ $key ] ) {
+            $settings_classes[] = $key; // add active setting as a class
+        }
+    }
+
+    // Join classes into string
+    $settings_class_str = ! empty( $settings_classes ) ? ' ' . implode( ' ', $settings_classes ) : '';
+
+    $output  = '<div class="watchlist-cntr' . esc_attr( $settings_class_str ) . '">';
     $output .= '<h2>Your Watchlist</h2>';
 
     // Settings UI
     $output .= '<div class="watchlist-settings"><h3>Settings</h3><ul>';
-    foreach ( $settings as $key => $label ) {
-        $checked = ( isset($data[$key]) && $data[$key] ) ? 'checked' : '';
+    foreach ( $settings as $key => $meta ) {
+        $checked = $data[ $key ] ? 'checked' : '';
         $output .= '<li>
             <label>
                 <input type="checkbox" class="watchlist-setting-toggle" 
                        data-setting="' . esc_attr($key) . '" ' . $checked . '> 
-                ' . esc_html($label) . '
+                ' . esc_html($meta['label']) . '
             </label>
         </li>';
     }
     $output .= '</ul></div>';
 
     // If no watchlist, show empty message
-    if ( ! isset($data['watchlist']) || ! is_array($data['watchlist']) || empty($data['watchlist']) ) {
+    if ( empty( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) ) {
         $output .= '<p>Your watchlist is empty.</p></div>';
         return $output;
     }
 
     // Build array of watched IDs for lookup
     $watched_ids = [];
-    if ( isset( $data['watched'] ) && is_array( $data['watched'] ) ) {
+    if ( ! empty( $data['watched'] ) && is_array( $data['watched'] ) ) {
         foreach ( $data['watched'] as $watched_item ) {
             if ( isset( $watched_item['film-id'] ) ) {
                 $watched_ids[] = (int) $watched_item['film-id'];
@@ -139,8 +162,8 @@ function oscars_watchlist_shortcode() {
 
         $is_watched = in_array( (int) $film_id, $watched_ids, true );
 
-        $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5..."></path></svg>';
-        $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M96 320C96..."></path></svg>';
+        $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path></svg>';
+        $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"></path></svg>';
 
         if ( $is_watched ) {
             $buttons  = '<button title="Watched" class="mark-as-unwatched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="unwatched">' . $svg_icon_check . '</button>';
