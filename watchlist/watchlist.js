@@ -266,3 +266,90 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const toggleBtn = document.getElementById("toggle-watchlist");
+  if (!toggleBtn) return;
+
+  // Make/ensure badge element
+  let badge = toggleBtn.querySelector(".watchlist-badge");
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.className = "watchlist-badge";
+    toggleBtn.appendChild(badge);
+  }
+
+  let currentCount = null; // null so first render doesn't animate
+  let resetTimer = null;
+
+  function getWatchlistCount() {
+    const uls = document.querySelectorAll("ul.watchlist");
+    let total = 0;
+    uls.forEach((ul) => {
+      // Count only direct LI children of the watchlist UL
+      total += Array.from(ul.children).filter((el) => el.tagName === "LI").length;
+    });
+    return total;
+  }
+
+  function refreshBadge() {
+    const newCount = getWatchlistCount();
+
+    // First render: set without animation
+    if (currentCount === null) {
+      badge.textContent = newCount;
+      currentCount = newCount;
+      return;
+    }
+
+    if (newCount === currentCount) return;
+
+    const changeClass = newCount > currentCount ? "increasing" : "decreasing";
+    currentCount = newCount;
+    badge.textContent = newCount;
+
+    // Reset animation classes
+    badge.classList.remove("increasing", "decreasing");
+    void badge.offsetWidth; // force reflow so animation retriggers
+    badge.classList.add(changeClass);
+
+    if (resetTimer) clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      badge.classList.remove("increasing", "decreasing");
+    }, 1000);
+  }
+
+  // Observe all current watchlist ULs for live add/remove updates
+  const watchlists = document.querySelectorAll("ul.watchlist");
+  const observers = [];
+  watchlists.forEach((ul) => {
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === "childList") {
+          refreshBadge();
+          break;
+        }
+      }
+    });
+    mo.observe(ul, { childList: true });
+    observers.push(mo);
+  });
+
+  // Also update after any click on add/remove/watchlist buttons
+  document.body.addEventListener("click", (e) => {
+    const btn = e.target.closest(
+      ".mark-as-watchlist-button, .mark-as-unwatchlist-button, .remove-from-watchlist-button"
+    );
+    if (!btn) return;
+    // Defer slightly so DOM changes from your handlers have applied
+    setTimeout(refreshBadge, 50);
+  });
+
+  // Initial render
+  refreshBadge();
+
+  // Optional: expose a manual trigger if you ever need it
+  window.updateWatchlistBadge = refreshBadge;
+});
