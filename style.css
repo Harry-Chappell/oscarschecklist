@@ -2687,3 +2687,101 @@ details.watchlist-settings[open] {
 span.film-title {
     padding-top: 2px;
 }
+
+
+
+.watchlist-setting-labels label, 
+.watchlist-setting-labels label:last-child {
+    margin-bottom: 0.5em;
+    display: inline-flex;
+    position: relative;
+}
+.watchlist-setting-labels label:hover:after {
+    /* content: attr(title); */
+    position: absolute;
+    top: 0;
+    height: auto;
+    width: auto;
+    padding: 2px 7px 0;
+    border-radius: 5px;
+    background: var(--theme-palette-color-7);
+    border: 1px solid var(--theme-palette-color-6);
+    transform: translateY(-100%);
+    white-space: nowrap;
+}
+.watchlist-setting-labels label#label-auto_remove_watched:after {
+    left: 0;
+}
+.watchlist-setting-labels label#label-compact_view:after {
+    right: 0;
+}
+
+.watchlist-cntr.compact_view .watchlist-setting-labels label#label-compact_view:hover:after {
+    content: "Compact View";
+}
+.watchlist-cntr:not(.compact_view) .watchlist-setting-labels label#label-compact_view:hover:after {
+    content: "Expanded View";
+}
+.watchlist-cntr.auto_remove_watched .watchlist-setting-labels label#label-auto_remove_watched:hover:after {
+    content: "Auto Remove Watched: On";
+}
+.watchlist-cntr:not(.auto_remove_watched) .watchlist-setting-labels label#label-auto_remove_watched:hover:after {
+    content: "Auto Remove Watched: Off";
+}
+
+
+.watchlist-setting-labels label > svg {
+    height: 25px;
+    fill: var(--theme-palette-color-6);
+}
+label#label-this_page_only {
+    display: inline-flex;
+    border-radius: 5px;
+    overflow: hidden;
+}
+label#label-this_page_only span {
+    background: var(--theme-palette-color-7);
+    padding: 3px 7px 0;
+    font-size: 0.9em;
+}
+label#label-this_page_only span:hover {
+    background: var(--theme-palette-color-6);
+}
+label#label-this_page_only span:first-child {
+    padding-left: 10px;
+}
+label#label-this_page_only span:last-child {
+    padding-right: 10px;
+}
+
+.watchlist-cntr.this_page_only label#label-this_page_only span:first-child,
+.watchlist-cntr:not(.this_page_only) label#label-this_page_only span:last-child {
+    background: var(--theme-palette-color-6);
+    cursor: default;
+}
+ul.watchlist {
+    border-top: 1px solid var(--theme-palette-color-6);
+    padding-top: 1em;
+}
+
+body:not(.admin-bar) .ct-widget:has(>.watchlist-cntr) {
+    display: none;
+}
+.watchlist-setting-labels {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+
+.watchlist-cntr.auto_remove_watched label#label-auto_remove_watched svg:last-of-type,
+.watchlist-cntr:not(.auto_remove_watched) label#label-auto_remove_watched svg:first-of-type,
+.watchlist-cntr.compact_view label#label-compact_view svg:first-child,
+.watchlist-cntr:not(.compact_view) label#label-compact_view svg:last-child {
+    display: none;
+}
+
+details.watchlist-settings summary, 
+label#label-auto_remove_watched {
+    display: none;
+}
