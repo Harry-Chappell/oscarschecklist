@@ -105,11 +105,11 @@ function oscars_watchlist_shortcode() {
         ],
         'this_page_only' => [
             'label'   => 'Show films from this page only',
-            'default' => false,
+            'default' => true,
         ],
         'compact_view' => [
             'label'   => 'Compact view',
-            'default' => false,
+            'default' => true,
         ],
     ];
 

@@ -41,9 +41,17 @@ document.addEventListener('click', function (e) {
         console.log('New watchlist item element:', newWatchlistItem);
 
         if (newWatchlistItem) {
-        watchlistUl.appendChild(newWatchlistItem);
-
-        newWatchlistItem.setAttribute('data-newly-added', '1');
+      // Add 'current-page' class if this film is on the current page
+      const found = document.querySelector(
+        `.film-id-${filmId}:not(.watchlist li)`
+      ) || document.querySelector(
+        `.nominations-list li.film-id-${filmId}`
+      );
+      if (found) {
+        newWatchlistItem.classList.add('current-page');
+      }
+      watchlistUl.appendChild(newWatchlistItem);
+      newWatchlistItem.setAttribute('data-newly-added', '1');
 
         // Immediately check if it exists in DOM
         const foundInDom = watchlistUl.querySelector(`li[data-film-id="${filmId}"]`);
@@ -243,6 +251,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const setting = toggle.getAttribute("data-setting");
     const value = toggle.checked;
 
+    // Update container class immediately
+    const container = document.querySelector('.watchlist-cntr');
+    if (container && setting) {
+        if (value) {
+            container.classList.add(setting);
+        } else {
+            container.classList.remove(setting);
+        }
+    }
+
     const formData = new FormData();
     formData.append("action", "oscars_update_setting");
     formData.append("setting", setting);
@@ -266,7 +284,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
-
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -352,4 +369,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Optional: expose a manual trigger if you ever need it
   window.updateWatchlistBadge = refreshBadge;
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Add 'current-page' class to watchlist items that match a film on the current page
+  const watchlistLis = document.querySelectorAll('.watchlist li[data-film-id]');
+  watchlistLis.forEach((li) => {
+    const filmId = li.getAttribute('data-film-id');
+    if (!filmId) return;
+    // Look for any other element on the page with this film id (excluding the watchlist itself)
+    const found = document.querySelector(
+      `.film-id-${filmId}:not(.watchlist li)`
+    ) || document.querySelector(
+      `.nominations-list li.film-id-${filmId}`
+    );
+    if (found) {
+      li.classList.add('current-page');
+    } else {
+      li.classList.remove('current-page');
+    }
+  });
 });

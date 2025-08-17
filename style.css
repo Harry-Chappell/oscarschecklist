@@ -2436,9 +2436,15 @@ ul.nominations-list:has(>.winner) button.mark-as-watchlist-button {
     display: flex;
     flex-direction: column;
 }
-#sidebar.watchlist-mode div:has(>.watchlist-cntr) ~ *,
-#sidebar:not(.watchlist-mode) .watchlist-cntr {
-    display: none;
+@media (max-width: 999px) {
+    #sidebar.watchlist-mode div:has(>.watchlist-cntr) ~ *,
+    #sidebar:not(.watchlist-mode) .watchlist-cntr {
+        display: none;
+    }
+} 
+.watchlist-cntr:not(.compact_view) {
+    max-height: 400px;
+    overflow: scroll;
 }
 ul.watchlist > li {
     background: var(--theme-palette-color-7);
@@ -2631,4 +2637,53 @@ details.watchlist-settings[open] {
     /* border-radius: 5px; */
     margin: 0 0 1em;
     padding: 1em;
+}
+
+.watchlist-cntr.this_page_only ul.watchlist li:not(.current-page) {
+    display: none;
+}
+
+
+.watchlist-cntr.compact_view ul.watchlist {
+    gap: 0;
+}
+.watchlist-cntr.compact_view ul.watchlist > li,
+.watchlist-cntr.compact_view ul.watchlist > li.watched {
+    background: none;
+    border-width: 0 0 1px 0;
+    border-radius: 0;
+    border-color: var(--theme-palette-color-7);
+}
+.watchlist-cntr.compact_view ul.watchlist > li img {
+    display: none;
+}
+.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"] {
+    height: 30px;
+    border-radius: 0;
+    border: 0;
+    margin: 0;
+    margin-left: auto;
+    background: none;
+}
+.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button {
+    position: initial;
+    border-radius: 0;
+    border: 0;
+    height: 30px;
+    width: 30px;
+}
+.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover,
+.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"]:hover {
+    background: var(--theme-palette-color-7);
+}
+.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button svg,
+.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"] svg {
+    fill: var(--theme-palette-color-6);
+}
+.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover svg,
+.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"]:hover svg {
+    fill: var(--theme-palette-color-5);
+}
+span.film-title {
+    padding-top: 2px;
 }
