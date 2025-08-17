@@ -2600,3 +2600,35 @@ ul.watchlist li.unwatched {
   0% { transform: translateY(0); opacity: 1; }
   100% { transform: translateY(20px); opacity: 0; }
 }
+
+.watchlist-cntr {
+    position: relative;
+}
+details.watchlist-settings summary {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 37.5px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+details.watchlist-settings summary svg {
+    height: 20px;
+    fill: var(--theme-palette-color-6);
+}
+details.watchlist-settings summary:hover svg {
+    fill: var(--theme-palette-color-5);
+}
+.watchlist-settings label input {
+    width: auto !important;
+    margin-right: 5px !important
+}
+details.watchlist-settings {
+    background: var(--theme-palette-color-8);
+    border-bottom: 3px solid var(--theme-palette-color-7);
+    border-top: 3px solid var(--theme-palette-color-7);
+    /* border-radius: 5px; */
+    margin: 0 0 1em;
+    padding: 1em;
+}
