@@ -2624,7 +2624,7 @@ details.watchlist-settings summary:hover svg {
     width: auto !important;
     margin-right: 5px !important
 }
-details.watchlist-settings {
+details.watchlist-settings[open] {
     background: var(--theme-palette-color-8);
     border-bottom: 3px solid var(--theme-palette-color-7);
     border-top: 3px solid var(--theme-palette-color-7);

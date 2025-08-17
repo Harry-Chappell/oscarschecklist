@@ -51,11 +51,28 @@
             "watched-date": "2025-08-06"
         }
     ],
-    "watchlist": [
+    "old-watchlist": [
         51874,
         51854,
         51903
     ],
+    "watchlist": [
+        {
+            "film-id": 51874,
+            "order": 1
+        },
+        {
+            "film-id": 51854,
+            "order": 3
+        },
+        {
+            "film-id": 51903,
+            "order": 2
+        }
+    ],
     "favourite-categories": [],
-    "hidden-categories": []
+    "hidden-categories": [],
+    "auto_remove_watched": true,
+    "this_page_only": false,
+    "compact_view": false
 }

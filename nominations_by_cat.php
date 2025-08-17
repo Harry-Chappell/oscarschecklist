@@ -164,7 +164,14 @@ function show_nominations_by_cat_shortcode($atts) {
 
                                     // Watchlist
                                     if (isset($user_meta['watchlist']) && is_array($user_meta['watchlist'])) {
-                                        $user_watchlist = in_array($post_id, $user_meta['watchlist']);
+                                        // New format: array of objects with 'film-id'
+                                        $user_watchlist = false;
+                                        foreach ($user_meta['watchlist'] as $watchlist_item) {
+                                            if (is_array($watchlist_item) && isset($watchlist_item['film-id']) && $watchlist_item['film-id'] == $post_id) {
+                                                $user_watchlist = true;
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
                             }

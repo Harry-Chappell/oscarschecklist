@@ -15,7 +15,8 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
     }
     $user_id = get_current_user_id();
     $film_id = isset($_POST['film_id']) ? intval($_POST['film_id']) : 0;
-    $action_type = isset($_POST['action_type']) ? sanitize_text_field($_POST['action_type']) : '';    if (!$film_id) {
+    $action_type = isset($_POST['action_type']) ? sanitize_text_field($_POST['action_type']) : '';
+    if (!$film_id) {
         wp_send_json_error('No film ID.');
     }
 
@@ -50,14 +51,22 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
 
     $changed = false;
     if ( $action_type === 'add' ) {
-        if ( ! in_array( $film_id, $json['watchlist'], true ) ) {
-            $json['watchlist'][] = $film_id;
+        // New format: array of objects with film-id and order (order is null for now)
+        $already_in = false;
+        foreach ($json['watchlist'] as $item) {
+            if (isset($item['film-id']) && intval($item['film-id']) === $film_id) {
+                $already_in = true;
+                break;
+            }
+        }
+        if (!$already_in) {
+            $json['watchlist'][] = [ 'film-id' => $film_id, 'order' => null ];
             $changed = true;
         }
     } elseif ( $action_type === 'remove' ) {
         $before = count($json['watchlist']);
-        $json['watchlist'] = array_values(array_filter($json['watchlist'], function($id) use ($film_id) {
-            return $id != $film_id;
+        $json['watchlist'] = array_values(array_filter($json['watchlist'], function($item) use ($film_id) {
+            return !(isset($item['film-id']) && intval($item['film-id']) === $film_id);
         }));
         if ( count($json['watchlist']) < $before ) {
             $changed = true;
@@ -155,7 +164,10 @@ function oscars_watchlist_shortcode() {
 
     $output .= '<ul class="watchlist">';
 
-    foreach ( $data['watchlist'] as $film_id ) {
+    foreach ( $data['watchlist'] as $watchlist_item ) {
+        // New format: $watchlist_item is an array with 'film-id' and 'order'
+        $film_id = isset($watchlist_item['film-id']) ? (int)$watchlist_item['film-id'] : null;
+        if (!$film_id) continue;
         $film_term = get_term( $film_id, 'films' );
         if ( ! $film_term || is_wp_error( $film_term ) ) continue;
 
