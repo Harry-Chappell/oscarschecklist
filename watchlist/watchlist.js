@@ -23,11 +23,20 @@ document.addEventListener('click', function (e) {
     }
 
     // Find watchlist <ul> container
-    const watchlistUl = document.querySelector('.watchlist-cntr .watchlist');
-        console.log('Watchlist container:', watchlistUl);
+    let watchlistUl = document.querySelector('.watchlist-cntr .watchlist');
+    console.log('Watchlist container:', watchlistUl);
     if (!watchlistUl) {
-      console.warn('Watchlist container not found');
-      return;
+      // If missing, create it inside the .watchlist-cntr
+      const watchlistCntr = document.querySelector('.watchlist-cntr');
+      if (watchlistCntr) {
+        watchlistUl = document.createElement('ul');
+        watchlistUl.className = 'watchlist';
+        watchlistCntr.appendChild(watchlistUl);
+        console.log('Created new watchlist <ul>');
+      } else {
+        console.warn('Watchlist container not found');
+        return;
+      }
     }
 
     // Check for duplicates, skip if already present

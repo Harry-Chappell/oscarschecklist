@@ -168,7 +168,7 @@ function oscars_watchlist_shortcode() {
 
     // If no watchlist, show empty message
     if ( empty( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) ) {
-        $output .= '<p>Your watchlist is empty.</p></div>';
+        $output .= '<p class="empty-message">Your watchlist is empty.</p></div>';
         return $output;
     }
 

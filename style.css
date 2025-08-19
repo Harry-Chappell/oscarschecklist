@@ -1323,7 +1323,8 @@ body.show-unique-films aside#sidebar > * > div:first-child button#toggle-unique-
 body.hide-watched-films aside#sidebar > * > div:first-child button#toggle-hide-watched,
 body.winners-only aside#sidebar > * > div:first-child button#toggle-winners-only,
 body.hide-predicted aside#sidebar > * > div:first-child button.toggle-predicted-button,
-aside#sidebar.open > * > div:first-child button#toggle-progress {
+aside#sidebar.open.progress-mode > * > div:first-child button#toggle-progress,
+aside#sidebar.open.watchlist-mode > * > div:first-child button#toggle-watchlist {
     background-color: var(--theme-palette-color-7);
     background-color: rgba(0, 0, 0, 0.1);
     color: var(--theme-palette-color-1);
@@ -1352,7 +1353,8 @@ aside#sidebar.open > * > div:first-child button#toggle-progress svg {
     html:not([data-color-mode="light"]) body.hide-watched-films aside#sidebar > * > div:first-child button#toggle-hide-watched,
     html:not([data-color-mode="light"]) body.winners-only aside#sidebar > * > div:first-child button#toggle-winners-only,
     html:not([data-color-mode="light"]) body.hide-predicted aside#sidebar > * > div:first-child button.toggle-predicted-button,
-    html:not([data-color-mode="light"]) aside#sidebar.open > * > div:first-child button#toggle-progress {
+    html:not([data-color-mode="light"]) aside#sidebar.open.progress-mode > * > div:first-child button#toggle-progress,
+    html:not([data-color-mode="light"]) aside#sidebar.open.watchlist-mode > * > div:first-child button#toggle-watchlist {
         background-color: rgba(255, 255, 255, 0.1);
     }
 }
@@ -2404,10 +2406,11 @@ form#oscars-publicise-form input {
 
 
 
-body:not(.admin-bar) button.mark-as-watchlist-button,
-body:not(.admin-bar) button#toggle-watchlist {
+/* body:not(.page-id-122452) button.mark-as-watchlist-button,
+body:not(.page-id-122452) button#toggle-watchlist,
+body:not(.page-id-122452) .ct-widget:has(>.watchlist-cntr) {
     display: none !important;
-}
+} */
 button.mark-as-watchlist-button svg:first-child, 
 button.mark-as-unwatchlist-button svg:last-child {
     display: none;
@@ -2526,7 +2529,7 @@ ul.watchlist {
     flex-direction: column;
     gap: 1em;
 }
-ul.watchlist li.unwatched {
+ul.watchlist li:not(.watched) {
     order: -1;
 }
 
@@ -2664,7 +2667,15 @@ details.watchlist-settings[open] {
     margin: 0;
     margin-left: auto;
     background: none;
+    border-radius: 3px;
 }
+.watchlist-cntr.compact_view ul.watchlist > li.watched button[title="Watched"] {
+    background: var(--theme-palette-color-10);
+    /* opacity: 0.3; */
+}
+.watchlist-cntr.compact_view ul.watchlist > li.watched button[title="Watched"] svg {
+    fill: var(--theme-palette-color-4);
+}   
 .watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button {
     position: initial;
     border-radius: 0;
@@ -2764,12 +2775,9 @@ ul.watchlist {
     padding-top: 1em;
 }
 
-body:not(.admin-bar) .ct-widget:has(>.watchlist-cntr) {
-    display: none;
-}
 .watchlist-setting-labels {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -2783,5 +2791,9 @@ body:not(.admin-bar) .ct-widget:has(>.watchlist-cntr) {
 
 details.watchlist-settings summary, 
 label#label-auto_remove_watched {
+    display: none;
+}
+
+p.empty-message:has(+ul.watchlist) {
     display: none;
 }
