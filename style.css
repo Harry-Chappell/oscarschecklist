@@ -78,6 +78,7 @@ ul.nominations-list h3 {
     gap: 1px;
     border-radius: 0 0 10px 10px;
     padding: 1px;
+    overflow: hidden;
 }
 li.watched > .buttons-cntr {
     background: var(--theme-palette-color-10);
@@ -2789,11 +2790,14 @@ ul.watchlist {
     display: none;
 }
 
-details.watchlist-settings summary, 
-label#label-auto_remove_watched {
+details.watchlist-settings summary {
     display: none;
 }
 
 p.empty-message:has(+ul.watchlist) {
+    display: none;
+}
+
+body:has(* .watchlist-cntr.auto_remove_watched) ul.nominations-list .watched button.mark-as-watchlist-button {
     display: none;
 }

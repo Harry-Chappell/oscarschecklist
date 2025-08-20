@@ -400,3 +400,83 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// Auto-remove watched films from watchlist if .auto_remove_watched is present, and toggle live
+(function() {
+  document.addEventListener("DOMContentLoaded", function() {
+    const watchlistCntr = document.querySelector('.watchlist-cntr');
+    if (!watchlistCntr) return;
+    let watchlist = watchlistCntr.querySelector('.watchlist');
+    if (!watchlist) return;
+
+    let liObserver = null;
+    let listObserver = null;
+    let enabled = false;
+
+    function triggerRemove(li) {
+      const btn = li.querySelector('.remove-from-watchlist-button');
+      if (btn) btn.click();
+    }
+
+    function enableAutoRemove() {
+      if (enabled) return;
+      enabled = true;
+      // Remove already-watched items on enable
+      watchlist.querySelectorAll('li.watched').forEach(triggerRemove);
+      // Observe for li gaining .watched
+      liObserver = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+          if (m.type === 'attributes' && m.attributeName === 'class') {
+            const li = m.target;
+            if (li.classList.contains('watched')) {
+              triggerRemove(li);
+            }
+          }
+        });
+      });
+      watchlist.querySelectorAll('li').forEach(li => {
+        liObserver.observe(li, { attributes: true, attributeFilter: ['class'] });
+      });
+      // Observe for new li added to the watchlist
+      listObserver = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+          if (m.type === 'childList' && m.addedNodes.length) {
+            m.addedNodes.forEach(node => {
+              if (node.nodeType === 1 && node.tagName === 'LI') {
+                liObserver.observe(node, { attributes: true, attributeFilter: ['class'] });
+                if (node.classList.contains('watched')) {
+                  triggerRemove(node);
+                }
+              }
+            });
+          }
+        });
+      });
+      listObserver.observe(watchlist, { childList: true });
+    }
+
+    function disableAutoRemove() {
+      enabled = false;
+      if (liObserver) { liObserver.disconnect(); liObserver = null; }
+      if (listObserver) { listObserver.disconnect(); listObserver = null; }
+    }
+
+    // Watch for .auto_remove_watched class changes
+    const cntrObserver = new MutationObserver(() => {
+      // In case the watchlist element changes (e.g. via AJAX), re-query
+      watchlist = watchlistCntr.querySelector('.watchlist');
+      if (!watchlist) { disableAutoRemove(); return; }
+      if (watchlistCntr.classList.contains('auto_remove_watched')) {
+        enableAutoRemove();
+      } else {
+        disableAutoRemove();
+      }
+    });
+    cntrObserver.observe(watchlistCntr, { attributes: true, attributeFilter: ['class'] });
+
+    // Initial state
+    if (watchlistCntr.classList.contains('auto_remove_watched')) {
+      enableAutoRemove();
+    }
+  });
+})();
