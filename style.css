@@ -2531,8 +2531,15 @@ ul.watchlist {
     gap: 1em;
 }
 ul.watchlist li:not(.watched) {
-    order: -1;
+    order: var(--order, 99999);
 }
+ul.watchlist li.watched {
+    order: 100000;
+}
+/* ul.watchlist li {
+    order: var(--order);
+} */
+
 
 
 .watchlist-badge {
@@ -2666,16 +2673,17 @@ details.watchlist-settings[open] {
     border-radius: 0;
     border: 0;
     margin: 0;
-    margin-left: auto;
+    /* margin-left: auto; */
     background: none;
     border-radius: 3px;
+    order: -2;
 }
 .watchlist-cntr.compact_view ul.watchlist > li.watched button[title="Watched"] {
-    background: var(--theme-palette-color-10);
+    /* background: var(--theme-palette-color-10); */
     /* opacity: 0.3; */
 }
 .watchlist-cntr.compact_view ul.watchlist > li.watched button[title="Watched"] svg {
-    fill: var(--theme-palette-color-4);
+    /* fill: var(--theme-palette-color-4); */
 }   
 .watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button {
     position: initial;
@@ -2684,7 +2692,7 @@ details.watchlist-settings[open] {
     height: 30px;
     width: 30px;
 }
-.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover,
+/* .watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover,
 .watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"]:hover {
     background: var(--theme-palette-color-7);
 }
@@ -2695,9 +2703,22 @@ details.watchlist-settings[open] {
 .watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover svg,
 .watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"]:hover svg {
     fill: var(--theme-palette-color-5);
-}
+} */
 span.film-title {
     padding-top: 2px;
+    margin-right: auto;
+}
+
+.watchlist-cntr button.mark-as-watched-button svg,
+.watchlist-cntr button.mark-as-unwatched-button svg {
+    display: none;
+}
+.watchlist-cntr button.mark-as-watched-button:not(:hover)  svg:nth-child(1),
+.watchlist-cntr button.mark-as-watched-button:hover svg:nth-child(2),
+.watchlist-cntr button.mark-as-unwatched-button:hover svg:nth-child(2),
+.watchlist-cntr button.mark-as-unwatched-button:not(:hover) svg:nth-child(3) {
+    display: flex;
+    fill: var(--theme-palette-color-4);
 }
 
 
@@ -2800,4 +2821,8 @@ p.empty-message:has(+ul.watchlist) {
 
 body:has(* .watchlist-cntr.auto_remove_watched) ul.nominations-list .watched button.mark-as-watchlist-button {
     display: none;
+}
+
+body:not(.admin-bar) span.watchlist-reorder-btns {
+    display: none;   
 }

@@ -60,7 +60,8 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
             }
         }
         if (!$already_in) {
-            $json['watchlist'][] = [ 'film-id' => $film_id, 'order' => null ];
+            $order = count($json['watchlist']) + 1;
+            $json['watchlist'][] = [ 'film-id' => $film_id, 'order' => $order ];
             $changed = true;
         }
     } elseif ( $action_type === 'remove' ) {
@@ -69,6 +70,12 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
             return !(isset($item['film-id']) && intval($item['film-id']) === $film_id);
         }));
         if ( count($json['watchlist']) < $before ) {
+            // Reindex order fields
+            $json['watchlist'] = array_values($json['watchlist']);
+            foreach ($json['watchlist'] as $i => &$item) {
+                $item['order'] = $i + 1;
+            }
+            unset($item);
             $changed = true;
         }
     }
@@ -187,6 +194,7 @@ function oscars_watchlist_shortcode() {
     foreach ( $data['watchlist'] as $watchlist_item ) {
         // New format: $watchlist_item is an array with 'film-id' and 'order'
         $film_id = isset($watchlist_item['film-id']) ? (int)$watchlist_item['film-id'] : null;
+        $order = isset($watchlist_item['order']) && $watchlist_item['order'] !== null ? (int)$watchlist_item['order'] : '';
         if (!$film_id) continue;
         $film_term = get_term( $film_id, 'films' );
         if ( ! $film_term || is_wp_error( $film_term ) ) continue;
@@ -196,7 +204,7 @@ function oscars_watchlist_shortcode() {
 
         $is_watched = in_array( (int) $film_id, $watched_ids, true );
 
-        $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"></path></svg>';
+        $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M528 320C528 205.1 434.9 112 320 112C205.1 112 112 205.1 112 320C112 434.9 205.1 528 320 528C434.9 528 528 434.9 528 320zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320z"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 112C434.9 112 528 205.1 528 320C528 434.9 434.9 528 320 528C205.1 528 112 434.9 112 320C112 205.1 205.1 112 320 112zM320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7C411.4 265.5 408 250.7 396.8 243.6C385.6 236.5 370.8 240 363.7 251.2L302.3 349.5L275.3 313.5C267.3 302.9 252.3 300.7 241.7 308.7C231.1 316.7 228.9 331.7 236.9 342.3L284.9 406.3C289.6 412.6 297.2 416.2 305.1 415.9C313 415.6 320.2 411.4 324.4 404.6L404.4 276.6z"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7L324.4 404.7C320.2 411.4 313 415.6 305.1 416C297.2 416.4 289.6 412.8 284.9 406.4L236.9 342.4C228.9 331.8 231.1 316.8 241.7 308.8C252.3 300.8 267.3 303 275.3 313.6L302.3 349.6L363.7 251.3C370.7 240.1 385.5 236.6 396.8 243.7C408.1 250.8 411.5 265.5 404.4 276.8z"/></svg>';
         $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"></path></svg>';
 
         if ( $is_watched ) {
@@ -207,7 +215,8 @@ function oscars_watchlist_shortcode() {
 
         $buttons .= '<button title="Remove from Watchlist" class="remove-from-watchlist-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="remove">' . $svg_icon_remove . '</button>';
 
-        $output .= '<li class="' . ( $is_watched ? 'watched' : 'unwatched' ) . '" data-film-id="' . esc_attr( $film_id ) . '">';
+        $li_style = $order !== '' ? ' style="--order: ' . esc_attr($order) . ';"' : '';
+        $output .= '<li class="' . ( $is_watched ? 'watched' : 'unwatched' ) . '" data-film-id="' . esc_attr( $film_id ) . '"' . $li_style . '>';
         $output .= $poster_html;
         $output .= '<span class="film-title">' . esc_html( $film_term->name ) . '</span>';
         $output .= $buttons;
@@ -246,4 +255,43 @@ add_action('wp_ajax_oscars_update_setting', function() {
     file_put_contents($file_path, wp_json_encode($json, JSON_PRETTY_PRINT));
 
     wp_send_json_success(['setting' => $setting, 'value' => $value]);
+});
+
+add_action('wp_ajax_oscars_reorder_watchlist', function() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Not logged in.');
+    }
+    $user_id = get_current_user_id();
+    $file_path = wp_upload_dir()['basedir'] . "/user_meta/user_{$user_id}.json";
+    if (!file_exists($file_path)) {
+        wp_send_json_error('User data not found.');
+    }
+    $json = json_decode(file_get_contents($file_path), true);
+    if (!is_array($json) || !isset($json['watchlist']) || !is_array($json['watchlist'])) {
+        wp_send_json_error('Invalid user data.');
+    }
+    $new_order = isset($_POST['order']) && is_array($_POST['order']) ? $_POST['order'] : [];
+    if (empty($new_order)) {
+        wp_send_json_error('No order provided.');
+    }
+    // Reorder watchlist based on new_order (array of film-ids)
+    $film_map = [];
+    foreach ($json['watchlist'] as $item) {
+        if (isset($item['film-id'])) {
+            $film_map[$item['film-id']] = $item;
+        }
+    }
+    $reordered = [];
+    foreach ($new_order as $i => $film_id) {
+        $film_id = (int)$film_id;
+        if (isset($film_map[$film_id])) {
+            $item = $film_map[$film_id];
+            $item['order'] = $i + 1;
+            $reordered[] = $item;
+        }
+    }
+    $json['watchlist'] = $reordered;
+    $json['last-updated'] = date('Y-m-d');
+    file_put_contents($file_path, wp_json_encode($json, JSON_PRETTY_PRINT));
+    wp_send_json_success(['watchlist' => $json['watchlist']]);
 });
