@@ -2493,8 +2493,9 @@ ul.watchlist > li svg {
     height: 20px;
     fill: var(--theme-palette-color-6);
 }
-ul.watchlist > li.watched svg {
-    fill: var(--theme-palette-color-4);
+ul.watchlist > li button:hover svg {
+    height: 20px;
+    fill: var(--theme-palette-color-5);
 }
 
 ul.watchlist > li button:hover {
@@ -2690,7 +2691,7 @@ details.watchlist-settings[open] {
     border-radius: 0;
     border: 0;
     height: 30px;
-    width: 30px;
+    width: 20px;
 }
 /* .watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover,
 .watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"]:hover {
@@ -2825,4 +2826,31 @@ body:has(* .watchlist-cntr.auto_remove_watched) ul.nominations-list .watched but
 
 body:not(.admin-bar) span.watchlist-reorder-btns {
     display: none;   
+}
+
+
+.this_page_only button.move-up-btn,
+.this_page_only button.move-down-btn {
+    display: none;
+}
+
+span.watchlist-reorder-btns {
+    display: flex;
+}
+span.watchlist-reorder-btns button {
+    background: none;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0px !important;
+    cursor: pointer;
+}
+.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover, 
+.watchlist-cntr.compact_view ul.watchlist > li span.watchlist-reorder-btns button:hover {
+    background-color: var(--theme-palette-color-8);
+}
+.watchlist-cntr.compact_view ul.watchlist > li:not(:hover) button.remove-from-watchlist-button, 
+.watchlist-cntr.compact_view ul.watchlist > li:not(:hover) span.watchlist-reorder-btns {
+    opacity: 0;
 }

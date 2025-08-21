@@ -155,18 +155,11 @@ function convertNominationToWatchlistItem(nominationLi) {
     }
   }
 
-  const SVG_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-    <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128
-             c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
-  </svg>`;
-
-  const SVG_REMOVE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-    <path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 
-             512 352L128 352C110.3 352 96 337.7 96 320z"/>
-  </svg>`;
+  // --- SVGs matching PHP output ---
+  const SVG_WATCHED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M528 320C528 205.1 434.9 112 320 112C205.1 112 112 205.1 112 320C112 434.9 205.1 528 320 528C434.9 528 528 434.9 528 320zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M320 112C434.9 112 528 205.1 528 320C528 434.9 434.9 528 320 528C205.1 528 112 434.9 112 320C112 205.1 205.1 112 320 112zM320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7C411.4 265.5 408 250.7 396.8 243.6C385.6 236.5 370.8 240 363.7 251.2L302.3 349.5L275.3 313.5C267.3 302.9 252.3 300.7 241.7 308.7C231.1 316.7 228.9 331.7 236.9 342.3L284.9 406.3C289.6 412.6 297.2 416.2 305.1 415.9C313 415.6 320.2 411.4 324.4 404.6L404.4 276.6z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7L324.4 404.7C320.2 411.4 313 415.6 305.1 416C297.2 416.4 289.6 412.8 284.9 406.4L236.9 342.4C228.9 331.8 231.1 316.8 241.7 308.8C252.3 300.8 267.3 303 275.3 313.6L302.3 349.6L363.7 251.3C370.7 240.1 385.5 236.6 396.8 243.7C408.1 250.8 411.5 265.5 404.4 276.8z"></path></svg>`;
+  const SVG_REMOVE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M183.1 137.4C170.6 124.9 150.3 124.9 137.8 137.4C125.3 149.9 125.3 170.2 137.8 182.7L275.2 320L137.9 457.4C125.4 469.9 125.4 490.2 137.9 502.7C150.4 515.2 170.7 515.2 183.2 502.7L320.5 365.3L457.9 502.6C470.4 515.1 490.7 515.1 503.2 502.6C515.7 490.1 515.7 469.8 503.2 457.3L365.8 320L503.1 182.6C515.6 170.1 515.6 149.8 503.1 137.3C490.6 124.8 470.3 124.8 457.8 137.3L320.5 274.7L183.1 137.4z"></path></svg>`;
 
   const li = document.createElement('li');
-  // Set class based on nomination's watched state
   li.className = nominationLi.classList.contains('watched') ? 'watched' : 'unwatched';
   li.setAttribute('data-film-id', filmId);
 
@@ -183,23 +176,26 @@ function convertNominationToWatchlistItem(nominationLi) {
   span.textContent = titleText;
   li.appendChild(span);
 
-  // Create toggle button with conditional class/action/title
-  const toggleBtn = document.createElement('button');
-  toggleBtn.type = 'button';
-  toggleBtn.setAttribute('data-film-id', filmId);
-
+  // --- Watched button (new SVGs) ---
+  const watchedBtn = document.createElement('button');
+  watchedBtn.type = 'button';
+  watchedBtn.setAttribute('data-film-id', filmId);
   if (nominationLi.classList.contains('watched')) {
-    toggleBtn.className = 'mark-as-unwatched-button';
-    toggleBtn.setAttribute('data-action', 'unwatched');
-    toggleBtn.title = 'Watched';
+    watchedBtn.className = 'mark-as-unwatched-button';
+    watchedBtn.setAttribute('data-action', 'unwatched');
+    watchedBtn.title = 'Watched';
   } else {
-    toggleBtn.className = 'mark-as-watched-button';
-    toggleBtn.setAttribute('data-action', 'watched');
-    toggleBtn.title = 'Watched';
+    watchedBtn.className = 'mark-as-watched-button';
+    watchedBtn.setAttribute('data-action', 'watched');
+    watchedBtn.title = 'Watched';
   }
-  toggleBtn.innerHTML = SVG_CHECK;
-  li.appendChild(toggleBtn);
+  // watchedBtn.className = 'mark-as-watched-button';
+  // watchedBtn.setAttribute('data-action', 'watched');
+  // watchedBtn.title = 'Watched';
+  watchedBtn.innerHTML = SVG_WATCHED;
+  li.appendChild(watchedBtn);
 
+  // --- Remove from Watchlist button (new SVG) ---
   const removeBtn = document.createElement('button');
   removeBtn.type = 'button';
   removeBtn.title = 'Remove from Watchlist';
@@ -517,9 +513,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const upBtn = document.createElement('button');
     upBtn.className = 'move-up-btn';
     upBtn.title = 'Move Up';
-    upBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M297.4 201.4C309.9 188.9 330.2 188.9 342.7 201.4L502.7 361.4C515.2 373.9 515.2 394.2 502.7 406.7C490.2 419.2 469.9 419.2 457.4 406.7L320 269.3L182.6 406.6C170.1 419.1 149.8 419.1 137.3 406.6C124.8 394.1 124.8 373.8 137.3 361.3L297.3 201.3z"/></svg>';
+    upBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M297.4 201.4C309.9 188.9 330.2 188.9 342.7 201.4L502.7 361.4C515.2 373.9 515.2 394.2 502.7 406.7C490.2 419.2 469.9 419.2 457.4 406.7L320 269.3L182.6 406.6C170.1 419.1 149.8 419.1 137.3 406.6C124.8 394.1 124.8 373.8 137.3 361.3L297.3 201.3z"/></svg>';
     upBtn.type = 'button';
-    upBtn.addEventListener('click', function () {
+    upBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
       const prev = li.previousElementSibling;
       if (prev && prev.matches('li[data-film-id]')) {
         watchlistUl.insertBefore(li, prev);
@@ -529,9 +526,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const downBtn = document.createElement('button');
     downBtn.className = 'move-down-btn';
     downBtn.title = 'Move Down';
-    downBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M297.4 438.6C309.9 451.1 330.2 451.1 342.7 438.6L502.7 278.6C515.2 266.1 515.2 245.8 502.7 233.3C490.2 220.8 469.9 220.8 457.4 233.3L320 370.7L182.6 233.4C170.1 220.9 149.8 220.9 137.3 233.4C124.8 245.9 124.8 266.2 137.3 278.7L297.3 438.7z"/></svg>';
+    downBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M297.4 438.6C309.9 451.1 330.2 451.1 342.7 438.6L502.7 278.6C515.2 266.1 515.2 245.8 502.7 233.3C490.2 220.8 469.9 220.8 457.4 233.3L320 370.7L182.6 233.4C170.1 220.9 149.8 220.9 137.3 233.4C124.8 245.9 124.8 266.2 137.3 278.7L297.3 438.7z"/></svg>';
     downBtn.type = 'button';
-    downBtn.addEventListener('click', function () {
+    downBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
       const next = li.nextElementSibling;
       if (next && next.matches('li[data-film-id]')) {
         watchlistUl.insertBefore(next, li);
@@ -541,9 +539,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const topBtn = document.createElement('button');
     topBtn.className = 'move-top-btn';
     topBtn.title = 'Move to Top';
-    topBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M342.6 105.4C330.1 92.9 309.8 92.9 297.3 105.4L137.3 265.4C124.8 277.9 124.8 298.2 137.3 310.7C149.8 323.2 170.1 323.2 182.6 310.7L320 173.3L457.4 310.6C469.9 323.1 490.2 323.1 502.7 310.6C515.2 298.1 515.2 277.8 502.7 265.3L342.7 105.3zM502.6 457.4L342.6 297.4C330.1 284.9 309.8 284.9 297.3 297.4L137.3 457.4C124.8 469.9 124.8 490.2 137.3 502.7C149.8 515.2 170.1 515.2 182.6 502.7L320 365.3L457.4 502.6C469.9 515.1 490.2 515.1 502.7 502.6C515.2 490.1 515.2 469.8 502.7 457.3z"/></svg>';
+    topBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M342.6 105.4C330.1 92.9 309.8 92.9 297.3 105.4L137.3 265.4C124.8 277.9 124.8 298.2 137.3 310.7C149.8 323.2 170.1 323.2 182.6 310.7L320 173.3L457.4 310.6C469.9 323.1 490.2 323.1 502.7 310.6C515.2 298.1 515.2 277.8 502.7 265.3L342.7 105.3zM502.6 457.4L342.6 297.4C330.1 284.9 309.8 284.9 297.3 297.4L137.3 457.4C124.8 469.9 124.8 490.2 137.3 502.7C149.8 515.2 170.1 515.2 182.6 502.7L320 365.3L457.4 502.6C469.9 515.1 490.2 515.1 502.7 502.6C515.2 490.1 515.2 469.8 502.7 457.3z"/></svg>';
     topBtn.type = 'button';
-    topBtn.addEventListener('click', function () {
+    topBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
       if (watchlistUl.firstElementChild !== li) {
         watchlistUl.insertBefore(li, watchlistUl.firstElementChild);
         updateOrderOnServer();
