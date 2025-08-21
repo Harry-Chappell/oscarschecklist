@@ -65,8 +65,16 @@
             "order": 2
         }
     ],
-    "favourite-categories": [],
-    "hidden-categories": [],
+    "favourite-categories": [
+        "best-picture",
+        "best-director",
+        "best-actor"
+    ],
+    "hidden-categories": [
+        "best-animated-feature",
+        "best-international-feature",
+        "best-sound"
+    ],
     "auto_remove_watched": true,
     "this_page_only": false,
     "compact_view": false

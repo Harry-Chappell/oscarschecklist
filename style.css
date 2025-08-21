@@ -729,6 +729,7 @@ span.total:before {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-left: 10px;
 }
 
 .circular-progress {
@@ -2824,9 +2825,9 @@ body:has(* .watchlist-cntr.auto_remove_watched) ul.nominations-list .watched but
     display: none;
 }
 
-/* body:not(.admin-bar) span.watchlist-reorder-btns {
+body:not(.admin-bar) .admin-only {
     display: none;   
-} */
+}
 
 
 .this_page_only button.move-up-btn,
@@ -2853,4 +2854,29 @@ span.watchlist-reorder-btns button {
 .watchlist-cntr.compact_view ul.watchlist > li:not(:hover) button.remove-from-watchlist-button, 
 .watchlist-cntr.compact_view ul.watchlist > li:not(:hover) span.watchlist-reorder-btns {
     opacity: 0;
+}
+
+
+.category-title button.category-fav, 
+.category-title button.category-hide {
+    background: rgba(0, 0, 0, 0);
+    display: flex;
+    height: 37.5px;
+    padding: 10px;
+    width: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: 0.1s;
+    margin: 0 0px -7.5px 0px;
+    cursor: pointer;
+}
+.category-title button.category-fav svg, 
+.category-title button.category-hide svg {
+    fill: var(--theme-palette-color-6);
+    width: 20px;
+}
+.category-title button.category-fav:hover svg, 
+.category-title button.category-hide:hover svg {
+    fill: var(--theme-palette-color-5);
 }
