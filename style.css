@@ -2824,9 +2824,9 @@ body:has(* .watchlist-cntr.auto_remove_watched) ul.nominations-list .watched but
     display: none;
 }
 
-body:not(.admin-bar) span.watchlist-reorder-btns {
+/* body:not(.admin-bar) span.watchlist-reorder-btns {
     display: none;   
-}
+} */
 
 
 .this_page_only button.move-up-btn,
