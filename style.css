@@ -2880,3 +2880,40 @@ span.watchlist-reorder-btns button {
 .category-title button.hidden-btn:hover svg {
     fill: var(--theme-palette-color-5);
 }
+
+
+
+
+
+.awards-category.favourite {
+    order: -2;
+}
+.awards-category.hidden-category {
+    order: 999;
+    opacity: 0.5;
+    margin: 0;
+}
+.awards-category.hidden-category .category-title {
+    margin: 0;
+}
+.awards-category.hidden-category ul.nominations-list {
+    display: none;
+}
+.awards-category.favourite button.favourite-btn svg,
+.awards-category.hidden-category button.hidden-btn svg {
+    fill: var(--theme-palette-color-8);
+}
+.awards-category.favourite button.favourite-btn:before,
+.awards-category.hidden-category button.hidden-btn:before {
+    content: "";
+    background: var(--theme-palette-color-4);
+    height: 40px;
+    aspect-ratio: 1;
+    z-index: -1;
+    position: absolute;
+    border-radius: 100%;
+}
+.awards-category.favourite button.hidden-btn,
+.awards-category.hidden-category button.favourite-btn {
+    display: none;
+}
