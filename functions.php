@@ -5,6 +5,9 @@ if (! defined('WP_DEBUG')) {
 add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style( 'my-style', get_stylesheet_directory_uri() . '/style.css', array(), date('ymdhis'), 'all' ); // Inside a child theme
     wp_enqueue_script( 'my-scripts', get_stylesheet_directory_uri() . '/scripts.js', array(), date('ymdhis'), true ); // Inside a child theme, load in footer
+    wp_localize_script('my-scripts', 'OscarsChecklist', [
+        'userId' => get_current_user_id()
+    ]);
 });
 
 
@@ -1460,3 +1463,48 @@ add_action('wp_ajax_aggregate_watched_dates', function() {
 
 
 require_once get_stylesheet_directory() . '/watchlist/watchlist.php';
+
+// === AJAX: Get user data as JSON ===
+add_action('wp_ajax_get_user_data', 'oscars_get_user_data');
+add_action('wp_ajax_nopriv_get_user_data', 'oscars_get_user_data');
+function oscars_get_user_data() {
+    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    if (!$user_id) {
+        wp_send_json_error(['error' => 'No user_id provided']);
+    }
+    $file = get_user_meta_json_path($user_id);
+    if (!file_exists($file)) {
+        wp_send_json_error(['error' => 'User file not found']);
+    }
+    $json = file_get_contents($file);
+    wp_send_json(json_decode($json, true));
+}
+
+// === AJAX: Update category favourite/hidden ===
+add_action('wp_ajax_update_category', 'oscars_update_category');
+add_action('wp_ajax_nopriv_update_category', 'oscars_update_category');
+function oscars_update_category() {
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    $category_slug = isset($_POST['category_slug']) ? sanitize_text_field($_POST['category_slug']) : '';
+    $action = isset($_POST['category_action']) ? sanitize_text_field($_POST['category_action']) : '';
+    $is_adding = isset($_POST['is_adding']) ? filter_var($_POST['is_adding'], FILTER_VALIDATE_BOOLEAN) : false;
+    if (!$user_id || !$category_slug || !in_array($action, ['favourite', 'hidden-category'])) {
+        wp_send_json_error(['error' => 'Invalid parameters']);
+    }
+    $file = get_user_meta_json_path($user_id);
+    if (!file_exists($file)) {
+        wp_send_json_error(['error' => 'User file not found']);
+    }
+    $data = json_decode(file_get_contents($file), true);
+    $key = $action === 'favourite' ? 'favourite-categories' : 'hidden-categories';
+    if (!isset($data[$key])) $data[$key] = [];
+    if ($is_adding) {
+        if (!in_array($category_slug, $data[$key])) {
+            $data[$key][] = $category_slug;
+        }
+    } else {
+        $data[$key] = array_values(array_diff($data[$key], [$category_slug]));
+    }
+    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    wp_send_json_success(['data' => $data]);
+}

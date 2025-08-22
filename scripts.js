@@ -476,6 +476,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
 
+
+
+    
+    // Function to handle favourite and hidden buttons
+    function handleCategoryButtons() {
+        document.querySelectorAll('.favourite-btn, .hidden-btn').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                const categoryElement = button.closest('.awards-category');
+                const categorySlug = categoryElement.getAttribute('data-category-slug');
+                const action = button.classList.contains('favourite-btn') ? 'favourite' : 'hidden-category';
+                const isAdding = !categoryElement.classList.contains(action);
+                const userId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
+                console.log('[CategoryBtn] Clicked:', {categoryElement, categorySlug, action, isAdding, userId, button});
+                if (!userId) {
+                    console.error('[CategoryBtn] User ID not found.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('action', 'update_category');
+                formData.append('user_id', userId);
+                formData.append('category_slug', categorySlug);
+                formData.append('category_action', action);
+                formData.append('is_adding', isAdding);
+
+                fetch('/wp-admin/admin-ajax.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    console.log('[CategoryBtn] AJAX response:', response);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('[CategoryBtn] AJAX data:', data);
+                    if (!data.success) {
+                        throw new Error('Failed to update category');
+                    }
+                    categoryElement.classList.toggle(action, isAdding);
+                })
+                .catch(error => {
+                    console.error('[CategoryBtn] Error:', error);
+                });
+            });
+        });
+    }
+
+    // Function to initialize classes on page load
+    function initializeCategoryClasses() {
+        const userId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
+        console.log('[InitCatClasses] userId:', userId);
+        if (!userId) {
+            console.error('[InitCatClasses] User ID not found.');
+            return;
+        }
+        fetch(`/wp-admin/admin-ajax.php?action=get_user_data&user_id=${userId}`)
+            .then(response => {
+                console.log('[InitCatClasses] AJAX response:', response);
+                return response.json();
+            })
+            .then(userData => {
+                console.log('[InitCatClasses] userData:', userData);
+                if (!userData || !userData['favourite-categories']) return;
+                document.querySelectorAll('.awards-category').forEach(function (categoryElement) {
+                    const categorySlug = categoryElement.getAttribute('data-category-slug');
+                    if (userData['favourite-categories'] && userData['favourite-categories'].includes(categorySlug)) {
+                        categoryElement.classList.add('favourite');
+                        console.log(`[InitCatClasses] Added .favourite to`, categoryElement);
+                    }
+                    if (userData['hidden-categories'] && userData['hidden-categories'].includes(categorySlug)) {
+                        categoryElement.classList.add('hidden-category');
+                        console.log(`[InitCatClasses] Added .hidden-category to`, categoryElement);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('[InitCatClasses] Error fetching user data:', error);
+            });
+    }
+
+    // Initialize the buttons and classes
+    handleCategoryButtons();
+    initializeCategoryClasses();
+
+
     // Initialize watch buttons and TOC update
     handleWatchButtons();
     updateTOC();
@@ -543,3 +630,7 @@ if (navigator.userAgent.includes("Safari") && !navigator.userAgent.includes("Chr
     {
     document.documentElement.classList.add("safari-desktop");
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+ 
+});

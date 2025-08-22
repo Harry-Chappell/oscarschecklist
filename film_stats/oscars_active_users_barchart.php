@@ -14,7 +14,7 @@ function oscars_active_users_barchart_shortcode($atts = []) {
     ], $atts);
     $uid = uniqid('oscars-active-users-barchart-');
     $today = new DateTime();
-    $start = new DateTime('2025-06-16');
+    $start = new DateTime('2025-08-08');
     $interval_days = $start->diff($today)->days;
     $timeframe = isset($atts['timeframe']) && $atts['timeframe'] !== '' ? intval($atts['timeframe']) : $interval_days;
     if ($timeframe < 1) $timeframe = 1;
