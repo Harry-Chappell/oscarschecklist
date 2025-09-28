@@ -176,6 +176,38 @@ function convertNominationToWatchlistItem(nominationLi) {
   span.textContent = titleText;
   li.appendChild(span);
 
+    // Create film title as a link if we can find a permalink, otherwise a span
+  // let titleHref = '';
+  // if (filmNameEl) {
+  //   const anchorInName = filmNameEl.querySelector('a');
+  //   if (anchorInName && anchorInName.href) {
+  //     titleHref = anchorInName.href;
+  //   } else {
+  //     const h3Anchor = filmNameEl.querySelector('h3 a');
+  //     if (h3Anchor && h3Anchor.href) titleHref = h3Anchor.href;
+  //   }
+  // }
+  // // fallback: any anchor inside the nomination li (poster link, etc.)
+  // if (!titleHref) {
+  //   const anyAnchor = nominationLi.querySelector('a[href]');
+  //   if (anyAnchor && anyAnchor.href) titleHref = anyAnchor.href;
+  // }
+
+  // if (titleHref) {
+  //   const a = document.createElement('a');
+  //   a.className = 'film-title';
+  //   a.href = titleHref;
+  //   a.textContent = titleText || titleHref;
+  //   li.appendChild(a);
+  // } else {
+  //   const span = document.createElement('span');
+  //   span.className = 'film-title';
+  //   span.textContent = titleText;
+  //   li.appendChild(span);
+  // }
+
+
+
   // --- Watched button (new SVGs) ---
   const watchedBtn = document.createElement('button');
   watchedBtn.type = 'button';

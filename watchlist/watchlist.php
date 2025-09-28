@@ -218,7 +218,11 @@ function oscars_watchlist_shortcode() {
         $li_style = $order !== '' ? ' style="--order: ' . esc_attr($order) . ';"' : '';
         $output .= '<li class="' . ( $is_watched ? 'watched' : 'unwatched' ) . '" data-film-id="' . esc_attr( $film_id ) . '"' . $li_style . '>';
         $output .= $poster_html;
-        $output .= '<span class="film-title">' . esc_html( $film_term->name ) . '</span>';
+        $term_link = get_term_link( $film_term );
+        if ( is_wp_error( $term_link ) ) {
+            $term_link = '#';
+        }
+        $output .= '<a class="film-title" href="' . esc_url( $term_link ) . '">' . esc_html( $film_term->name ) . '</a>';
         $output .= $buttons;
         $output .= '</li>';
     }

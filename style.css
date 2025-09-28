@@ -393,7 +393,7 @@ body.hide-watched-films .awards-category.complete {
     padding: 15px;
     width: calc(100% + 20px);
     translate: -10px;
-    background: rgb(255 255 255 / 75%);
+    background: rgb(255 255 255 / 90%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     display: flex;
@@ -2447,10 +2447,10 @@ ul.nominations-list:has(>.winner) button.mark-as-watchlist-button {
         display: none;
     }
 } 
-.watchlist-cntr:not(.compact_view) {
+/* .watchlist-cntr:not(.compact_view) {
     max-height: 400px;
     overflow: scroll;
-}
+} */
 ul.watchlist > li {
     background: var(--theme-palette-color-7);
     /* margin-bottom: 1em; */
@@ -2657,20 +2657,20 @@ details.watchlist-settings[open] {
 }
 
 
-.watchlist-cntr.compact_view ul.watchlist {
+.watchlist-cntr ul.watchlist {
     gap: 0;
 }
-.watchlist-cntr.compact_view ul.watchlist > li,
-.watchlist-cntr.compact_view ul.watchlist > li.watched {
+.watchlist-cntr ul.watchlist > li,
+.watchlist-cntr ul.watchlist > li.watched {
     background: none;
     border-width: 0 0 1px 0;
     border-radius: 0;
     border-color: var(--theme-palette-color-7);
 }
-.watchlist-cntr.compact_view ul.watchlist > li img {
+.watchlist-cntr ul.watchlist > li img {
     display: none;
 }
-.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"] {
+.watchlist-cntr ul.watchlist > li button[title="Watched"] {
     height: 30px;
     border-radius: 0;
     border: 0;
@@ -2680,33 +2680,33 @@ details.watchlist-settings[open] {
     border-radius: 3px;
     order: -2;
 }
-.watchlist-cntr.compact_view ul.watchlist > li.watched button[title="Watched"] {
+.watchlist-cntr ul.watchlist > li.watched button[title="Watched"] {
     /* background: var(--theme-palette-color-10); */
     /* opacity: 0.3; */
 }
-.watchlist-cntr.compact_view ul.watchlist > li.watched button[title="Watched"] svg {
+.watchlist-cntr ul.watchlist > li.watched button[title="Watched"] svg {
     /* fill: var(--theme-palette-color-4); */
 }   
-.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button {
+.watchlist-cntr ul.watchlist > li button.remove-from-watchlist-button {
     position: initial;
     border-radius: 0;
     border: 0;
     height: 30px;
     width: 20px;
 }
-/* .watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover,
-.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"]:hover {
+/* .watchlist-cntr ul.watchlist > li button.remove-from-watchlist-button:hover,
+.watchlist-cntr ul.watchlist > li button[title="Watched"]:hover {
     background: var(--theme-palette-color-7);
 }
-.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button svg,
-.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"] svg {
+.watchlist-cntr ul.watchlist > li button.remove-from-watchlist-button svg,
+.watchlist-cntr ul.watchlist > li button[title="Watched"] svg {
     fill: var(--theme-palette-color-6);
 }
-.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover svg,
-.watchlist-cntr.compact_view ul.watchlist > li button[title="Watched"]:hover svg {
+.watchlist-cntr ul.watchlist > li button.remove-from-watchlist-button:hover svg,
+.watchlist-cntr ul.watchlist > li button[title="Watched"]:hover svg {
     fill: var(--theme-palette-color-5);
 } */
-span.film-title {
+.watchlist-cntr .film-title {
     padding-top: 2px;
     margin-right: auto;
 }
@@ -2847,12 +2847,12 @@ span.watchlist-reorder-btns button {
     border: 0px !important;
     cursor: pointer;
 }
-.watchlist-cntr.compact_view ul.watchlist > li button.remove-from-watchlist-button:hover, 
-.watchlist-cntr.compact_view ul.watchlist > li span.watchlist-reorder-btns button:hover {
+.watchlist-cntr ul.watchlist > li button.remove-from-watchlist-button:hover, 
+.watchlist-cntr ul.watchlist > li span.watchlist-reorder-btns button:hover {
     background-color: var(--theme-palette-color-8);
 }
-.watchlist-cntr.compact_view ul.watchlist > li:not(:hover) button.remove-from-watchlist-button, 
-.watchlist-cntr.compact_view ul.watchlist > li:not(:hover) span.watchlist-reorder-btns {
+.watchlist-cntr ul.watchlist > li:not(:hover) button.remove-from-watchlist-button, 
+.watchlist-cntr ul.watchlist > li:not(:hover) span.watchlist-reorder-btns {
     opacity: 0;
 }
 
@@ -2873,12 +2873,12 @@ span.watchlist-reorder-btns button {
 }
 .category-title button.favourite-btn svg, 
 .category-title button.hidden-btn svg {
-    fill: var(--theme-palette-color-6);
+    fill: var(--theme-palette-color-5);
     width: 20px;
 }
 .category-title button.favourite-btn:hover svg, 
 .category-title button.hidden-btn:hover svg {
-    fill: var(--theme-palette-color-5);
+    fill: var(--theme-palette-color-4);
 }
 
 
@@ -2901,12 +2901,12 @@ span.watchlist-reorder-btns button {
 }
 .awards-category.favourite button.favourite-btn svg,
 .awards-category.hidden-category button.hidden-btn svg {
-    fill: var(--theme-palette-color-8);
+    fill: var(--theme-palette-color-2);
 }
 .awards-category.favourite button.favourite-btn:before,
 .awards-category.hidden-category button.hidden-btn:before {
     content: "";
-    background: var(--theme-palette-color-6);
+    /* background: var(--theme-palette-color-6); */
     height: 40px;
     aspect-ratio: 1;
     z-index: -1;
@@ -2915,9 +2915,15 @@ span.watchlist-reorder-btns button {
 }
 .awards-category.favourite button.favourite-btn:hover:before,
 .awards-category.hidden-category button.hidden-btn:hover:before {
-    background: var(--theme-palette-color-3);
+    /* background: var(--theme-palette-color-3); */
 }
 .awards-category.favourite button.hidden-btn,
 .awards-category.hidden-category button.favourite-btn {
+    display: none;
+}
+
+
+
+label#label-compact_view {
     display: none;
 }
