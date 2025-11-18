@@ -45,10 +45,12 @@ ul.nominations-list > li.watched {
     border-color: var(--theme-palette-color-10);
     background-color: var(--theme-palette-color-11);
 }
-ul.nominations-list > li.winner {
+ul.nominations-list > li.winner,
+ul.nominees-nominations-list > li.winner {
     order: -1;
 }
-ul.nominations-list > li.winner:before {
+ul.nominations-list > li.winner:before,
+ul.nominees-nominations-list > li.winner:before {
     content: "";
     height: 45px;
     width: 30px;
@@ -1751,6 +1753,12 @@ ul.nominees-nominations-list li {
     gap: 10px;
     position: relative;
 }
+@media screen and (max-width: 689px) {
+    ul.nominees-nominations-list li {
+        padding-right: 50px;
+    }
+}
+
 ul.nominees-nominations-list img {
     max-height: 110px;
     aspect-ratio: 80 / 117;
@@ -1823,7 +1831,7 @@ ul.nominees-nominations-list .title {
 ul.nominees-nominations-list button {
     translate: 0% 0%;
     z-index: 2;
-    margin: auto 10px auto auto;
+    margin: auto 10px 20px auto;
 }
 
 ul.nominees-nominations-list button {
