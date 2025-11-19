@@ -11,7 +11,7 @@ function oscars_user_count_above_watched_shortcode($atts = []) {
     $default_films = intval($atts['films']);
     ob_start();
     ?>
-    <div id="oscars-user-count-above-watched-wrap">
+    <div id="oscars-user-count-above-watched-wrap" class="loading">
         <span class="large" id="oscars-user-count-above-watched-result"></span>
         <span class="small" id="oscars-user-count-above-watched-percent"></span>
         <label>Watched more than <input type="number" id="oscars-user-count-above-watched-input" value="<?php echo esc_attr($default_films); ?>" min="0"> films.</label>
@@ -21,6 +21,7 @@ function oscars_user_count_above_watched_shortcode($atts = []) {
         var input = document.getElementById('oscars-user-count-above-watched-input');
         var result = document.getElementById('oscars-user-count-above-watched-result');
         var percent = document.getElementById('oscars-user-count-above-watched-percent');
+        var wrap = document.getElementById('oscars-user-count-above-watched-wrap');
         function updateCount() {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', window.location.href, true);
@@ -39,6 +40,7 @@ function oscars_user_count_above_watched_shortcode($atts = []) {
                         } else {
                             percent.textContent = '';
                         }
+                        wrap.classList.remove('loading');
                     }
                 }
             };

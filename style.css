@@ -2939,7 +2939,7 @@ label#label-compact_view {
 
 
 
-div:has(>div#oscars-user-count-above-watched-wrap > span:empty) {
+div:has(>div.loading) {
     justify-content: flex-end !important;
     height: 100%;
 }
@@ -2952,8 +2952,8 @@ div:has(>div#oscars-user-count-above-watched-wrap > span:empty) {
     }
 }
 
-div#oscars-user-count-above-watched-wrap:has(span:empty):before,
-div#oscars-user-count-active-days-wrap:has(span:empty):before {
+
+div.loading:before {
     content: "";
     background: conic-gradient(
         from 0deg,

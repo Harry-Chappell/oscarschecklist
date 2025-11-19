@@ -35,7 +35,7 @@ function oscars_user_count_active_days_shortcode($atts = []) {
     if ($default_timeframe < 1) $default_timeframe = $interval_timeframe;
     ob_start();
     ?>
-    <div id="oscars-user-count-active-days-wrap">
+    <div id="oscars-user-count-active-days-wrap" class="loading">
         <span class="large" id="oscars-user-count-active-days-result"></span>
         <span class="small" id="oscars-user-count-active-days-percent"></span>
         <label>Active in last <input type="number" id="oscars-user-count-active-days-input" value="<?php echo esc_attr($default_timeframe); ?>" min="1">
@@ -53,6 +53,7 @@ function oscars_user_count_active_days_shortcode($atts = []) {
         var intervalSelect = document.getElementById('oscars-count-active-users-interval');
         var result = document.getElementById('oscars-user-count-active-days-result');
         var percent = document.getElementById('oscars-user-count-active-days-percent');
+        var wrap = document.getElementById('oscars-user-count-active-days-wrap');
         function updateCount() {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', window.location.href, true);
@@ -71,6 +72,7 @@ function oscars_user_count_active_days_shortcode($atts = []) {
                         } else {
                             percent.textContent = '';
                         }
+                        wrap.classList.remove('loading');
                     }
                 }
             };
