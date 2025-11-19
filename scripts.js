@@ -607,9 +607,12 @@ document.querySelectorAll('body:not(.logged-in) .buttons-cntr').forEach(function
     });
 });
 
-document.querySelector('.dismiss').addEventListener('click', function() {
-    document.querySelector('body').classList.add('close-logged-in-notice');
-});
+const dismissButton = document.querySelector('.dismiss');
+if (dismissButton) {
+    dismissButton.addEventListener('click', function() {
+        document.querySelector('body').classList.add('close-logged-in-notice');
+    });
+}
 
 
 
@@ -631,6 +634,230 @@ if (navigator.userAgent.includes("Safari") && !navigator.userAgent.includes("Chr
     document.documentElement.classList.add("safari-desktop");
 }
 
+/**
+ * User Data Sync Manager
+ * Syncs user JSON files from server to LocalStorage
+ * Only downloads when server file is newer than cached version
+ */
+async function syncUserDataFiles() {
+    try {
+        // Get current user ID from window object
+        const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
+        
+        if (!currentUserId) {
+            console.log('[UserDataSync] No user logged in, skipping data sync');
+            return;
+        }
+
+        // Get friend IDs from the DOM (they're already rendered in the friends list)
+        const friendIds = getUserFriendIdsFromDOM();
+        
+        // Combine current user and friends
+        const allUserIds = [currentUserId, ...friendIds];
+        
+        console.log(`[UserDataSync] Starting sync for ${allUserIds.length} users (user ${currentUserId} + ${friendIds.length} friends: [${friendIds.join(', ')}])`);
+        
+        // Sync each user's data files
+        for (const userId of allUserIds) {
+            await syncUserFile(userId);
+        }
+        
+        console.log('[UserDataSync] Sync completed successfully');
+        
+    } catch (error) {
+        console.error('[UserDataSync] Error syncing user data:', error);
+    }
+}
+
+/**
+ * Get friend IDs from the DOM
+ * Extracts user IDs from the rendered friends list by parsing onclick attributes
+ */
+function getUserFriendIdsFromDOM() {
+    const friendItems = document.querySelectorAll('#friends-list .friend-item');
+    const friendIds = [];
+    
+    console.log(`[UserDataSync] Found ${friendItems.length} friend items in DOM`);
+    
+    friendItems.forEach((item, index) => {
+        // Friends have onclick="updateTOC(123)" where 123 is the user ID
+        const onclick = item.getAttribute('onclick');
+        if (onclick) {
+            const match = onclick.match(/updateTOC\((\d+)\)/);
+            if (match && match[1]) {
+                const userId = parseInt(match[1]);
+                friendIds.push(userId);
+                console.log(`[UserDataSync] Found friend ID: ${userId} from onclick attribute`);
+            }
+        }
+    });
+    
+    console.log(`[UserDataSync] Extracted ${friendIds.length} friend IDs: [${friendIds.join(', ')}]`);
+    return friendIds;
+}
+
+/**
+ * Sync individual user file
+ * Downloads file from server and stores in LocalStorage with timestamp tracking
+ */
+async function syncUserFile(userId, suffix = '') {
+    const filename = `user_${userId}${suffix}.json`;
+    const fileUrl = `/wp-content/uploads/user_meta/${filename}`;
+    const localStorageKey = `userdata_${userId}${suffix}`;
+    
+    try {
+        // Fetch file
+        const response = await fetch(fileUrl, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            console.log(`[UserDataSync] ⚠ File not found: ${filename}`);
+            return;
+        }
+        
+        // Get server last modified timestamp from headers
+        const serverLastModified = response.headers.get('Last-Modified');
+        const serverTimestamp = serverLastModified ? new Date(serverLastModified).getTime() : Date.now();
+        
+        // Check if we have a cached version
+        const cachedData = localStorage.getItem(localStorageKey);
+        let shouldDownload = true;
+        
+        if (cachedData) {
+            try {
+                // Parse cached data to get the stored timestamp (we store it in the data itself now)
+                const cached = JSON.parse(cachedData);
+                const cachedTimestamp = cached._cachedTimestamp || 0;
+                
+                // Only download if server file is newer
+                if (serverTimestamp <= cachedTimestamp) {
+                    console.log(`[UserDataSync] ✓ ${filename} is up to date`);
+                    shouldDownload = false;
+                }
+            } catch (e) {
+                console.log(`[UserDataSync] Invalid cached data for ${filename}, will re-download`);
+            }
+        }
+        
+        if (shouldDownload) {
+            console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
+            
+            const data = await response.text();
+            
+            // Verify it's valid JSON before storing
+            let jsonData;
+            try {
+                jsonData = JSON.parse(data);
+            } catch (e) {
+                console.error(`[UserDataSync] ✗ Invalid JSON in ${filename}:`, e);
+                return;
+            }
+            
+            // Add timestamp to the data itself (simpler than separate meta file)
+            jsonData._cachedTimestamp = serverTimestamp;
+            jsonData._cachedDate = new Date().toISOString();
+            
+            // Store in LocalStorage
+            const dataToStore = JSON.stringify(jsonData);
+            localStorage.setItem(localStorageKey, dataToStore);
+            
+            console.log(`[UserDataSync] ✓ ${filename} cached (${(dataToStore.length / 1024).toFixed(2)} KB, modified: ${new Date(serverTimestamp).toLocaleString()})`);
+        }
+        
+    } catch (error) {
+        console.error(`[UserDataSync] ✗ Error syncing ${filename}:`, error);
+    }
+}
+
+/**
+ * Get user data from LocalStorage
+ * Helper function to retrieve cached user data
+ * @param {number} userId - The user ID
+ * @param {string} suffix - Optional suffix like '_pred_fav'
+ * @returns {object|null} User data object or null if not found
+ */
+function getUserDataFromCache(userId, suffix = '') {
+    const localStorageKey = `userdata_${userId}${suffix}`;
+    const cachedData = localStorage.getItem(localStorageKey);
+    
+    if (!cachedData) {
+        console.log(`[UserDataSync] No cached data for ${localStorageKey}`);
+        return null;
+    }
+    
+    try {
+        const data = JSON.parse(cachedData);
+        // Remove our internal cache metadata before returning
+        delete data._cachedTimestamp;
+        delete data._cachedDate;
+        return data;
+    } catch (error) {
+        console.error(`[UserDataSync] Error parsing cached data for user ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Clear all cached user data
+ * Utility function for debugging or resetting
+ * @returns {array} Array of removed keys
+ */
+function clearUserDataCache() {
+    const keys = Object.keys(localStorage);
+    const removedKeys = [];
+    
+    keys.forEach(key => {
+        if (key.startsWith('userdata_')) {
+            localStorage.removeItem(key);
+            removedKeys.push(key);
+        }
+    });
+    
+    console.log(`[UserDataSync] Cleared ${removedKeys.length} cached user data files: [${removedKeys.join(', ')}]`);
+    return removedKeys;
+}
+
+/**
+ * Get info about all cached user data
+ * Utility function to see what's cached
+ * @returns {array} Array of cache info objects
+ */
+function getCacheInfo() {
+    const keys = Object.keys(localStorage);
+    const cacheInfo = [];
+    
+    keys.forEach(key => {
+        if (key.startsWith('userdata_')) {
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    cacheInfo.push({
+                        key: key,
+                        size: (data.length / 1024).toFixed(2) + ' KB',
+                        cachedDate: parsed._cachedDate || 'unknown',
+                        username: parsed.username || 'unknown'
+                    });
+                } catch (e) {
+                    cacheInfo.push({
+                        key: key,
+                        size: (data.length / 1024).toFixed(2) + ' KB',
+                        error: 'Invalid JSON'
+                    });
+                }
+            }
+        }
+    });
+    
+    console.table(cacheInfo);
+    return cacheInfo;
+}
+
+// Initialize sync on page load
 document.addEventListener('DOMContentLoaded', function () {
- 
+    syncUserDataFiles();
 });
+
+
+
