@@ -93,7 +93,7 @@ function load_user_meta_json($user_id) {
         $updated = true;
     }
     if ($updated) {
-        file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
+        file_put_contents($file_path, wp_json_encode($data));
     }
     return $data + [
         'watched' => [],
@@ -112,11 +112,20 @@ function load_user_meta_json($user_id) {
 
 function save_user_meta_json($user_id, $data) {
     $file_path = get_user_meta_json_path($user_id);
-    file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
+    file_put_contents($file_path, wp_json_encode($data));
 }
 function save_user_pred_fav_json($user_id, $data) {
     $file_path = get_user_pred_fav_json_path($user_id);
-    file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
+    // Only include specific fields for pred_fav files
+    $filtered_data = array_intersect_key($data, array_flip([
+        'username',
+        'correct-predictions',
+        'incorrect-predictions',
+        'correct-prediction-rate',
+        'predictions',
+        'favourites'
+    ]));
+    file_put_contents($file_path, wp_json_encode($filtered_data));
 }
 
 function oscars_update_film_stats_json($film_id, $action) {
@@ -136,7 +145,7 @@ function oscars_update_film_stats_json($film_id, $action) {
             break;
         }
     }
-    file_put_contents($output_path, json_encode($films, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    file_put_contents($output_path, json_encode($films));
 }
 
 function markAsWatched() {
@@ -252,7 +261,7 @@ function update_watched_by_day_json($film_id) {
     }
 
     // Save back to file
-    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    file_put_contents($file_path, json_encode($data));
 }
 
 function markAsFav()
@@ -1417,7 +1426,7 @@ function aggregate_watched_dates_to_by_day_json() {
     }
 
     // Save back to file
-    file_put_contents($watched_by_day_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    file_put_contents($watched_by_day_path, json_encode($data));
 }
 
 function watched_by_day_admin_button() {
@@ -1515,6 +1524,6 @@ function oscars_update_category() {
     } else {
         $data[$key] = array_values(array_diff($data[$key], [$category_slug]));
     }
-    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    file_put_contents($file, json_encode($data));
     wp_send_json_success(['data' => $data]);
 }
