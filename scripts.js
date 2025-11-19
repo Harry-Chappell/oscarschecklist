@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const action = button.classList.contains('favourite-btn') ? 'favourite' : 'hidden-category';
                 const isAdding = !categoryElement.classList.contains(action);
                 const userId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
-                console.log('[CategoryBtn] Clicked:', {categoryElement, categorySlug, action, isAdding, userId, button});
+                // console.log('[CategoryBtn] Clicked:', {categoryElement, categorySlug, action, isAdding, userId, button});
                 if (!userId) {
                     console.error('[CategoryBtn] User ID not found.');
                     return;
@@ -508,11 +508,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: formData
                 })
                 .then(response => {
-                    console.log('[CategoryBtn] AJAX response:', response);
+                    // console.log('[CategoryBtn] AJAX response:', response);
                     return response.json();
                 })
                 .then(data => {
-                    console.log('[CategoryBtn] AJAX data:', data);
+                    // console.log('[CategoryBtn] AJAX data:', data);
                     if (!data.success) {
                         throw new Error('Failed to update category');
                     }
@@ -528,28 +528,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to initialize classes on page load
     function initializeCategoryClasses() {
         const userId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
-        console.log('[InitCatClasses] userId:', userId);
+        // console.log('[InitCatClasses] userId:', userId);
         if (!userId) {
             console.error('[InitCatClasses] User ID not found.');
             return;
         }
         fetch(`/wp-admin/admin-ajax.php?action=get_user_data&user_id=${userId}`)
             .then(response => {
-                console.log('[InitCatClasses] AJAX response:', response);
+                // console.log('[InitCatClasses] AJAX response:', response);
                 return response.json();
             })
             .then(userData => {
-                console.log('[InitCatClasses] userData:', userData);
+                // console.log('[InitCatClasses] userData:', userData);
                 if (!userData || !userData['favourite-categories']) return;
                 document.querySelectorAll('.awards-category').forEach(function (categoryElement) {
                     const categorySlug = categoryElement.getAttribute('data-category-slug');
                     if (userData['favourite-categories'] && userData['favourite-categories'].includes(categorySlug)) {
                         categoryElement.classList.add('favourite');
-                        console.log(`[InitCatClasses] Added .favourite to`, categoryElement);
+                        // console.log(`[InitCatClasses] Added .favourite to`, categoryElement);
                     }
                     if (userData['hidden-categories'] && userData['hidden-categories'].includes(categorySlug)) {
                         categoryElement.classList.add('hidden-category');
-                        console.log(`[InitCatClasses] Added .hidden-category to`, categoryElement);
+                        // console.log(`[InitCatClasses] Added .hidden-category to`, categoryElement);
                     }
                 });
             })
@@ -622,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('ct-register')) {
             event.preventDefault();
-            console.log('Redirecting to /register');
+            // console.log('Redirecting to /register');
             window.location.href = '/register';
         }
     });
@@ -645,7 +645,7 @@ async function syncUserDataFiles() {
         const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
         
         if (!currentUserId) {
-            console.log('[UserDataSync] No user logged in, skipping data sync');
+            // console.log('[UserDataSync] No user logged in, skipping data sync');
             return;
         }
 
@@ -655,14 +655,14 @@ async function syncUserDataFiles() {
         // Combine current user and friends
         const allUserIds = [currentUserId, ...friendIds];
         
-        console.log(`[UserDataSync] Starting sync for ${allUserIds.length} users (user ${currentUserId} + ${friendIds.length} friends: [${friendIds.join(', ')}])`);
+        // console.log(`[UserDataSync] Starting sync for ${allUserIds.length} users (user ${currentUserId} + ${friendIds.length} friends: [${friendIds.join(', ')}])`);
         
         // Sync each user's data files
         for (const userId of allUserIds) {
             await syncUserFile(userId);
         }
         
-        console.log('[UserDataSync] Sync completed successfully');
+        // console.log('[UserDataSync] Sync completed successfully');
         
     } catch (error) {
         console.error('[UserDataSync] Error syncing user data:', error);
@@ -677,7 +677,7 @@ function getUserFriendIdsFromDOM() {
     const friendItems = document.querySelectorAll('#friends-list .friend-item');
     const friendIds = [];
     
-    console.log(`[UserDataSync] Found ${friendItems.length} friend items in DOM`);
+    // console.log(`[UserDataSync] Found ${friendItems.length} friend items in DOM`);
     
     friendItems.forEach((item, index) => {
         // Friends have onclick="updateTOC(123)" where 123 is the user ID
@@ -687,12 +687,12 @@ function getUserFriendIdsFromDOM() {
             if (match && match[1]) {
                 const userId = parseInt(match[1]);
                 friendIds.push(userId);
-                console.log(`[UserDataSync] Found friend ID: ${userId} from onclick attribute`);
+                // console.log(`[UserDataSync] Found friend ID: ${userId} from onclick attribute`);
             }
         }
     });
     
-    console.log(`[UserDataSync] Extracted ${friendIds.length} friend IDs: [${friendIds.join(', ')}]`);
+    // console.log(`[UserDataSync] Extracted ${friendIds.length} friend IDs: [${friendIds.join(', ')}]`);
     return friendIds;
 }
 
@@ -712,7 +712,7 @@ async function syncUserFile(userId, suffix = '') {
         });
         
         if (!response.ok) {
-            console.log(`[UserDataSync] ⚠ File not found: ${filename}`);
+            // console.log(`[UserDataSync] ⚠ File not found: ${filename}`);
             return;
         }
         
@@ -732,16 +732,16 @@ async function syncUserFile(userId, suffix = '') {
                 
                 // Only download if server file is newer
                 if (serverTimestamp <= cachedTimestamp) {
-                    console.log(`[UserDataSync] ✓ ${filename} is up to date`);
+                    // console.log(`[UserDataSync] ✓ ${filename} is up to date`);
                     shouldDownload = false;
                 }
             } catch (e) {
-                console.log(`[UserDataSync] Invalid cached data for ${filename}, will re-download`);
+                // console.log(`[UserDataSync] Invalid cached data for ${filename}, will re-download`);
             }
         }
         
         if (shouldDownload) {
-            console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
+            // console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
             
             const data = await response.text();
             
@@ -762,7 +762,7 @@ async function syncUserFile(userId, suffix = '') {
             const dataToStore = JSON.stringify(jsonData);
             localStorage.setItem(localStorageKey, dataToStore);
             
-            console.log(`[UserDataSync] ✓ ${filename} cached (${(dataToStore.length / 1024).toFixed(2)} KB, modified: ${new Date(serverTimestamp).toLocaleString()})`);
+            // console.log(`[UserDataSync] ✓ ${filename} cached (${(dataToStore.length / 1024).toFixed(2)} KB, modified: ${new Date(serverTimestamp).toLocaleString()})`);
         }
         
     } catch (error) {
@@ -782,7 +782,7 @@ function getUserDataFromCache(userId, suffix = '') {
     const cachedData = localStorage.getItem(localStorageKey);
     
     if (!cachedData) {
-        console.log(`[UserDataSync] No cached data for ${localStorageKey}`);
+        // console.log(`[UserDataSync] No cached data for ${localStorageKey}`);
         return null;
     }
     
@@ -814,7 +814,7 @@ function clearUserDataCache() {
         }
     });
     
-    console.log(`[UserDataSync] Cleared ${removedKeys.length} cached user data files: [${removedKeys.join(', ')}]`);
+    // console.log(`[UserDataSync] Cleared ${removedKeys.length} cached user data files: [${removedKeys.join(', ')}]`);
     return removedKeys;
 }
 
@@ -854,9 +854,68 @@ function getCacheInfo() {
     return cacheInfo;
 }
 
+/**
+ * Apply watched status to film items from cached user data
+ * Checks if page has nomination shortcodes and applies 'it-works' class to watched films
+ */
+function applyWatchedStatusFromCache() {
+    // Detect whether the page has any nomination items
+    const hasNominations = document.querySelector('li[class*="film-id-"]');
+    
+    if (!hasNominations) {
+        console.log('[WatchedStatus] No nomination items found on this page, skipping');
+        return;
+    }
+
+    const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId)
+        ? OscarsChecklist.userId 
+        : null;
+
+    if (!currentUserId) {
+        console.log('[WatchedStatus] No user logged in');
+        return;
+    }
+
+    const userData = getUserDataFromCache(currentUserId);
+
+    if (!userData || !userData.watched) {
+        console.log('[WatchedStatus] No cached user data found');
+        return;
+    }
+
+    const watchedFilmIds = new Set();
+    userData.watched.forEach(film => {
+        if (film['film-id']) watchedFilmIds.add(film['film-id']);
+    });
+
+    console.log(`[WatchedStatus] Found ${watchedFilmIds.size} watched films in cache`);
+
+    const filmItems = document.querySelectorAll('li[class*="film-id-"]');
+    let appliedCount = 0;
+
+    filmItems.forEach(item => {
+        const classList = Array.from(item.classList);
+        const filmIdClass = classList.find(cls => cls.startsWith('film-id-'));
+
+        if (filmIdClass) {
+            const filmId = parseInt(filmIdClass.replace('film-id-', ''));
+            if (watchedFilmIds.has(filmId)) {
+                item.classList.add('it-works');
+                appliedCount++;
+            }
+        }
+    });
+
+    console.log(`[WatchedStatus] Applied 'it-works' class to ${appliedCount} watched films out of ${filmItems.length} total films`);
+}
+
 // Initialize sync on page load
-document.addEventListener('DOMContentLoaded', function () {
-    syncUserDataFiles();
+document.addEventListener('DOMContentLoaded', async function () {
+    // First, sync the data files
+    await syncUserDataFiles();
+    
+    // Then apply watched status from cache
+    applyWatchedStatusFromCache();
 });
 
 
