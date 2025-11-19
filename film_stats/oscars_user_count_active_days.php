@@ -8,13 +8,31 @@ function oscars_user_count_active_days_shortcode($atts = []) {
         'timeframe' => 0,
         'interval' =>  'day'
     ], $atts);
-    // Calculate default timeframe as days between June 16, 2025 and today
+    $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
+    
+    // Calculate default timeframe from June 16, 2025 to today based on interval
     $today = new DateTime();
     $start = new DateTime('2025-06-16');
-    $interval_days = $start->diff($today)->days;
-    $default_timeframe = isset($atts['timeframe']) && $atts['timeframe'] !== '' ? intval($atts['timeframe']) : $interval_days;
-    if ($default_timeframe < 1) $default_timeframe = $interval_days;
-    $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
+    $diff_days = $start->diff($today)->days;
+    
+    // Convert days to appropriate interval units
+    switch ($interval) {
+        case 'week':
+            $interval_timeframe = ceil($diff_days / 7);
+            break;
+        case 'month':
+            $interval_timeframe = $start->diff($today)->m + ($start->diff($today)->y * 12);
+            break;
+        case 'year':
+            $interval_timeframe = max(1, $start->diff($today)->y);
+            break;
+        default: // day
+            $interval_timeframe = $diff_days;
+            break;
+    }
+    
+    $default_timeframe = isset($atts['timeframe']) && $atts['timeframe'] !== '' ? intval($atts['timeframe']) : $interval_timeframe;
+    if ($default_timeframe < 1) $default_timeframe = $interval_timeframe;
     ob_start();
     ?>
     <div id="oscars-user-count-active-days-wrap">

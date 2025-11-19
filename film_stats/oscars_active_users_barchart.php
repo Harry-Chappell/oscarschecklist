@@ -8,17 +8,36 @@
  */
 function oscars_active_users_barchart_shortcode($atts = []) {
     $atts = shortcode_atts([
-        'timeframe' => 7,
+        'timeframe' => '',
         'interval' => 'day',
         'film_id' => ''
     ], $atts);
     $uid = uniqid('oscars-active-users-barchart-');
-    $today = new DateTime();
-    $start = new DateTime('2025-08-08');
-    $interval_days = $start->diff($today)->days;
-    $timeframe = isset($atts['timeframe']) && $atts['timeframe'] !== '' ? intval($atts['timeframe']) : $interval_days;
-    if ($timeframe < 1) $timeframe = 1;
     $interval = in_array(strtolower($atts['interval']), ['day','week','month','year']) ? strtolower($atts['interval']) : 'day';
+    
+    // Calculate default timeframe from June 16, 2025 to today
+    $today = new DateTime();
+    $start = new DateTime('2025-06-16');
+    $diff_days = $start->diff($today)->days;
+    
+    // Convert days to appropriate interval units
+    switch ($interval) {
+        case 'week':
+            $default_timeframe = ceil($diff_days / 7);
+            break;
+        case 'month':
+            $default_timeframe = $start->diff($today)->m + ($start->diff($today)->y * 12);
+            break;
+        case 'year':
+            $default_timeframe = max(1, $start->diff($today)->y);
+            break;
+        default: // day
+            $default_timeframe = $diff_days;
+            break;
+    }
+    
+    $timeframe = isset($atts['timeframe']) && $atts['timeframe'] !== '' ? intval($atts['timeframe']) : $default_timeframe;
+    if ($timeframe < 1) $timeframe = 1;
     $film_id = $atts['film_id'];
     ob_start();
     ?>
@@ -26,7 +45,7 @@ function oscars_active_users_barchart_shortcode($atts = []) {
         <h2>
             Users watched in the last
             <input type="number" id="<?php echo $uid; ?>-timeframe" value="<?php echo esc_attr($timeframe); ?>" min="1" max="365" style="width:60px">
-            <span>Days</span>
+            <span><?php echo ucfirst($interval) . 's'; ?></span>
         </h2>
     </div>
     <div class="oscars-active-users-barchart-wrapper" style="width:100%;">
@@ -40,11 +59,13 @@ function oscars_active_users_barchart_shortcode($atts = []) {
             var ctx = document.getElementById(uid).getContext('2d');
             var chart = null;
             var film_id = <?php echo json_encode($film_id); ?>;
+            var interval = <?php echo json_encode($interval); ?>;
             function fetchAndRenderChart() {
                 var timeframe = document.getElementById(uid+'-timeframe').value;
                 var data = new FormData();
                 data.append('action', 'oscars_active_users_barchart_ajax');
                 data.append('timeframe', timeframe);
+                data.append('interval', interval);
                 data.append('film_id', film_id);
                 fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                     method: 'POST',
@@ -97,6 +118,7 @@ add_shortcode('oscars_active_users_barchart', 'oscars_active_users_barchart_shor
 add_action('wp_ajax_oscars_active_users_barchart_ajax', function() {
     $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 7;
     if ($timeframe < 1) $timeframe = 7;
+    $interval = isset($_POST['interval']) && in_array($_POST['interval'], ['day','week','month','year']) ? $_POST['interval'] : 'day';
     $watched_path = ABSPATH . 'wp-content/uploads/watched_by_day.json';
     if (!file_exists($watched_path)) {
         wp_send_json_error('No watched_by_day data found.');
@@ -113,30 +135,75 @@ add_action('wp_ajax_oscars_active_users_barchart_ajax', function() {
     } else {
         $data = $watched['days'];
     }
-    // Fill gaps in days
-    $all_dates = [];
+    
+    // Generate intervals based on interval type
+    $all_intervals = [];
+    $interval_map = [];
     if (!empty($data)) {
         $dates = array_keys($data);
         rsort($dates); // newest first
         $latest = new DateTime($dates[0]);
+        
         for ($i = 0; $i < $timeframe; $i++) {
             $d = clone $latest;
-            $d->modify("-$i days");
-            $all_dates[] = $d->format('Y-m-d');
+            switch ($interval) {
+                case 'week':
+                    $d->modify("-$i weeks");
+                    $label = $d->format('Y-\WW');
+                    break;
+                case 'month':
+                    $d->modify("-$i months");
+                    $label = $d->format('Y-m');
+                    break;
+                case 'year':
+                    $d->modify("-$i years");
+                    $label = $d->format('Y');
+                    break;
+                default: // day
+                    $d->modify("-$i days");
+                    $label = $d->format('Y-m-d');
+                    break;
+            }
+            $all_intervals[] = $label;
         }
-        $all_dates = array_reverse($all_dates); // oldest first
+        $all_intervals = array_reverse($all_intervals); // oldest first
+        
+        // Map each date in data to its interval
+        foreach ($data as $date => $count) {
+            $dt = new DateTime($date);
+            switch ($interval) {
+                case 'week':
+                    $interval_key = $dt->format('Y-\WW');
+                    break;
+                case 'month':
+                    $interval_key = $dt->format('Y-m');
+                    break;
+                case 'year':
+                    $interval_key = $dt->format('Y');
+                    break;
+                default: // day
+                    $interval_key = $dt->format('Y-m-d');
+                    break;
+            }
+            if (!isset($interval_map[$interval_key])) {
+                $interval_map[$interval_key] = 0;
+            }
+            $interval_map[$interval_key] += $count;
+        }
     }
+    
     $labels = [];
     $bins = [];
-    foreach ($all_dates as $date) {
-        $labels[] = $date;
-        $bins[] = isset($data[$date]) ? $data[$date] : 0;
+    foreach ($all_intervals as $interval_label) {
+        $labels[] = $interval_label;
+        $bins[] = isset($interval_map[$interval_label]) ? $interval_map[$interval_label] : 0;
     }
     wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
 });
 add_action('wp_ajax_nopriv_oscars_active_users_barchart_ajax', function() {
     $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 7;
     if ($timeframe < 1) $timeframe = 7;
+    $interval = isset($_POST['interval']) && in_array($_POST['interval'], ['day','week','month','year']) ? $_POST['interval'] : 'day';
     $watched_path = ABSPATH . 'wp-content/uploads/watched_by_day.json';
     if (!file_exists($watched_path)) {
         wp_send_json_error('No watched_by_day data found.');
@@ -153,24 +220,68 @@ add_action('wp_ajax_nopriv_oscars_active_users_barchart_ajax', function() {
     } else {
         $data = $watched['days'];
     }
-    // Fill gaps in days
-    $all_dates = [];
+    
+    // Generate intervals based on interval type
+    $all_intervals = [];
+    $interval_map = [];
     if (!empty($data)) {
         $dates = array_keys($data);
         rsort($dates); // newest first
         $latest = new DateTime($dates[0]);
+        
         for ($i = 0; $i < $timeframe; $i++) {
             $d = clone $latest;
-            $d->modify("-$i days");
-            $all_dates[] = $d->format('Y-m-d');
+            switch ($interval) {
+                case 'week':
+                    $d->modify("-$i weeks");
+                    $label = $d->format('Y-\WW');
+                    break;
+                case 'month':
+                    $d->modify("-$i months");
+                    $label = $d->format('Y-m');
+                    break;
+                case 'year':
+                    $d->modify("-$i years");
+                    $label = $d->format('Y');
+                    break;
+                default: // day
+                    $d->modify("-$i days");
+                    $label = $d->format('Y-m-d');
+                    break;
+            }
+            $all_intervals[] = $label;
         }
-        $all_dates = array_reverse($all_dates); // oldest first
+        $all_intervals = array_reverse($all_intervals); // oldest first
+        
+        // Map each date in data to its interval
+        foreach ($data as $date => $count) {
+            $dt = new DateTime($date);
+            switch ($interval) {
+                case 'week':
+                    $interval_key = $dt->format('Y-\WW');
+                    break;
+                case 'month':
+                    $interval_key = $dt->format('Y-m');
+                    break;
+                case 'year':
+                    $interval_key = $dt->format('Y');
+                    break;
+                default: // day
+                    $interval_key = $dt->format('Y-m-d');
+                    break;
+            }
+            if (!isset($interval_map[$interval_key])) {
+                $interval_map[$interval_key] = 0;
+            }
+            $interval_map[$interval_key] += $count;
+        }
     }
+    
     $labels = [];
     $bins = [];
-    foreach ($all_dates as $date) {
-        $labels[] = $date;
-        $bins[] = isset($data[$date]) ? $data[$date] : 0;
+    foreach ($all_intervals as $interval_label) {
+        $labels[] = $interval_label;
+        $bins[] = isset($interval_map[$interval_label]) ? $interval_map[$interval_label] : 0;
     }
     wp_send_json_success(['labels' => $labels, 'bins' => $bins]);
 });

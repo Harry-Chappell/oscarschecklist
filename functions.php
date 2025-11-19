@@ -1461,6 +1461,16 @@ add_action('wp_ajax_aggregate_watched_dates', function() {
     wp_die('Aggregation complete!');
 });
 
+// Schedule daily cron job for watched dates aggregation
+add_action('wp', function() {
+    if (!wp_next_scheduled('daily_aggregate_watched_dates')) {
+        wp_schedule_event(time(), 'daily', 'daily_aggregate_watched_dates');
+    }
+});
+
+// Hook the aggregation function to the cron event
+add_action('daily_aggregate_watched_dates', 'aggregate_watched_dates_to_by_day_json');
+
 
 require_once get_stylesheet_directory() . '/watchlist/watchlist.php';
 

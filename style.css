@@ -2935,3 +2935,41 @@ span.watchlist-reorder-btns button {
 label#label-compact_view {
     display: none;
 }
+
+
+
+
+div:has(>div#oscars-user-count-above-watched-wrap > span:empty) {
+    justify-content: flex-end !important;
+    height: 100%;
+}
+@keyframes spin {
+    from {
+        rotate: 0deg;
+    }
+    to {
+        rotate: 360deg;
+    }
+}
+
+div#oscars-user-count-above-watched-wrap:has(span:empty):before,
+div#oscars-user-count-active-days-wrap:has(span:empty):before {
+    content: "";
+    background: conic-gradient(
+        from 0deg,
+        transparent 0%,
+        var(--theme-palette-color-4) 50%,
+        transparent 100%
+    );
+    height: 50px;
+    aspect-ratio: 1;
+    display: flex;
+    position: absolute;
+    inset: 50%;
+    translate: -50% -70px;
+    transition: 0.3s;
+    border-radius: 50%;
+    mask: radial-gradient(transparent 60%, black 60%);
+    -webkit-mask: radial-gradient(transparent 60%, black 60%);
+    animation: spin 1s linear infinite;
+}
