@@ -720,50 +720,30 @@ async function syncUserFile(userId, suffix = '') {
         const serverLastModified = response.headers.get('Last-Modified');
         const serverTimestamp = serverLastModified ? new Date(serverLastModified).getTime() : Date.now();
         
-        // Check if we have a cached version
-        const cachedData = localStorage.getItem(localStorageKey);
-        let shouldDownload = true;
+        // Always download on every page load
+        // console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
         
-        if (cachedData) {
-            try {
-                // Parse cached data to get the stored timestamp (we store it in the data itself now)
-                const cached = JSON.parse(cachedData);
-                const cachedTimestamp = cached._cachedTimestamp || 0;
-                
-                // Only download if server file is newer
-                if (serverTimestamp <= cachedTimestamp) {
-                    // console.log(`[UserDataSync] ✓ ${filename} is up to date`);
-                    shouldDownload = false;
-                }
-            } catch (e) {
-                // console.log(`[UserDataSync] Invalid cached data for ${filename}, will re-download`);
-            }
+        const data = await response.text();
+        
+        // Verify it's valid JSON before storing
+        let jsonData;
+        try {
+            jsonData = JSON.parse(data);
+        } catch (e) {
+            console.error(`[UserDataSync] ✗ Invalid JSON in ${filename}:`, e);
+            return;
         }
         
-        if (shouldDownload) {
-            // console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
-            
-            const data = await response.text();
-            
-            // Verify it's valid JSON before storing
-            let jsonData;
-            try {
-                jsonData = JSON.parse(data);
-            } catch (e) {
-                console.error(`[UserDataSync] ✗ Invalid JSON in ${filename}:`, e);
-                return;
-            }
-            
-            // Add timestamp to the data itself (simpler than separate meta file)
-            jsonData._cachedTimestamp = serverTimestamp;
-            jsonData._cachedDate = new Date().toISOString();
-            
-            // Store in LocalStorage
-            const dataToStore = JSON.stringify(jsonData);
-            localStorage.setItem(localStorageKey, dataToStore);
-            
-            // console.log(`[UserDataSync] ✓ ${filename} cached (${(dataToStore.length / 1024).toFixed(2)} KB, modified: ${new Date(serverTimestamp).toLocaleString()})`);
-        }
+        // Add timestamp to the data itself (simpler than separate meta file)
+        jsonData._cachedTimestamp = serverTimestamp;
+        jsonData._cachedDate = new Date().toISOString();
+        
+        // Store in LocalStorage
+        const dataToStore = JSON.stringify(jsonData);
+        localStorage.setItem(localStorageKey, dataToStore);
+        
+        // console.log(`[UserDataSync] ✓ ${filename} cached (${(dataToStore.length / 1024).toFixed(2)} KB, modified: ${new Date(serverTimestamp).toLocaleString()})`);
+
         
     } catch (error) {
         console.error(`[UserDataSync] ✗ Error syncing ${filename}:`, error);

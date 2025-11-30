@@ -2973,3 +2973,9 @@ div.loading:before {
     -webkit-mask: radial-gradient(transparent 60%, black 60%);
     animation: spin 1s linear infinite;
 }
+
+
+body.admin-bar ul.nominations-list > li.it-works {
+    scale: 0.9;
+    opacity: 0.5;
+}
