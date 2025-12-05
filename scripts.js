@@ -838,7 +838,6 @@ function getCacheInfo() {
 
 /**
  * Apply watched status to film items from cached user data
- * Checks if page has nomination shortcodes and applies 'it-works' class to watched films
  */
 function applyWatchedStatusFromCache() {
     // Detect whether the page has any nomination items
@@ -882,13 +881,11 @@ function applyWatchedStatusFromCache() {
         if (filmIdClass) {
             const filmId = parseInt(filmIdClass.replace('film-id-', ''));
             if (watchedFilmIds.has(filmId)) {
-                item.classList.add('it-works');
+                item.classList.add('test-watched');
                 appliedCount++;
             }
         }
     });
-
-    console.log(`[WatchedStatus] Applied 'it-works' class to ${appliedCount} watched films out of ${filmItems.length} total films`);
 }
 
 // Initialize sync on page load
