@@ -837,14 +837,14 @@ function getCacheInfo() {
 }
 
 /**
- * Apply watched status to film items from cached user data
+ * Apply watched, favourite, and prediction status to items from cached user data
  */
-function applyWatchedStatusFromCache() {
+function applyUserStatusFromCache() {
     // Detect whether the page has any nomination items
     const hasNominations = document.querySelector('li[class*="film-id-"]');
     
     if (!hasNominations) {
-        console.log('[WatchedStatus] No nomination items found on this page, skipping');
+        console.log('[UserStatus] No nomination items found on this page, skipping');
         return;
     }
 
@@ -853,39 +853,76 @@ function applyWatchedStatusFromCache() {
         : null;
 
     if (!currentUserId) {
-        console.log('[WatchedStatus] No user logged in');
+        console.log('[UserStatus] No user logged in');
         return;
     }
 
     const userData = getUserDataFromCache(currentUserId);
 
-    if (!userData || !userData.watched) {
-        console.log('[WatchedStatus] No cached user data found');
+    if (!userData) {
+        console.log('[UserStatus] No cached user data found');
         return;
     }
 
+    // Process watched films (by film-id)
     const watchedFilmIds = new Set();
-    userData.watched.forEach(film => {
-        if (film['film-id']) watchedFilmIds.add(film['film-id']);
-    });
+    if (userData.watched && Array.isArray(userData.watched)) {
+        userData.watched.forEach(film => {
+            if (film['film-id']) watchedFilmIds.add(film['film-id']);
+        });
+    }
 
-    console.log(`[WatchedStatus] Found ${watchedFilmIds.size} watched films in cache`);
+    // Process favourites (by nomination-id)
+    const favouriteNominationIds = new Set();
+    if (userData.favourites && Array.isArray(userData.favourites)) {
+        userData.favourites.forEach(nominationId => {
+            favouriteNominationIds.add(parseInt(nominationId));
+        });
+    }
+
+    // Process predictions (by nomination-id)
+    const predictionNominationIds = new Set();
+    if (userData.predictions && Array.isArray(userData.predictions)) {
+        userData.predictions.forEach(nominationId => {
+            predictionNominationIds.add(parseInt(nominationId));
+        });
+    }
+
+    console.log(`[UserStatus] Found ${watchedFilmIds.size} watched films, ${favouriteNominationIds.size} favourites, ${predictionNominationIds.size} predictions in cache`);
 
     const filmItems = document.querySelectorAll('li[class*="film-id-"]');
-    let appliedCount = 0;
+    let watchedCount = 0;
+    let favCount = 0;
+    let predictCount = 0;
 
     filmItems.forEach(item => {
         const classList = Array.from(item.classList);
         const filmIdClass = classList.find(cls => cls.startsWith('film-id-'));
 
+        // Apply watched status (by film-id)
         if (filmIdClass) {
             const filmId = parseInt(filmIdClass.replace('film-id-', ''));
             if (watchedFilmIds.has(filmId)) {
                 item.classList.add('test-watched');
-                appliedCount++;
+                watchedCount++;
+            }
+        }
+
+        // Apply favourite and prediction status (by nomination-id)
+        const nominationId = item.id ? parseInt(item.id.replace('nomination-', '')) : null;
+        if (nominationId) {
+            if (favouriteNominationIds.has(nominationId)) {
+                item.classList.add('test-fav');
+                favCount++;
+            }
+            if (predictionNominationIds.has(nominationId)) {
+                item.classList.add('test-predict');
+                predictCount++;
             }
         }
     });
+
+    console.log(`[UserStatus] Applied ${watchedCount} watched, ${favCount} favourites, ${predictCount} predictions`);
 }
 
 // Initialize sync on page load
@@ -893,8 +930,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     // First, sync the data files
     await syncUserDataFiles();
     
-    // Then apply watched status from cache
-    applyWatchedStatusFromCache();
+    // Then apply user status (watched, favourites, predictions) from cache
+    applyUserStatusFromCache();
 });
 
 

@@ -2975,8 +2975,8 @@ div.loading:before {
 }
 
 
-body.user-id-6 ul.nominations-list > li.it-works,
-body.user-id-2393 ul.nominations-list > li.it-works {
+body.user-id-6 ul.nominations-list > li.test-watched,
+body.user-id-2393 ul.nominations-list > li.test-watched {
     scale: 0.9;
     opacity: 0.5;
 }
