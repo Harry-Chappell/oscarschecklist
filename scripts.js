@@ -706,9 +706,11 @@ async function syncUserFile(userId, suffix = '') {
     const localStorageKey = `userdata_${userId}${suffix}`;
     
     try {
-        // Fetch file
-        const response = await fetch(fileUrl, {
-            credentials: 'include'
+        // Fetch file with cache-busting to ensure fresh data on every page load
+        const cacheBuster = `?t=${Date.now()}`;
+        const response = await fetch(fileUrl + cacheBuster, {
+            credentials: 'include',
+            cache: 'no-store'
         });
         
         if (!response.ok) {
