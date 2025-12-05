@@ -1035,6 +1035,9 @@ function add_custom_body_classes($classes) {
     if (is_user_logged_in()) {
         $user_id = get_current_user_id();
 
+        // Add user ID class
+        $classes[] = 'user-id-' . $user_id;
+
         // Get user preferences
         $show_unique = get_user_meta($user_id, 'show_unique_films', true);
         $hide_watched = get_user_meta($user_id, 'hide_watched_films', true);
@@ -1527,3 +1530,4 @@ function oscars_update_category() {
     file_put_contents($file, json_encode($data));
     wp_send_json_success(['data' => $data]);
 }
+
