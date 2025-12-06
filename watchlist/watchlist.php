@@ -51,7 +51,7 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
 
     $changed = false;
     if ( $action_type === 'add' ) {
-        // New format: array of objects with film-id and order (order is null for now)
+        // New format: array of objects with film-id, order, film-name, film-year, film-url
         $already_in = false;
         foreach ($json['watchlist'] as $item) {
             if (isset($item['film-id']) && intval($item['film-id']) === $film_id) {
@@ -61,7 +61,23 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
         }
         if (!$already_in) {
             $order = count($json['watchlist']) + 1;
-            $json['watchlist'][] = [ 'film-id' => $film_id, 'order' => $order ];
+            
+            // Fetch film details from the post/term
+            $film_term = get_term($film_id, 'films');
+            $film_name = '';
+            $film_url = '';
+            
+            if ($film_term && !is_wp_error($film_term)) {
+                $film_name = $film_term->name;
+                $film_url = $film_term->slug;
+            }
+            
+            $json['watchlist'][] = [ 
+                'film-id' => $film_id, 
+                'order' => $order,
+                'film-name' => $film_name,
+                'film-url' => $film_url
+            ];
             $changed = true;
         }
     } elseif ( $action_type === 'remove' ) {
@@ -173,61 +189,64 @@ function oscars_watchlist_shortcode() {
     $output .= '</div>';
     
 
-    // If no watchlist, show empty message
-    if ( empty( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) ) {
-        $output .= '<p class="empty-message">Your watchlist is empty.</p></div>';
-        return $output;
-    }
+    // JavaScript will populate the watchlist dynamically
+    $output .= '<!-- Watchlist items will be populated by JavaScript --></div>';
+    
+    // // If no watchlist, show empty message
+    // if ( empty( $data['watchlist'] ) || ! is_array( $data['watchlist'] ) ) {
+    //     $output .= '<p class="empty-message">Your watchlist is empty.</p></div>';
+    //     return $output;
+    // }
 
-    // Build array of watched IDs for lookup
-    $watched_ids = [];
-    if ( ! empty( $data['watched'] ) && is_array( $data['watched'] ) ) {
-        foreach ( $data['watched'] as $watched_item ) {
-            if ( isset( $watched_item['film-id'] ) ) {
-                $watched_ids[] = (int) $watched_item['film-id'];
-            }
-        }
-    }
+    // // Build array of watched IDs for lookup
+    // $watched_ids = [];
+    // if ( ! empty( $data['watched'] ) && is_array( $data['watched'] ) ) {
+    //     foreach ( $data['watched'] as $watched_item ) {
+    //         if ( isset( $watched_item['film-id'] ) ) {
+    //             $watched_ids[] = (int) $watched_item['film-id'];
+    //         }
+    //     }
+    // }
 
-    $output .= '<ul class="watchlist">';
+    // $output .= '<ul class="watchlist">';
 
-    foreach ( $data['watchlist'] as $watchlist_item ) {
-        // New format: $watchlist_item is an array with 'film-id' and 'order'
-        $film_id = isset($watchlist_item['film-id']) ? (int)$watchlist_item['film-id'] : null;
-        $order = isset($watchlist_item['order']) && $watchlist_item['order'] !== null ? (int)$watchlist_item['order'] : '';
-        if (!$film_id) continue;
-        $film_term = get_term( $film_id, 'films' );
-        if ( ! $film_term || is_wp_error( $film_term ) ) continue;
+    // foreach ( $data['watchlist'] as $watchlist_item ) {
+    //     // New format: $watchlist_item is an array with 'film-id' and 'order'
+    //     $film_id = isset($watchlist_item['film-id']) ? (int)$watchlist_item['film-id'] : null;
+    //     $order = isset($watchlist_item['order']) && $watchlist_item['order'] !== null ? (int)$watchlist_item['order'] : '';
+    //     if (!$film_id) continue;
+    //     $film_term = get_term( $film_id, 'films' );
+    //     if ( ! $film_term || is_wp_error( $film_term ) ) continue;
 
-        $poster = get_field( 'poster', 'films_' . $film_id );
-        $poster_html = $poster ? '<img src="' . esc_url( $poster ) . '" alt="' . esc_attr( $film_term->name ) . '">' : '';
+    //     $poster = get_field( 'poster', 'films_' . $film_id );
+    //     $poster_html = $poster ? '<img src="' . esc_url( $poster ) . '" alt="' . esc_attr( $film_term->name ) . '">' : '';
 
-        $is_watched = in_array( (int) $film_id, $watched_ids, true );
+    //     $is_watched = in_array( (int) $film_id, $watched_ids, true );
 
-        $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M528 320C528 205.1 434.9 112 320 112C205.1 112 112 205.1 112 320C112 434.9 205.1 528 320 528C434.9 528 528 434.9 528 320zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320z"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 112C434.9 112 528 205.1 528 320C528 434.9 434.9 528 320 528C205.1 528 112 434.9 112 320C112 205.1 205.1 112 320 112zM320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7C411.4 265.5 408 250.7 396.8 243.6C385.6 236.5 370.8 240 363.7 251.2L302.3 349.5L275.3 313.5C267.3 302.9 252.3 300.7 241.7 308.7C231.1 316.7 228.9 331.7 236.9 342.3L284.9 406.3C289.6 412.6 297.2 416.2 305.1 415.9C313 415.6 320.2 411.4 324.4 404.6L404.4 276.6z"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7L324.4 404.7C320.2 411.4 313 415.6 305.1 416C297.2 416.4 289.6 412.8 284.9 406.4L236.9 342.4C228.9 331.8 231.1 316.8 241.7 308.8C252.3 300.8 267.3 303 275.3 313.6L302.3 349.6L363.7 251.3C370.7 240.1 385.5 236.6 396.8 243.7C408.1 250.8 411.5 265.5 404.4 276.8z"/></svg>';
-        $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M183.1 137.4C170.6 124.9 150.3 124.9 137.8 137.4C125.3 149.9 125.3 170.2 137.8 182.7L275.2 320L137.9 457.4C125.4 469.9 125.4 490.2 137.9 502.7C150.4 515.2 170.7 515.2 183.2 502.7L320.5 365.3L457.9 502.6C470.4 515.1 490.7 515.1 503.2 502.6C515.7 490.1 515.7 469.8 503.2 457.3L365.8 320L503.1 182.6C515.6 170.1 515.6 149.8 503.1 137.3C490.6 124.8 470.3 124.8 457.8 137.3L320.5 274.7L183.1 137.4z"/></svg>';
+    //     $svg_icon_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M528 320C528 205.1 434.9 112 320 112C205.1 112 112 205.1 112 320C112 434.9 205.1 528 320 528C434.9 528 528 434.9 528 320zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320z"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 112C434.9 112 528 205.1 528 320C528 434.9 434.9 528 320 528C205.1 528 112 434.9 112 320C112 205.1 205.1 112 320 112zM320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7C411.4 265.5 408 250.7 396.8 243.6C385.6 236.5 370.8 240 363.7 251.2L302.3 349.5L275.3 313.5C267.3 302.9 252.3 300.7 241.7 308.7C231.1 316.7 228.9 331.7 236.9 342.3L284.9 406.3C289.6 412.6 297.2 416.2 305.1 415.9C313 415.6 320.2 411.4 324.4 404.6L404.4 276.6z"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7L324.4 404.7C320.2 411.4 313 415.6 305.1 416C297.2 416.4 289.6 412.8 284.9 406.4L236.9 342.4C228.9 331.8 231.1 316.8 241.7 308.8C252.3 300.8 267.3 303 275.3 313.6L302.3 349.6L363.7 251.3C370.7 240.1 385.5 236.6 396.8 243.7C408.1 250.8 411.5 265.5 404.4 276.8z"/></svg>';
+    //     $svg_icon_remove = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M183.1 137.4C170.6 124.9 150.3 124.9 137.8 137.4C125.3 149.9 125.3 170.2 137.8 182.7L275.2 320L137.9 457.4C125.4 469.9 125.4 490.2 137.9 502.7C150.4 515.2 170.7 515.2 183.2 502.7L320.5 365.3L457.9 502.6C470.4 515.1 490.7 515.1 503.2 502.6C515.7 490.1 515.7 469.8 503.2 457.3L365.8 320L503.1 182.6C515.6 170.1 515.6 149.8 503.1 137.3C490.6 124.8 470.3 124.8 457.8 137.3L320.5 274.7L183.1 137.4z"/></svg>';
 
-        if ( $is_watched ) {
-            $buttons  = '<button title="Watched" class="mark-as-unwatched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="unwatched">' . $svg_icon_check . '</button>';
-        } else {
-            $buttons  = '<button title="Watched" class="mark-as-watched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="watched">' . $svg_icon_check . '</button>';
-        }
+    //     if ( $is_watched ) {
+    //         $buttons  = '<button title="Watched" class="mark-as-unwatched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="unwatched">' . $svg_icon_check . '</button>';
+    //     } else {
+    //         $buttons  = '<button title="Watched" class="mark-as-watched-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="watched">' . $svg_icon_check . '</button>';
+    //     }
 
-        $buttons .= '<button title="Remove from Watchlist" class="remove-from-watchlist-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="remove">' . $svg_icon_remove . '</button>';
+    //     $buttons .= '<button title="Remove from Watchlist" class="remove-from-watchlist-button" data-film-id="' . esc_attr( $film_id ) . '" data-action="remove">' . $svg_icon_remove . '</button>';
 
-        $li_style = $order !== '' ? ' style="--order: ' . esc_attr($order) . ';"' : '';
-        $output .= '<li class="' . ( $is_watched ? 'watched' : 'unwatched' ) . '" data-film-id="' . esc_attr( $film_id ) . '"' . $li_style . '>';
-        $output .= $poster_html;
-        $term_link = get_term_link( $film_term );
-        if ( is_wp_error( $term_link ) ) {
-            $term_link = '#';
-        }
-        $output .= '<a class="film-title" href="' . esc_url( $term_link ) . '">' . esc_html( $film_term->name ) . '</a>';
-        $output .= $buttons;
-        $output .= '</li>';
-    }
+    //     $li_style = $order !== '' ? ' style="--order: ' . esc_attr($order) . ';"' : '';
+    //     $output .= '<li class="' . ( $is_watched ? 'watched' : 'unwatched' ) . '" data-film-id="' . esc_attr( $film_id ) . '"' . $li_style . '>';
+    //     $output .= $poster_html;
+    //     $term_link = get_term_link( $film_term );
+    //     if ( is_wp_error( $term_link ) ) {
+    //         $term_link = '#';
+    //     }
+    //     $output .= '<a class="film-title" href="' . esc_url( $term_link ) . '">' . esc_html( $film_term->name ) . '</a>';
+    //     $output .= $buttons;
+    //     $output .= '</li>';
+    // }
 
-    $output .= '</ul></div>';
+    // $output .= '</ul></div>';
     return $output;
 }
 add_shortcode( 'watchlist', 'oscars_watchlist_shortcode' );

@@ -73,11 +73,20 @@ document.addEventListener('click', function (e) {
         }
     }
 
-    // Update clicked button UI to "unwatchlist"
-    btn.classList.remove('mark-as-watchlist-button');
-    btn.classList.add('mark-as-unwatchlist-button');
-    btn.setAttribute('data-action', 'unwatchlist');
-    btn.setAttribute('title', 'Remove from Watchlist');
+    // Update ALL instances of this film on the page to "unwatchlist" state
+    const allWatchlistButtons = document.querySelectorAll(`button[data-film-id="${filmId}"].mark-as-watchlist-button`);
+    allWatchlistButtons.forEach((button) => {
+      button.classList.remove('mark-as-watchlist-button');
+      button.classList.add('mark-as-unwatchlist-button');
+      button.setAttribute('data-action', 'unwatchlist');
+      button.setAttribute('title', 'Remove from Watchlist');
+    });
+
+    // Also add 'in-watchlist' class to ALL film instances on the page
+    const allFilmInstances = document.querySelectorAll(`li.film-id-${filmId}`);
+    allFilmInstances.forEach((filmElement) => {
+      filmElement.classList.add('in-watchlist');
+    });
 
   } else if (action === 'unwatchlist' || action === 'unwatched' || action === 'remove') {
     // Remove from watchlist UI
@@ -93,6 +102,12 @@ document.addEventListener('click', function (e) {
     button.classList.add('mark-as-watchlist-button');
     button.setAttribute('data-action', 'watchlist');
     button.setAttribute('title', 'Add to Watchlist');
+    });
+
+    // Remove 'in-watchlist' class from ALL film instances on the page
+    const allFilmInstances = document.querySelectorAll(`li.film-id-${filmId}`);
+    allFilmInstances.forEach((filmElement) => {
+      filmElement.classList.remove('in-watchlist');
     });
   }
 
