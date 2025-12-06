@@ -949,6 +949,91 @@ function applyUserStatusFromCache() {
     console.log(`[UserStatus] Applied ${watchedCount} watched, ${favCount} favourites, ${predictCount} predictions`);
 }
 
+/**
+ * Apply friends' watched status to film items
+ * Populates the .friends-watched divs with avatars of friends who have watched each film
+ */
+async function applyFriendsWatchedStatus() {
+    const friendIds = getUserFriendIdsFromDOM();
+    
+    if (friendIds.length === 0) {
+        console.log('[FriendsWatched] No friends found');
+        return;
+    }
+
+    console.log(`[FriendsWatched] Processing ${friendIds.length} friends`);
+
+    // Get all film items on the page
+    const filmItems = document.querySelectorAll('li[class*="film-id-"]');
+    
+    filmItems.forEach(item => {
+        const classList = Array.from(item.classList);
+        const filmIdClass = classList.find(cls => cls.startsWith('film-id-'));
+        
+        if (!filmIdClass) return;
+        
+        const filmId = parseInt(filmIdClass.replace('film-id-', ''));
+        const friendsWatchedContainer = item.querySelector('.friends-watched');
+        
+        if (!friendsWatchedContainer) return;
+        
+        // Clear any existing content
+        friendsWatchedContainer.innerHTML = '';
+        
+        // Check each friend to see if they've watched this film
+        friendIds.forEach(friendId => {
+            const friendData = getUserDataFromCache(friendId);
+            
+            if (!friendData || !friendData.watched) return;
+            
+            // Check if friend has watched this film
+            const hasWatched = friendData.watched.some(film => 
+                film['film-id'] && film['film-id'] === filmId
+            );
+            
+            if (hasWatched) {
+                // Get friend info from the friend list item
+                const friendItem = document.querySelector(`#friends-list .friend-item[onclick*="updateTOC(${friendId})"]`);
+                
+                if (friendItem) {
+                    const displayName = friendItem.getAttribute('title') || 'Friend';
+                    const avatarImg = friendItem.querySelector('img');
+                    
+                    // Get the random color number from the friend item's inline style
+                    const randomcolornum = friendItem.style.getPropertyValue('--randomcolornum');
+                    
+                    // Get initials from the existing friend-initials element
+                    const initialsElement = friendItem.querySelector('.friend-initials');
+                    const initials = initialsElement ? initialsElement.textContent : '';
+                    
+                    // Create avatar element
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = `friend-avatar friend-id-${friendId}`;
+                    avatarDiv.style.setProperty('--randomcolornum', randomcolornum);
+                    
+                    // Clone the avatar image if it exists
+                    if (avatarImg) {
+                        const clonedAvatar = avatarImg.cloneNode(true);
+                        avatarDiv.appendChild(clonedAvatar);
+                        clonedAvatar.classList.remove('friend-avatar');
+                    }
+                    
+                    // Add initials
+                    const initialsDiv = document.createElement('div');
+                    initialsDiv.className = 'friend-initials';
+                    initialsDiv.title = displayName;
+                    initialsDiv.textContent = initials;
+                    avatarDiv.appendChild(initialsDiv);
+                    
+                    friendsWatchedContainer.appendChild(avatarDiv);
+                }
+            }
+        });
+    });
+
+    console.log('[FriendsWatched] Friends watched status applied');
+}
+
 // Initialize sync on page load
 document.addEventListener('DOMContentLoaded', async function () {
     // First, sync the data files
@@ -956,6 +1041,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     // Then apply user status (watched, favourites, predictions) from cache
     applyUserStatusFromCache();
+    
+    // Then apply friends' watched status
+    await applyFriendsWatchedStatus();
 });
 
 
