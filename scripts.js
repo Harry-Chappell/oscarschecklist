@@ -903,8 +903,16 @@ function applyUserStatusFromCache() {
         if (filmIdClass) {
             const filmId = parseInt(filmIdClass.replace('film-id-', ''));
             if (watchedFilmIds.has(filmId)) {
-                item.classList.add('test-watched');
+                item.classList.add('watched');
                 watchedCount++;
+                
+                // Update watched button
+                const watchedButton = item.querySelector('.mark-as-watched-button');
+                if (watchedButton) {
+                    watchedButton.classList.remove('mark-as-watched-button');
+                    watchedButton.classList.add('mark-as-unwatched-button');
+                    watchedButton.setAttribute('data-action', 'unwatched');
+                }
             }
         }
 
@@ -912,12 +920,28 @@ function applyUserStatusFromCache() {
         const nominationId = item.id ? parseInt(item.id.replace('nomination-', '')) : null;
         if (nominationId) {
             if (favouriteNominationIds.has(nominationId)) {
-                item.classList.add('test-fav');
+                item.classList.add('fav');
                 favCount++;
+                
+                // Update favourite button
+                const favButton = item.querySelector('.mark-as-fav-button');
+                if (favButton) {
+                    favButton.classList.remove('mark-as-fav-button');
+                    favButton.classList.add('mark-as-unfav-button');
+                    favButton.setAttribute('data-action', 'unfav');
+                }
             }
             if (predictionNominationIds.has(nominationId)) {
-                item.classList.add('test-predict');
+                item.classList.add('predict');
                 predictCount++;
+                
+                // Update prediction button
+                const predictButton = item.querySelector('.mark-as-predict-button');
+                if (predictButton) {
+                    predictButton.classList.remove('mark-as-predict-button');
+                    predictButton.classList.add('mark-as-unpredict-button');
+                    predictButton.setAttribute('data-action', 'unpredict');
+                }
             }
         }
     });
