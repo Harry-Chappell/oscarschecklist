@@ -1061,6 +1061,25 @@ function populateWatchlistFromCache() {
         return;
     }
 
+    // Apply watchlist settings classes based on user data
+    // Default to true if not set
+    const settings = {
+        'this_page_only': userData.this_page_only !== false, // default true
+        'auto_remove_watched': userData.auto_remove_watched !== false, // default true
+        'compact_view': userData.compact_view !== false // default true
+    };
+
+    // Add classes for enabled settings
+    Object.keys(settings).forEach(settingKey => {
+        if (settings[settingKey]) {
+            watchlistCntr.classList.add(settingKey);
+        } else {
+            watchlistCntr.classList.remove(settingKey);
+        }
+    });
+
+    console.log('[Watchlist] Applied settings:', settings);
+
     // Check if watchlist already exists, otherwise create it
     let watchlistUl = watchlistCntr.querySelector('.watchlist');
     if (!watchlistUl) {

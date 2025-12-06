@@ -137,20 +137,22 @@ function oscars_watchlist_shortcode() {
     ];
 
     // Build list of classes from active settings
-    $settings_classes = [];
-    foreach ( $settings as $key => $meta ) {
-        if ( ! isset( $data[ $key ] ) ) {
-            $data[ $key ] = $meta['default']; // apply default if missing
-        }
-        if ( $data[ $key ] ) {
-            $settings_classes[] = $key; // add active setting as a class
-        }
-    }
+    // COMMENTED OUT - Classes now added by JavaScript for caching compatibility
+    // $settings_classes = [];
+    // foreach ( $settings as $key => $meta ) {
+    //     if ( ! isset( $data[ $key ] ) ) {
+    //         $data[ $key ] = $meta['default']; // apply default if missing
+    //     }
+    //     if ( $data[ $key ] ) {
+    //         $settings_classes[] = $key; // add active setting as a class
+    //     }
+    // }
 
     // Join classes into string
-    $settings_class_str = ! empty( $settings_classes ) ? ' ' . implode( ' ', $settings_classes ) : '';
+    // $settings_class_str = ! empty( $settings_classes ) ? ' ' . implode( ' ', $settings_classes ) : '';
 
-    $output  = '<div class="watchlist-cntr' . esc_attr( $settings_class_str ) . '">';
+    // Classes are now added by JavaScript after loading user data from cache
+    $output  = '<div class="watchlist-cntr">';
     $output .= '<h2>Your Watchlist</h2>';
 
     // Settings UI
