@@ -272,14 +272,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add "active" class to the clicked item
             item.classList.add('active');
     
-            // Check if the clicked item is the first item or has the title "you"
-            if (index === 0 || item.getAttribute('title').toLowerCase() === "you") {
-                progressHeading.textContent = "Your Progress";
-            } else {
-                // Get the display name from the title attribute
-                const displayName = item.getAttribute('title');
-                // Update the heading text
-                progressHeading.textContent = displayName + "'s Progress";
+            // Update progress heading only if it exists on the page
+            if (progressHeading) {
+                // Check if the clicked item is the first item or has the title "you"
+                if (index === 0 || item.getAttribute('title').toLowerCase() === "you") {
+                    progressHeading.textContent = "Your Progress";
+                } else {
+                    // Get the display name from the title attribute
+                    const displayName = item.getAttribute('title');
+                    // Update the heading text
+                    progressHeading.textContent = displayName + "'s Progress";
+                }
             }
         }
     
@@ -1082,14 +1085,19 @@ function populateWatchlistFromCache() {
 
     // Check if watchlist already exists, otherwise create it
     let watchlistUl = watchlistCntr.querySelector('.watchlist');
+    console.log('[Watchlist] Existing UL found:', !!watchlistUl);
+    
     if (!watchlistUl) {
+        console.log('[Watchlist] Creating new UL element');
         watchlistUl = document.createElement('ul');
         watchlistUl.className = 'watchlist';
         watchlistCntr.appendChild(watchlistUl);
+        console.log('[Watchlist] UL appended to container');
     }
 
     // Clear existing items (in case PHP rendered some)
     watchlistUl.innerHTML = '';
+    console.log('[Watchlist] UL cleared, ready to populate');
 
     // Build array of watched film IDs for quick lookup
     const watchedFilmIds = new Set();
@@ -1399,6 +1407,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     // Then apply user status (watched, favourites, predictions) from cache
     applyUserStatusFromCache();
+    
+    // Update TOC and progress indicators after applying watched status
+    if (typeof window.updateTOC === 'function') {
+        window.updateTOC();
+    }
     
     // Then populate watchlist from cache
     populateWatchlistFromCache();
