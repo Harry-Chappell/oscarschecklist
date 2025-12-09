@@ -222,6 +222,7 @@ function show_nominations_by_year_shortcode($atts) {
                                 // if (is_user_logged_in() && $user_predict) {
                                 //     $output .= 'predict ';
                                 // }
+                                // Watchlist class is added by JavaScript to avoid caching issues
                                 // $output .= do_shortcode('[esi watched ttl="3" film-id="' . $film->term_id . '"]');
 
                                 $output .= ' film-id-' . $film->term_id . ' ';
@@ -232,7 +233,7 @@ function show_nominations_by_year_shortcode($atts) {
                                 if ($is_song == true) {
                                     $output .= ' song ';
                                 }
-                                $output .= '">';
+                                $output .= '" data-film-id="' . $film->term_id . '">';
 
                                 if ($is_song == true) {
                                     $output .= '<h3 class="song-name">' . get_the_title() . '</h3>';
@@ -355,12 +356,9 @@ function show_nominations_by_year_shortcode($atts) {
                                     $output .= '</button>';
 
 
-                                    // Watchlist button
+                                    // Watchlist button - always start as "add to watchlist", JavaScript will update based on user data
                                     if (is_user_logged_in()) {
-                                        $watchlist_button_class = $user_watchlist ? 'mark-as-unwatchlist-button' : 'mark-as-watchlist-button';
-                                        $watchlist_button_text = $user_watchlist ? 'Remove from Watchlist' : 'Add to Watchlist';
-                                        $watchlist_action = $user_watchlist ? 'unwatchlist' : 'watchlist';
-                                        $output .= '<button title="Watchlist" class="' . $watchlist_button_class . '" data-film-id="' . $film_id . '" data-action="' . $watchlist_action . '">';
+                                        $output .= '<button title="Watchlist" class="mark-as-watchlist-button" data-film-id="' . $film_id . '" data-action="watchlist">';
                                         $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"/></svg>';
                                         $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M352 128C352 110.3 337.7 96 320 96C302.3 96 288 110.3 288 128L288 288L128 288C110.3 288 96 302.3 96 320C96 337.7 110.3 352 128 352L288 352L288 512C288 529.7 302.3 544 320 544C337.7 544 352 529.7 352 512L352 352L512 352C529.7 352 544 337.7 544 320C544 302.3 529.7 288 512 288L352 288L352 128z"/></svg>';
                                         $output .= '</button>';

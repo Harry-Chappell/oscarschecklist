@@ -149,7 +149,6 @@ function show_nominations_by_cat_shortcode($atts) {
                                 $user_id = get_current_user_id();
                                 $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
                                 $user_watched = false;
-                                $user_watchlist = false;
                                 if (file_exists($json_path)) {
                                     $json_data = file_get_contents($json_path);
                                     $user_meta = json_decode($json_data, true);
@@ -157,18 +156,6 @@ function show_nominations_by_cat_shortcode($atts) {
                                         foreach ($user_meta['watched'] as $watched_film) {
                                             if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post_id) {
                                                 $user_watched = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    // Watchlist
-                                    if (isset($user_meta['watchlist']) && is_array($user_meta['watchlist'])) {
-                                        // New format: array of objects with 'film-id'
-                                        $user_watchlist = false;
-                                        foreach ($user_meta['watchlist'] as $watchlist_item) {
-                                            if (is_array($watchlist_item) && isset($watchlist_item['film-id']) && $watchlist_item['film-id'] == $post_id) {
-                                                $user_watchlist = true;
                                                 break;
                                             }
                                         }
@@ -195,6 +182,7 @@ function show_nominations_by_cat_shortcode($atts) {
                             if (is_user_logged_in() && $user_predict) {
                                 $output .= 'predict ';
                             }
+                            // Watchlist class is added by JavaScript to avoid caching issues
                             // $output .= do_shortcode('[esi watched ttl="3" film-id="' . $film->term_id . '"]');
 
                             $output .= ' film-id-' . $film->term_id . ' ';
@@ -202,7 +190,7 @@ function show_nominations_by_cat_shortcode($atts) {
                                 $output .= 'winner ';
                                 // echo apply_filters( 'litespeed_esi_url', 'my_esi_block', 'Custom ESI block' );
                             }
-                            $output .= '">';
+                            $output .= '" data-film-id="' . $film->term_id . '">';
 
                             if ($is_song == true) {
                                 $output .= '<h3 class="song-name">' . get_the_title() . '</h3>';
@@ -248,11 +236,8 @@ function show_nominations_by_cat_shortcode($atts) {
                                     $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"/></svg>';
                                     $output .= '</button>';
 
-                                    // Watchlist button
-                                    $watchlist_button_class = $user_watchlist ? 'mark-as-unwatchlist-button' : 'mark-as-watchlist-button';
-                                    $watchlist_button_text = $user_watchlist ? 'Remove from Watchlist' : 'Add to Watchlist';
-                                    $watchlist_action = $user_watchlist ? 'unwatchlist' : 'watchlist';
-                                    $output .= '<button title="Watchlist" class="' . $watchlist_button_class . '" data-film-id="' . $film_id . '" data-action="' . $watchlist_action . '">';
+                                    // Watchlist button - always start as "add to watchlist", JavaScript will update based on user data
+                                    $output .= '<button title="Watchlist" class="mark-as-watchlist-button" data-film-id="' . $film_id . '" data-action="watchlist">';
                                     $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"/></svg>';
                                     $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M352 128C352 110.3 337.7 96 320 96C302.3 96 288 110.3 288 128L288 288L128 288C110.3 288 96 302.3 96 320C96 337.7 110.3 352 128 352L288 352L288 512C288 529.7 302.3 544 320 544C337.7 544 352 529.7 352 512L352 352L512 352C529.7 352 544 337.7 544 320C544 302.3 529.7 288 512 288L352 288L352 128z"/></svg>';
                                     $output .= '</button>';

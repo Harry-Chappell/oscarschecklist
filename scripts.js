@@ -432,7 +432,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
                 // Simulate click on the first friend item
                 const firstFriendItem = friendItems[0];
-                handleFriendItemClick(firstFriendItem, 0);
+                if (firstFriendItem) {
+                    handleFriendItemClick(firstFriendItem, 0);
+                }
     
             // Reapply scroll event listener after updating TOC
             handleScroll();
@@ -648,7 +650,7 @@ async function syncUserDataFiles() {
         const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
         
         if (!currentUserId) {
-            // console.log('[UserDataSync] No user logged in, skipping data sync');
+            console.log('[UserDataSync] No user logged in, skipping data sync');
             return;
         }
 
@@ -658,14 +660,14 @@ async function syncUserDataFiles() {
         // Combine current user and friends
         const allUserIds = [currentUserId, ...friendIds];
         
-        // console.log(`[UserDataSync] Starting sync for ${allUserIds.length} users (user ${currentUserId} + ${friendIds.length} friends: [${friendIds.join(', ')}])`);
+        console.log(`[UserDataSync] Starting sync for ${allUserIds.length} users (user ${currentUserId} + ${friendIds.length} friends: [${friendIds.join(', ')}])`);
         
         // Sync each user's data files
         for (const userId of allUserIds) {
             await syncUserFile(userId);
         }
         
-        // console.log('[UserDataSync] Sync completed successfully');
+        console.log('[UserDataSync] Sync completed successfully');
         
     } catch (error) {
         console.error('[UserDataSync] Error syncing user data:', error);
@@ -717,7 +719,7 @@ async function syncUserFile(userId, suffix = '') {
         });
         
         if (!response.ok) {
-            // console.log(`[UserDataSync] ⚠ File not found: ${filename}`);
+            console.log(`[UserDataSync] ⚠ File not found: ${filename} (Status: ${response.status})`);
             return;
         }
         
@@ -726,7 +728,7 @@ async function syncUserFile(userId, suffix = '') {
         const serverTimestamp = serverLastModified ? new Date(serverLastModified).getTime() : Date.now();
         
         // Always download on every page load
-        // console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
+        console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
         
         const data = await response.text();
         
@@ -745,10 +747,14 @@ async function syncUserFile(userId, suffix = '') {
         
         // Store in LocalStorage
         const dataToStore = JSON.stringify(jsonData);
-        localStorage.setItem(localStorageKey, dataToStore);
-        
-        // console.log(`[UserDataSync] ✓ ${filename} cached (${(dataToStore.length / 1024).toFixed(2)} KB, modified: ${new Date(serverTimestamp).toLocaleString()})`);
-
+        try {
+            localStorage.setItem(localStorageKey, dataToStore);
+            console.log(`[UserDataSync] ✓ ${filename} cached to localStorage key: ${localStorageKey} (${(dataToStore.length / 1024).toFixed(2)} KB)`);
+        } catch (storageError) {
+            console.error(`[UserDataSync] ✗ Failed to store ${filename} in localStorage:`, storageError);
+            console.log(`[UserDataSync] LocalStorage quota may be exceeded. Current usage:`, 
+                Object.keys(localStorage).reduce((total, key) => total + localStorage.getItem(key).length, 0) / 1024, 'KB');
+        }
         
     } catch (error) {
         console.error(`[UserDataSync] ✗ Error syncing ${filename}:`, error);
@@ -767,12 +773,14 @@ function getUserDataFromCache(userId, suffix = '') {
     const cachedData = localStorage.getItem(localStorageKey);
     
     if (!cachedData) {
-        // console.log(`[UserDataSync] No cached data for ${localStorageKey}`);
+        console.log(`[UserDataSync] ⚠ No cached data found for ${localStorageKey}`);
+        console.log(`[UserDataSync] Available localStorage keys:`, Object.keys(localStorage).filter(k => k.startsWith('userdata_')));
         return null;
     }
     
     try {
         const data = JSON.parse(cachedData);
+        console.log(`[UserDataSync] ✓ Retrieved cached data for ${localStorageKey} (${(cachedData.length / 1024).toFixed(2)} KB)`);
         // Remove our internal cache metadata before returning
         delete data._cachedTimestamp;
         delete data._cachedDate;
@@ -1402,18 +1410,27 @@ function setupWatchlistInteractions() {
 
 // Initialize sync on page load
 document.addEventListener('DOMContentLoaded', async function () {
+    console.log('[App] DOMContentLoaded fired - starting initialization');
+    
     // First, sync the data files
     await syncUserDataFiles();
+    
+    console.log('[App] Data sync complete - applying user status from cache');
     
     // Then apply user status (watched, favourites, predictions) from cache
     applyUserStatusFromCache();
     
     // Update TOC and progress indicators after applying watched status
-    if (typeof window.updateTOC === 'function') {
-        window.updateTOC();
+    try {
+        if (typeof window.updateTOC === 'function') {
+            window.updateTOC();
+        }
+    } catch (error) {
+        console.error('[App] Error updating TOC (non-critical):', error);
     }
     
     // Then populate watchlist from cache
+    console.log('[App] About to populate watchlist from cache');
     populateWatchlistFromCache();
     
     // Setup watchlist interactions (watched buttons, auto-remove)
