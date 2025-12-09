@@ -425,7 +425,8 @@ function show_friends() {
 add_shortcode('show_friends', 'show_friends');
 
 
-function get_friends_list() {
+// Core function to generate friends list HTML
+function get_friends_list_html() {
     if ( ! is_user_logged_in() ) {
         return '';
     }
@@ -471,6 +472,42 @@ function get_friends_list() {
         $output .= '<a class="add-friends-link" href="https://oscarschecklist.com/members/"><p>Add friends to compare</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
     }
     return $output;
+}
+
+// AJAX handler for loading friends list
+function ajax_get_friends_list() {
+    echo get_friends_list_html();
+    wp_die();
+}
+add_action('wp_ajax_get_friends_list', 'ajax_get_friends_list');
+add_action('wp_ajax_nopriv_get_friends_list', 'ajax_get_friends_list');
+
+// Shortcode that loads friends list via AJAX
+function get_friends_list() {
+    if ( ! is_user_logged_in() ) {
+        return '';
+    }
+    
+    // Return placeholder that will be replaced by AJAX call
+    $ajax_url = admin_url('admin-ajax.php');
+    return '<div id="friends-list-container" class="loading"></div>
+    <script>
+    (function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "' . esc_js($ajax_url) . '", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var container = document.getElementById("friends-list-container");
+                if (container) {
+                    container.innerHTML = xhr.responseText;
+                    container.classList.remove("loading");
+                }
+            }
+        };
+        xhr.send("action=get_friends_list");
+    })();
+    </script>';
 }
 add_shortcode( 'getfriendslist', 'get_friends_list' );
 
