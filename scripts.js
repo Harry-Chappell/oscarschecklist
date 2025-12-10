@@ -714,6 +714,34 @@ async function syncUserFile(userId, suffix = '') {
         });
         
         if (!response.ok) {
+            // File doesn't exist - try to create it for the main user file (not pred_fav)
+            if (!suffix && response.status === 404) {
+                const initResponse = await fetch('/wp-admin/admin-ajax.php', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=init_user_data&user_id=${userId}`
+                });
+                
+                if (initResponse.ok) {
+                    const result = await initResponse.json();
+                    if (result.success && result.data) {
+                        // Store the newly created data in localStorage
+                        const jsonData = result.data;
+                        jsonData._cachedTimestamp = Date.now();
+                        jsonData._cachedDate = new Date().toISOString();
+                        const dataToStore = JSON.stringify(jsonData);
+                        try {
+                            localStorage.setItem(localStorageKey, dataToStore);
+                        } catch (storageError) {
+                            console.error(`[UserDataSync] Failed to store ${filename} in localStorage:`, storageError);
+                        }
+                        return;
+                    }
+                }
+            }
             return;
         }
         

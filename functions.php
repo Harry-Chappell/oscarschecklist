@@ -1546,6 +1546,50 @@ function oscars_get_user_data() {
     wp_send_json(json_decode($json, true));
 }
 
+// === AJAX: Initialize user data file ===
+add_action('wp_ajax_init_user_data', 'oscars_init_user_data');
+add_action('wp_ajax_nopriv_init_user_data', 'oscars_init_user_data');
+function oscars_init_user_data() {
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    if (!$user_id) {
+        wp_send_json_error(['error' => 'No user_id provided']);
+    }
+    
+    $file = get_user_meta_json_path($user_id);
+    
+    // If file already exists, return it
+    if (file_exists($file)) {
+        $json = file_get_contents($file);
+        wp_send_json_success(json_decode($json, true));
+        return;
+    }
+    
+    // Create new user data file
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
+    $data = [
+        'watched' => [],
+        'favourites' => [],
+        'predictions' => [],
+        'watchlist' => [],
+        'favourite-categories' => [],
+        'hidden-categories' => [],
+        'correct-predictions' => "",
+        'incorrect-predictions' => "",
+        'correct-prediction-rate' => "",
+        'public' => false,
+        'username' => $username,
+        'total-watched' => 0,
+        'last-updated' => date('Y-m-d'),
+        'this_page_only' => true,
+        'auto_remove_watched' => true,
+        'compact_view' => true,
+    ];
+    
+    file_put_contents($file, wp_json_encode($data));
+    wp_send_json_success($data);
+}
+
 // === AJAX: Update category favourite/hidden ===
 add_action('wp_ajax_update_category', 'oscars_update_category');
 add_action('wp_ajax_nopriv_update_category', 'oscars_update_category');
