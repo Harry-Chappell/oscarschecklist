@@ -10,6 +10,15 @@ add_action( 'wp_enqueue_scripts', function () {
     ]);
 });
 
+// Remove jQuery Migrate
+add_action( 'wp_default_scripts', function( $scripts ) {
+    if ( ! is_admin() && isset( $scripts->registered['jquery'] ) ) {
+        $script = $scripts->registered['jquery'];
+        if ( $script->deps ) {
+            $script->deps = array_diff( $script->deps, array( 'jquery-migrate' ) );
+        }
+    }
+});
 
 add_action('pmxi_saved_post', 'wp_all_import_post_saved', 10, 1);
 
@@ -1114,8 +1123,6 @@ function add_custom_js_to_footer() {
                         notification.style.display = 'block'; // Show the message
                     }
                 });
-            } else {
-                console.log("Username input field not found");
             }
         });
     </script>

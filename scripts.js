@@ -650,7 +650,6 @@ async function syncUserDataFiles() {
         const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
         
         if (!currentUserId) {
-            console.log('[UserDataSync] No user logged in, skipping data sync');
             return;
         }
 
@@ -660,14 +659,10 @@ async function syncUserDataFiles() {
         // Combine current user and friends
         const allUserIds = [currentUserId, ...friendIds];
         
-        console.log(`[UserDataSync] Starting sync for ${allUserIds.length} users (user ${currentUserId} + ${friendIds.length} friends: [${friendIds.join(', ')}])`);
-        
         // Sync each user's data files
         for (const userId of allUserIds) {
             await syncUserFile(userId);
         }
-        
-        console.log('[UserDataSync] Sync completed successfully');
         
     } catch (error) {
         console.error('[UserDataSync] Error syncing user data:', error);
@@ -719,16 +714,12 @@ async function syncUserFile(userId, suffix = '') {
         });
         
         if (!response.ok) {
-            console.log(`[UserDataSync] ⚠ File not found: ${filename} (Status: ${response.status})`);
             return;
         }
         
         // Get server last modified timestamp from headers
         const serverLastModified = response.headers.get('Last-Modified');
         const serverTimestamp = serverLastModified ? new Date(serverLastModified).getTime() : Date.now();
-        
-        // Always download on every page load
-        console.log(`[UserDataSync] ⬇ Downloading ${filename}...`);
         
         const data = await response.text();
         
@@ -737,7 +728,7 @@ async function syncUserFile(userId, suffix = '') {
         try {
             jsonData = JSON.parse(data);
         } catch (e) {
-            console.error(`[UserDataSync] ✗ Invalid JSON in ${filename}:`, e);
+            console.error(`[UserDataSync] Invalid JSON in ${filename}:`, e);
             return;
         }
         
@@ -749,15 +740,12 @@ async function syncUserFile(userId, suffix = '') {
         const dataToStore = JSON.stringify(jsonData);
         try {
             localStorage.setItem(localStorageKey, dataToStore);
-            console.log(`[UserDataSync] ✓ ${filename} cached to localStorage key: ${localStorageKey} (${(dataToStore.length / 1024).toFixed(2)} KB)`);
         } catch (storageError) {
-            console.error(`[UserDataSync] ✗ Failed to store ${filename} in localStorage:`, storageError);
-            console.log(`[UserDataSync] LocalStorage quota may be exceeded. Current usage:`, 
-                Object.keys(localStorage).reduce((total, key) => total + localStorage.getItem(key).length, 0) / 1024, 'KB');
+            console.error(`[UserDataSync] Failed to store ${filename} in localStorage:`, storageError);
         }
         
     } catch (error) {
-        console.error(`[UserDataSync] ✗ Error syncing ${filename}:`, error);
+        console.error(`[UserDataSync] Error syncing ${filename}:`, error);
     }
 }
 
@@ -773,14 +761,11 @@ function getUserDataFromCache(userId, suffix = '') {
     const cachedData = localStorage.getItem(localStorageKey);
     
     if (!cachedData) {
-        console.log(`[UserDataSync] ⚠ No cached data found for ${localStorageKey}`);
-        console.log(`[UserDataSync] Available localStorage keys:`, Object.keys(localStorage).filter(k => k.startsWith('userdata_')));
         return null;
     }
     
     try {
         const data = JSON.parse(cachedData);
-        console.log(`[UserDataSync] ✓ Retrieved cached data for ${localStorageKey} (${(cachedData.length / 1024).toFixed(2)} KB)`);
         // Remove our internal cache metadata before returning
         delete data._cachedTimestamp;
         delete data._cachedDate;
@@ -855,7 +840,6 @@ function applyUserStatusFromCache() {
     const hasNominations = document.querySelector('li[class*="film-id-"]');
     
     if (!hasNominations) {
-        console.log('[UserStatus] No nomination items found on this page, skipping');
         return;
     }
 
@@ -864,14 +848,12 @@ function applyUserStatusFromCache() {
         : null;
 
     if (!currentUserId) {
-        console.log('[UserStatus] No user logged in');
         return;
     }
 
     const userData = getUserDataFromCache(currentUserId);
 
     if (!userData) {
-        console.log('[UserStatus] No cached user data found');
         return;
     }
 
@@ -898,8 +880,6 @@ function applyUserStatusFromCache() {
             predictionNominationIds.add(parseInt(nominationId));
         });
     }
-
-    console.log(`[UserStatus] Found ${watchedFilmIds.size} watched films, ${favouriteNominationIds.size} favourites, ${predictionNominationIds.size} predictions in cache`);
 
     const filmItems = document.querySelectorAll('li[class*="film-id-"]');
     let watchedCount = 0;
@@ -956,8 +936,6 @@ function applyUserStatusFromCache() {
             }
         }
     });
-
-    console.log(`[UserStatus] Applied ${watchedCount} watched, ${favCount} favourites, ${predictCount} predictions`);
 }
 
 /**
@@ -968,11 +946,8 @@ async function applyFriendsWatchedStatus() {
     const friendIds = getUserFriendIdsFromDOM();
     
     if (friendIds.length === 0) {
-        console.log('[FriendsWatched] No friends found');
         return;
     }
-
-    console.log(`[FriendsWatched] Processing ${friendIds.length} friends`);
 
     // Get all film items on the page
     const filmItems = document.querySelectorAll('li[class*="film-id-"]');
@@ -1041,8 +1016,6 @@ async function applyFriendsWatchedStatus() {
             }
         });
     });
-
-    console.log('[FriendsWatched] Friends watched status applied');
 }
 
 /**
@@ -1052,7 +1025,6 @@ async function applyFriendsWatchedStatus() {
 function populateWatchlistFromCache() {
     const watchlistCntr = document.querySelector('.watchlist-cntr');
     if (!watchlistCntr) {
-        console.log('[Watchlist] No watchlist container found on this page');
         return;
     }
 
@@ -1061,14 +1033,12 @@ function populateWatchlistFromCache() {
         : null;
 
     if (!currentUserId) {
-        console.log('[Watchlist] No user logged in');
         return;
     }
 
     const userData = getUserDataFromCache(currentUserId);
 
     if (!userData || !userData.watchlist || !Array.isArray(userData.watchlist)) {
-        console.log('[Watchlist] No watchlist data found');
         return;
     }
 
@@ -1089,23 +1059,17 @@ function populateWatchlistFromCache() {
         }
     });
 
-    console.log('[Watchlist] Applied settings:', settings);
-
     // Check if watchlist already exists, otherwise create it
     let watchlistUl = watchlistCntr.querySelector('.watchlist');
-    console.log('[Watchlist] Existing UL found:', !!watchlistUl);
     
     if (!watchlistUl) {
-        console.log('[Watchlist] Creating new UL element');
         watchlistUl = document.createElement('ul');
         watchlistUl.className = 'watchlist';
         watchlistCntr.appendChild(watchlistUl);
-        console.log('[Watchlist] UL appended to container');
     }
 
     // Clear existing items (in case PHP rendered some)
     watchlistUl.innerHTML = '';
-    console.log('[Watchlist] UL cleared, ready to populate');
 
     // Build array of watched film IDs for quick lookup
     const watchedFilmIds = new Set();
@@ -1114,8 +1078,6 @@ function populateWatchlistFromCache() {
             if (film['film-id']) watchedFilmIds.add(film['film-id']);
         });
     }
-
-    console.log(`[Watchlist] Populating watchlist with ${userData.watchlist.length} items`);
 
     // SVG icons for buttons
     const SVG_WATCHED = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M528 320C528 205.1 434.9 112 320 112C205.1 112 112 205.1 112 320C112 434.9 205.1 528 320 528C434.9 528 528 434.9 528 320zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M320 112C434.9 112 528 205.1 528 320C528 434.9 434.9 528 320 528C205.1 528 112 434.9 112 320C112 205.1 205.1 112 320 112zM320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7C411.4 265.5 408 250.7 396.8 243.6C385.6 236.5 370.8 240 363.7 251.2L302.3 349.5L275.3 313.5C267.3 302.9 252.3 300.7 241.7 308.7C231.1 316.7 228.9 331.7 236.9 342.3L284.9 406.3C289.6 412.6 297.2 416.2 305.1 415.9C313 415.6 320.2 411.4 324.4 404.6L404.4 276.6z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM404.4 276.7L324.4 404.7C320.2 411.4 313 415.6 305.1 416C297.2 416.4 289.6 412.8 284.9 406.4L236.9 342.4C228.9 331.8 231.1 316.8 241.7 308.8C252.3 300.8 267.3 303 275.3 313.6L302.3 349.6L363.7 251.3C370.7 240.1 385.5 236.6 396.8 243.7C408.1 250.8 411.5 265.5 404.4 276.8z"></path></svg>';
@@ -1252,11 +1214,14 @@ function populateWatchlistFromCache() {
             });
         }
     });
-
-    console.log(`[Watchlist] Populated ${watchlistUl.children.length} watchlist items`);
     
     // After populating, add reorder buttons to each item
     addReorderButtonsToWatchlist();
+    
+    // Update the watchlist badge count
+    if (typeof window.updateWatchlistBadge === 'function') {
+        window.updateWatchlistBadge();
+    }
 }
 
 /**
@@ -1410,12 +1375,8 @@ function setupWatchlistInteractions() {
 
 // Initialize sync on page load
 document.addEventListener('DOMContentLoaded', async function () {
-    console.log('[App] DOMContentLoaded fired - starting initialization');
-    
     // First, sync the data files
     await syncUserDataFiles();
-    
-    console.log('[App] Data sync complete - applying user status from cache');
     
     // Then apply user status (watched, favourites, predictions) from cache
     applyUserStatusFromCache();
@@ -1430,7 +1391,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     
     // Then populate watchlist from cache
-    console.log('[App] About to populate watchlist from cache');
     populateWatchlistFromCache();
     
     // Setup watchlist interactions (watched buttons, auto-remove)

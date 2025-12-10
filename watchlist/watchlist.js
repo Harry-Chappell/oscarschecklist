@@ -325,9 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then((res) => res.json())
       .then((response) => {
-        if (response.success) {
-          console.log("Updated setting:", response.data);
-        } else {
+        if (!response.success) {
           alert("Error saving setting: " + response.data);
         }
       })
