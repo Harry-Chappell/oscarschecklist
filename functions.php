@@ -511,6 +511,10 @@ function get_friends_list() {
                 if (container) {
                     container.innerHTML = xhr.responseText;
                     container.classList.remove("loading");
+                    
+                    // Dispatch event to notify that friends list has loaded
+                    var event = new CustomEvent("friendsListLoaded");
+                    document.dispatchEvent(event);
                 }
             }
         };

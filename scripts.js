@@ -650,11 +650,13 @@ async function syncUserDataFiles() {
         const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
         
         if (!currentUserId) {
+            console.log('[UserDataSync] No current user ID found, skipping sync');
             return;
         }
 
         // Get friend IDs from the DOM (they're already rendered in the friends list)
         const friendIds = getUserFriendIdsFromDOM();
+        console.log(`[UserDataSync] Found ${friendIds.length} friends to sync`);
         
         // Combine current user and friends
         const allUserIds = [currentUserId, ...friendIds];
@@ -663,6 +665,8 @@ async function syncUserDataFiles() {
         for (const userId of allUserIds) {
             await syncUserFile(userId);
         }
+        
+        console.log('[UserDataSync] All user data synced successfully');
         
     } catch (error) {
         console.error('[UserDataSync] Error syncing user data:', error);
@@ -974,8 +978,11 @@ async function applyFriendsWatchedStatus() {
     const friendIds = getUserFriendIdsFromDOM();
     
     if (friendIds.length === 0) {
+        console.log('[FriendsWatched] No friends found in DOM, skipping');
         return;
     }
+    
+    console.log(`[FriendsWatched] Applying watched status for ${friendIds.length} friends`);
 
     // Get all film items on the page
     const filmItems = document.querySelectorAll('li[class*="film-id-"]');
@@ -1403,8 +1410,11 @@ function setupWatchlistInteractions() {
 
 // Initialize sync on page load
 document.addEventListener('DOMContentLoaded', async function () {
-    // First, sync the data files
-    await syncUserDataFiles();
+    // First, sync the current user's data file (friends will sync after their list loads)
+    const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
+    if (currentUserId) {
+        await syncUserFile(currentUserId);
+    }
     
     // Then apply user status (watched, favourites, predictions) from cache
     applyUserStatusFromCache();
@@ -1425,6 +1435,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupWatchlistInteractions();
     
     // Then apply friends' watched status
+    await applyFriendsWatchedStatus();
+});
+
+// Listen for friends list loaded event and sync friends' data
+document.addEventListener('friendsListLoaded', async function () {
+    console.log('[UserDataSync] Friends list loaded, syncing friends data...');
+    
+    // Get friend IDs from the now-loaded DOM
+    const friendIds = getUserFriendIdsFromDOM();
+    
+    // Sync each friend's data file
+    for (const userId of friendIds) {
+        await syncUserFile(userId);
+    }
+    
+    console.log('[UserDataSync] Friends data sync complete');
+    
+    // Re-apply friends' watched status with the fresh data
     await applyFriendsWatchedStatus();
 });
 
