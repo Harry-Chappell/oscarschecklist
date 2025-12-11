@@ -12,15 +12,24 @@ function oscars_compile_all_user_stats() {
                 $user_id = (int)$matches[1];
                 $json = file_get_contents($file);
                 $data = json_decode($json, true);
+                
+                // Load prediction/favourite stats from pred_fav file
+                $pred_fav_file = $user_meta_dir . "user_{$user_id}_pred_fav.json";
+                $pred_fav_data = [];
+                if (file_exists($pred_fav_file)) {
+                    $pred_fav_json = file_get_contents($pred_fav_file);
+                    $pred_fav_data = json_decode($pred_fav_json, true) ?: [];
+                }
+                
                 $output[] = [
                     'user_id' => $user_id,
                     'last-updated' => $data['last-updated'] ?? '',
                     'total-watched' => $data['total-watched'] ?? 0,
                     'username' => $data['username'] ?? '',
                     'public' => $data['public'] ?? false,
-                    'correct-predictions' => $data['correct-predictions'] ?? '',
-                    'incorrect-predictions' => $data['incorrect-predictions'] ?? '',
-                    'correct-prediction-rate' => $data['correct-prediction-rate'] ?? '',
+                    'correct-predictions' => $pred_fav_data['correct-predictions'] ?? '',
+                    'incorrect-predictions' => $pred_fav_data['incorrect-predictions'] ?? '',
+                    'correct-prediction-rate' => $pred_fav_data['correct-prediction-rate'] ?? '',
                 ];
             }
         }

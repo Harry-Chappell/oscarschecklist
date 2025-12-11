@@ -1,13 +1,13 @@
 <?php
 
 /**
- * For every user, count correct/incorrect predictions and save to their JSON. Add a shortcode button for admins.
+ * For every user, count correct/incorrect predictions and save to their pred_fav JSON. Add a shortcode button for admins.
  */
 function oscars_update_all_user_prediction_stats() {
     $user_meta_dir = ABSPATH . 'wp-content/uploads/user_meta/';
     if (!is_dir($user_meta_dir)) return 'User meta directory not found.';
     $count = 0;
-    foreach (glob($user_meta_dir . 'user_*.json') as $file) {
+    foreach (glob($user_meta_dir . 'user_*_pred_fav.json') as $file) {
         $json = file_get_contents($file);
         $data = json_decode($json, true);
         if (!is_array($data) || empty($data['predictions']) || !is_array($data['predictions'])) continue;

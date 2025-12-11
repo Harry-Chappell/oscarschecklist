@@ -77,16 +77,16 @@ function load_user_meta_json($user_id) {
     if (!file_exists($file_path)) {
         return [
             'watched' => [],
-            'favourites' => [],
-            'predictions' => [],
             'watchlist' => [],
             'favourite-categories' => [],
             'hidden-categories' => [],
-            'correct-predictions' => "",
-            'incorrect-predictions' => "",
-            'correct-prediction-rate' => "",
             'public' => false,
             'username' => $username,
+            'last-updated' => '',
+            'total-watched' => 0,
+            'this_page_only' => false,
+            'auto_remove_watched' => true,
+            'compact_view' => false,
         ];
     }
     $json = file_get_contents($file_path);
@@ -106,16 +106,47 @@ function load_user_meta_json($user_id) {
     }
     return $data + [
         'watched' => [],
-        'favourites' => [],
-        'predictions' => [],
         'watchlist' => [],
         'favourite-categories' => [],
         'hidden-categories' => [],
+        'public' => false,
+        'username' => $username,
+        'last-updated' => '',
+        'total-watched' => 0,
+        'this_page_only' => false,
+        'auto_remove_watched' => true,
+        'compact_view' => false,
+    ];
+}
+
+function load_user_pred_fav_json($user_id) {
+    $file_path = get_user_pred_fav_json_path($user_id);
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
+    if (!file_exists($file_path)) {
+        return [
+            'username' => $username,
+            'favourites' => [],
+            'predictions' => [],
+            'correct-predictions' => "",
+            'incorrect-predictions' => "",
+            'correct-prediction-rate' => "",
+        ];
+    }
+    $json = file_get_contents($file_path);
+    $data = json_decode($json, true) ?: [];
+    // Ensure username is always present
+    if (!isset($data['username']) || $data['username'] === '') {
+        $data['username'] = $username;
+        file_put_contents($file_path, wp_json_encode($data));
+    }
+    return $data + [
+        'username' => $username,
+        'favourites' => [],
+        'predictions' => [],
         'correct-predictions' => "",
         'incorrect-predictions' => "",
         'correct-prediction-rate' => "",
-        'public' => false,
-        'username' => $username,
     ];
 }
 
@@ -283,7 +314,7 @@ function markAsFav()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id);
+    $json = load_user_pred_fav_json($user_id);
 
     if ($fav_action === 'fav') {
         if (!in_array((int)$fav_nom_id, $json['favourites'])) {
@@ -294,8 +325,6 @@ function markAsFav()
             return $id != $fav_nom_id;
         }));
     }
-    $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json);
     save_user_pred_fav_json($user_id, $json);
 }
 add_action('init', 'markAsFav');
@@ -310,7 +339,7 @@ function markAspredict()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id);
+    $json = load_user_pred_fav_json($user_id);
 
     if ($predict_action === 'predict') {
         if (!in_array((int)$predict_nom_id, $json['predictions'])) {
@@ -321,8 +350,6 @@ function markAspredict()
             return $id != $predict_nom_id;
         }));
     }
-    $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json);
     save_user_pred_fav_json($user_id, $json);
 }
 add_action('init', 'markAspredict');
@@ -1560,6 +1587,7 @@ function oscars_init_user_data() {
     }
     
     $file = get_user_meta_json_path($user_id);
+    $pred_fav_file = get_user_pred_fav_json_path($user_id);
     
     // If file already exists, return it
     if (file_exists($file)) {
@@ -1573,14 +1601,9 @@ function oscars_init_user_data() {
     $username = $user ? $user->user_login : '';
     $data = [
         'watched' => [],
-        'favourites' => [],
-        'predictions' => [],
         'watchlist' => [],
         'favourite-categories' => [],
         'hidden-categories' => [],
-        'correct-predictions' => "",
-        'incorrect-predictions' => "",
-        'correct-prediction-rate' => "",
         'public' => false,
         'username' => $username,
         'total-watched' => 0,
@@ -1589,6 +1612,19 @@ function oscars_init_user_data() {
         'auto_remove_watched' => true,
         'compact_view' => true,
     ];
+    
+    // Also create pred_fav file if it doesn't exist
+    if (!file_exists($pred_fav_file)) {
+        $pred_fav_data = [
+            'username' => $username,
+            'favourites' => [],
+            'predictions' => [],
+            'correct-predictions' => "",
+            'incorrect-predictions' => "",
+            'correct-prediction-rate' => "",
+        ];
+        file_put_contents($pred_fav_file, wp_json_encode($pred_fav_data));
+    }
     
     file_put_contents($file, wp_json_encode($data));
     wp_send_json_success($data);

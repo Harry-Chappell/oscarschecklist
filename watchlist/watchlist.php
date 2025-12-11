@@ -28,18 +28,16 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
         $username = $user ? $user->user_login : '';
         $json = [
             'watched' => [],
-            'favourites' => [],
-            'predictions' => [],
             'watchlist' => [],
             'favourite-categories' => [],
             'hidden-categories' => [],
-            'correct-predictions' => "",
-            'incorrect-predictions' => "",
-            'correct-prediction-rate' => "",
             'public' => false,
             'username' => $username,
             'total-watched' => 0,
             'last-updated' => date('Y-m-d'),
+            'this_page_only' => false,
+            'auto_remove_watched' => true,
+            'compact_view' => false,
         ];
     } else {
         $json = json_decode(file_get_contents($file_path), true);

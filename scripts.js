@@ -884,6 +884,7 @@ function applyUserStatusFromCache() {
     }
 
     const userData = getUserDataFromCache(currentUserId);
+    const predFavData = getUserDataFromCache(currentUserId, '_pred_fav');
 
     if (!userData) {
         return;
@@ -897,18 +898,18 @@ function applyUserStatusFromCache() {
         });
     }
 
-    // Process favourites (by nomination-id)
+    // Process favourites (by nomination-id) from pred_fav file
     const favouriteNominationIds = new Set();
-    if (userData.favourites && Array.isArray(userData.favourites)) {
-        userData.favourites.forEach(nominationId => {
+    if (predFavData && predFavData.favourites && Array.isArray(predFavData.favourites)) {
+        predFavData.favourites.forEach(nominationId => {
             favouriteNominationIds.add(parseInt(nominationId));
         });
     }
 
-    // Process predictions (by nomination-id)
+    // Process predictions (by nomination-id) from pred_fav file
     const predictionNominationIds = new Set();
-    if (userData.predictions && Array.isArray(userData.predictions)) {
-        userData.predictions.forEach(nominationId => {
+    if (predFavData && predFavData.predictions && Array.isArray(predFavData.predictions)) {
+        predFavData.predictions.forEach(nominationId => {
             predictionNominationIds.add(parseInt(nominationId));
         });
     }
@@ -1414,6 +1415,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
     if (currentUserId) {
         await syncUserFile(currentUserId);
+        await syncUserFile(currentUserId, '_pred_fav');
     }
     
     // Then apply user status (watched, favourites, predictions) from cache
@@ -1445,9 +1447,10 @@ document.addEventListener('friendsListLoaded', async function () {
     // Get friend IDs from the now-loaded DOM
     const friendIds = getUserFriendIdsFromDOM();
     
-    // Sync each friend's data file
+    // Sync each friend's data file (both main and pred_fav)
     for (const userId of friendIds) {
         await syncUserFile(userId);
+        await syncUserFile(userId, '_pred_fav');
     }
     
     console.log('[UserDataSync] Friends data sync complete');

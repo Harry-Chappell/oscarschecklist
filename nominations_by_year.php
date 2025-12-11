@@ -151,21 +151,21 @@ function show_nominations_by_year_shortcode($atts) {
                             if (is_user_logged_in()) {
                                 $nomination_id = get_the_ID();
                                 $user_id = get_current_user_id();
-                                $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                                $pred_fav_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '_pred_fav.json';
                                 $user_fav = false;
                                 $user_predict = false;
 
-                                if (file_exists($json_path)) {
-                                    $json_data = file_get_contents($json_path);
-                                    $user_meta = json_decode($json_data, true);
+                                if (file_exists($pred_fav_path)) {
+                                    $pred_fav_data = file_get_contents($pred_fav_path);
+                                    $pred_fav_meta = json_decode($pred_fav_data, true);
 
                                     // Favourites
-                                    if (isset($user_meta['favourites']) && is_array($user_meta['favourites'])) {
-                                        $user_fav = in_array($nomination_id, $user_meta['favourites']);
+                                    if (isset($pred_fav_meta['favourites']) && is_array($pred_fav_meta['favourites'])) {
+                                        $user_fav = in_array($nomination_id, $pred_fav_meta['favourites']);
                                     }
                                     // Predictions
-                                    if (isset($user_meta['predictions']) && is_array($user_meta['predictions'])) {
-                                        $user_predict = in_array($nomination_id, $user_meta['predictions']);
+                                    if (isset($pred_fav_meta['predictions']) && is_array($pred_fav_meta['predictions'])) {
+                                        $user_predict = in_array($nomination_id, $pred_fav_meta['predictions']);
                                     }
                                 }
                             }
