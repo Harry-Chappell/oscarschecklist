@@ -613,6 +613,13 @@ ul#toc li:before {
 ul#toc li.active:after {
     opacity: 1;
 }
+ul#toc li.favourite {
+    order: -2;
+}
+ul#toc li.hidden-category {
+    order: 999;
+    opacity: 0.5;
+}
 
 .progress-bar-container {
     width: 100%;

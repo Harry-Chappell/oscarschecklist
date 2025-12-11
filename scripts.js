@@ -316,7 +316,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const listItem = document.createElement("li");
                 listItem.textContent = categoryName;
                 listItem.classList.add(categoryName.replace(/\s+/g, '-')); // Add class with title name
-    
+                
+                // Apply favourite and hidden-category classes to TOC items
+                if (category.classList.contains('favourite')) {
+                    listItem.classList.add('favourite');
+                }
+                if (category.classList.contains('hidden-category')) {
+                    listItem.classList.add('hidden-category');
+                }
+
                 const ul = category.querySelector("ul"); // Get the UL under the H2
                 let totalLiCount = 0;
                 let watchedCount = 0;
@@ -522,6 +530,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error('Failed to update category');
                     }
                     categoryElement.classList.toggle(action, isAdding);
+                    
+                    // Update TOC to reflect the new favourite/hidden status
+                    if (typeof updateTOC === 'function') {
+                        updateTOC();
+                    }
                 })
                 .catch(error => {
                     console.error('[CategoryBtn] Error:', error);
@@ -557,6 +570,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         // console.log(`[InitCatClasses] Added .hidden-category to`, categoryElement);
                     }
                 });
+                
+                // Update TOC to reflect the favourite/hidden status on initial load
+                if (typeof updateTOC === 'function') {
+                    updateTOC();
+                }
             })
             .catch(error => {
                 console.error('[InitCatClasses] Error fetching user data:', error);
