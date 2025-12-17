@@ -12,38 +12,9 @@ function quick_check_shortcode() {
     
     ob_start();
     ?>
-    <div class="quick-check-container">
+    <div class="quick-check-container" data-source="films">
         <div class="cards-wrapper">
-            <div class="card" data-card="5">
-                <div class="card-content">
-                    <h2>Card 5 / 5</h2>
-                    <p>Swipe left or right</p>
-                </div>
-            </div>
-            <div class="card" data-card="4">
-                <div class="card-content">
-                    <h2>Card 4 / 5</h2>
-                    <p>Swipe left or right</p>
-                </div>
-            </div>
-            <div class="card" data-card="3">
-                <div class="card-content">
-                    <h2>Card 3 / 5</h2>
-                    <p>Swipe left or right</p>
-                </div>
-            </div>
-            <div class="card" data-card="2">
-                <div class="card-content">
-                    <h2>Card 2 / 5</h2>
-                    <p>Swipe left or right</p>
-                </div>
-            </div>
-            <div class="card active" data-card="1">
-                <div class="card-content">
-                    <h2>Card 1 / 5</h2>
-                    <p>Swipe left or right</p>
-                </div>
-            </div>
+            <!-- Cards will be dynamically generated from film data or fallback to default cards -->
         </div>
         
         <div class="results hidden">
