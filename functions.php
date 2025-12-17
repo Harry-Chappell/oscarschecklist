@@ -5,8 +5,20 @@ if (! defined('WP_DEBUG')) {
 add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style( 'my-style', get_stylesheet_directory_uri() . '/style.css', array(), date('ymdhis'), 'all' ); // Inside a child theme
     wp_enqueue_script( 'my-scripts', get_stylesheet_directory_uri() . '/scripts.js', array(), date('ymdhis'), true ); // Inside a child theme, load in footer
+    wp_localize_script('my-scripts', 'OscarsChecklist', [
+        'userId' => get_current_user_id()
+    ]);
 });
 
+// Remove jQuery Migrate
+add_action( 'wp_default_scripts', function( $scripts ) {
+    if ( ! is_admin() && isset( $scripts->registered['jquery'] ) ) {
+        $script = $scripts->registered['jquery'];
+        if ( $script->deps ) {
+            $script->deps = array_diff( $script->deps, array( 'jquery-migrate' ) );
+        }
+    }
+});
 
 add_action('pmxi_saved_post', 'wp_all_import_post_saved', 10, 1);
 
@@ -41,80 +53,142 @@ if (!current_user_can('edit_posts')) {
 
 
 
-function get_user_meta_json_path($user_id, $type = 'watched') {
+function get_user_meta_json_path($user_id) {
     $upload_dir = wp_upload_dir();
     $user_dir   = $upload_dir['basedir'] . '/user_meta';
     if ( ! file_exists( $user_dir ) ) {
         wp_mkdir_p( $user_dir );
     }
-    if ($type === 'watched') {
-        return $user_dir . "/user_{$user_id}_watched.json";
-    } else {
-        return $user_dir . "/user_{$user_id}_prefs.json";
+    return $user_dir . "/user_{$user_id}.json";
+}
+function get_user_pred_fav_json_path($user_id) {
+    $upload_dir = wp_upload_dir();
+    $user_dir   = $upload_dir['basedir'] . '/user_meta';
+    if ( ! file_exists( $user_dir ) ) {
+        wp_mkdir_p( $user_dir );
     }
+    return $user_dir . "/user_{$user_id}_pred_fav.json";
 }
 
-function load_user_meta_json($user_id, $type = null) {
-    // If type is null, load both and merge for legacy compatibility
-    if ($type === null) {
-        $watched = load_user_meta_json($user_id, 'watched');
-        $prefs = load_user_meta_json($user_id, 'prefs');
-        return array_merge($watched, $prefs);
-    }
-    $file_path = get_user_meta_json_path($user_id, $type);
+function load_user_meta_json($user_id) {
+    $file_path = get_user_meta_json_path($user_id);
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
     if (!file_exists($file_path)) {
-        if ($type === 'watched') {
-            return [
-                'watched' => [],
-                'total-watched' => 0,
-                'last-updated' => '',
-            ];
-        } else {
-            return [
-                'favourites' => [],
-                'predictions' => [],
-                'last-updated' => '',
-                'public' => false,
-                'correct-predictions' => '',
-                'incorrect-predictions' => '',
-                'correct-prediction-rate' => '',
-            ];
-        }
+        return [
+            'watched' => [],
+            'watchlist' => [],
+            'favourite-categories' => [],
+            'hidden-categories' => [],
+            'public' => false,
+            'username' => $username,
+            'last-updated' => '',
+            'total-watched' => 0,
+            'this_page_only' => false,
+            'auto_remove_watched' => true,
+            'compact_view' => false,
+        ];
     }
     $json = file_get_contents($file_path);
-    return json_decode($json, true) ?: [];
-}
-
-function save_user_meta_json($user_id, $data, $type = null) {
-    // If type is null, try to split and save both
-    if ($type === null) {
-        if (isset($data['watched'])) {
-            save_user_meta_json($user_id, [
-                'username' => isset($data['username']) ? $data['username'] : '',
-                'last-updated' => isset($data['last-updated']) ? $data['last-updated'] : '',
-                'total-watched' => isset($data['total-watched']) ? $data['total-watched'] : count($data['watched']),
-                'watched' => $data['watched'],
-            ], 'watched');
-        }
-        save_user_meta_json($user_id, [
-            'username' => isset($data['username']) ? $data['username'] : '',
-            'public' => isset($data['public']) ? $data['public'] : false,
-            'last-updated' => isset($data['last-updated']) ? $data['last-updated'] : '',
-            'favourites' => isset($data['favourites']) ? $data['favourites'] : [],
-            'predictions' => isset($data['predictions']) ? $data['predictions'] : [],
-            'correct-predictions' => isset($data['correct-predictions']) ? $data['correct-predictions'] : '',
-            'incorrect-predictions' => isset($data['incorrect-predictions']) ? $data['incorrect-predictions'] : '',
-            'correct-prediction-rate' => isset($data['correct-prediction-rate']) ? $data['correct-prediction-rate'] : '',
-        ], 'prefs');
-        return;
+    $data = json_decode($json, true) ?: [];
+    // Ensure username and public are always present
+    $updated = false;
+    if (!isset($data['username']) || $data['username'] === '') {
+        $data['username'] = $username;
+        $updated = true;
     }
-    $file_path = get_user_meta_json_path($user_id, $type);
-    file_put_contents($file_path, wp_json_encode($data, JSON_PRETTY_PRINT));
+    if (!isset($data['public'])) {
+        $data['public'] = false;
+        $updated = true;
+    }
+    if ($updated) {
+        file_put_contents($file_path, wp_json_encode($data));
+    }
+    return $data + [
+        'watched' => [],
+        'watchlist' => [],
+        'favourite-categories' => [],
+        'hidden-categories' => [],
+        'public' => false,
+        'username' => $username,
+        'last-updated' => '',
+        'total-watched' => 0,
+        'this_page_only' => false,
+        'auto_remove_watched' => true,
+        'compact_view' => false,
+    ];
 }
 
-// Update markAsWatched, markAsFav, markAspredict to use new structure
-function markAsWatched()
-{
+function load_user_pred_fav_json($user_id) {
+    $file_path = get_user_pred_fav_json_path($user_id);
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
+    if (!file_exists($file_path)) {
+        return [
+            'username' => $username,
+            'favourites' => [],
+            'predictions' => [],
+            'correct-predictions' => "",
+            'incorrect-predictions' => "",
+            'correct-prediction-rate' => "",
+        ];
+    }
+    $json = file_get_contents($file_path);
+    $data = json_decode($json, true) ?: [];
+    // Ensure username is always present
+    if (!isset($data['username']) || $data['username'] === '') {
+        $data['username'] = $username;
+        file_put_contents($file_path, wp_json_encode($data));
+    }
+    return $data + [
+        'username' => $username,
+        'favourites' => [],
+        'predictions' => [],
+        'correct-predictions' => "",
+        'incorrect-predictions' => "",
+        'correct-prediction-rate' => "",
+    ];
+}
+
+function save_user_meta_json($user_id, $data) {
+    $file_path = get_user_meta_json_path($user_id);
+    file_put_contents($file_path, wp_json_encode($data));
+}
+function save_user_pred_fav_json($user_id, $data) {
+    $file_path = get_user_pred_fav_json_path($user_id);
+    // Only include specific fields for pred_fav files
+    $filtered_data = array_intersect_key($data, array_flip([
+        'username',
+        'correct-predictions',
+        'incorrect-predictions',
+        'correct-prediction-rate',
+        'predictions',
+        'favourites'
+    ]));
+    file_put_contents($file_path, wp_json_encode($filtered_data));
+}
+
+function oscars_update_film_stats_json($film_id, $action) {
+    $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
+    if (!file_exists($output_path)) return;
+    $json = file_get_contents($output_path);
+    $films = json_decode($json, true);
+    if (!$films || !is_array($films)) return;
+    foreach ($films as &$film) {
+        if (isset($film['film-id']) && $film['film-id'] == $film_id) {
+            if (!isset($film['watched-count'])) $film['watched-count'] = 0;
+            if ($action === 'watched') {
+                $film['watched-count']++;
+            } elseif ($action === 'unwatched' && $film['watched-count'] > 0) {
+                $film['watched-count']--;
+            }
+            break;
+        }
+    }
+    file_put_contents($output_path, json_encode($films));
+}
+
+function markAsWatched() {
     $post_id = $_POST['watched_post_id'] ?? null;
     $action = $_POST['watched_action'] ?? null;
 
@@ -123,10 +197,11 @@ function markAsWatched()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id, 'watched');
+    $json = load_user_meta_json($user_id);
     $changed = false;
 
     if ($action === 'watched') {
+        // Only add if not already present
         $already = false;
         foreach ($json['watched'] as $film) {
             if ($film['film-id'] == $post_id) {
@@ -135,11 +210,43 @@ function markAsWatched()
             }
         }
         if (!$already) {
-            $json['watched'][] = [
-                'film-id' => $post_id,
-                // Optionally add more film info if needed
+            // Use get_term to fetch the film term by ID
+            $film_term = get_term((int)$post_id, 'films');
+            $film_name = ($film_term && !is_wp_error($film_term)) ? $film_term->name : '';
+            $film_slug = ($film_term && !is_wp_error($film_term)) ? $film_term->slug : '';
+            $film_url = ($film_term && !is_wp_error($film_term)) ? get_term_link($film_term) : '';
+            $film_url = $film_slug;
+            $film_year = null;
+
+            // Get year from first nomination post (if any)
+            $nomination_query = new WP_Query([
+                'post_type' => 'nominations',
+                'posts_per_page' => 1,
+                'tax_query' => [[
+                    'taxonomy' => 'films',
+                    'field'    => 'term_id',
+                    'terms'    => (int)$post_id,
+                ]],
+                'orderby' => 'date',
+                'order'   => 'ASC',
+            ]);
+            if ($nomination_query->have_posts()) {
+                $nomination = $nomination_query->posts[0];
+                $film_year = (int) date('Y', strtotime($nomination->post_date));
+            }
+            wp_reset_postdata();
+
+            $entry = [
+                'film-id' => (int)$post_id,
+                'film-name' => $film_name,
+                'film-year' => $film_year,
+                'film-url' => $film_url,
+                'watched-date' => date('Y-m-d'),
             ];
+            $json['watched'][] = $entry;
             $changed = true;
+
+            update_watched_by_day_json($post_id);
         }
     } elseif ($action === 'unwatched') {
         $before = count($json['watched']);
@@ -150,14 +257,52 @@ function markAsWatched()
             $changed = true;
         }
     }
+    // Update stats and last-updated
     $json['total-watched'] = count($json['watched']);
     $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json, 'watched');
+    save_user_meta_json($user_id, $json);
     if ($changed) {
         oscars_update_film_stats_json($post_id, $action);
     }
 }
 add_action('init', 'markAsWatched', 30);
+
+function update_watched_by_day_json($film_id) {
+    $upload_dir = wp_upload_dir();
+    $file_path = $upload_dir['basedir'] . '/watched_by_day.json';
+    $today = date('Y-m-d');
+
+    // Load or initialize data
+    if (file_exists($file_path)) {
+        $json = file_get_contents($file_path);
+        $data = json_decode($json, true);
+        if (!is_array($data)) $data = [];
+    } else {
+        $data = [];
+    }
+
+    // Ensure structure
+    if (!isset($data['days'])) $data['days'] = [];
+    if (!isset($data['films'])) $data['films'] = [];
+
+    // Increment total watched for today
+    if (!isset($data['days'][$today])) {
+        $data['days'][$today] = 1;
+    } else {
+        $data['days'][$today]++;
+    }
+
+    // Increment watched for this film for today
+    if (!isset($data['films'][$film_id])) $data['films'][$film_id] = [];
+    if (!isset($data['films'][$film_id][$today])) {
+        $data['films'][$film_id][$today] = 1;
+    } else {
+        $data['films'][$film_id][$today]++;
+    }
+
+    // Save back to file
+    file_put_contents($file_path, json_encode($data));
+}
 
 function markAsFav()
 {
@@ -169,7 +314,7 @@ function markAsFav()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id, 'prefs');
+    $json = load_user_pred_fav_json($user_id);
 
     if ($fav_action === 'fav') {
         if (!in_array((int)$fav_nom_id, $json['favourites'])) {
@@ -180,8 +325,7 @@ function markAsFav()
             return $id != $fav_nom_id;
         }));
     }
-    $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json, 'prefs');
+    save_user_pred_fav_json($user_id, $json);
 }
 add_action('init', 'markAsFav');
 
@@ -195,7 +339,7 @@ function markAspredict()
     }
 
     $user_id = get_current_user_id();
-    $json = load_user_meta_json($user_id, 'prefs');
+    $json = load_user_pred_fav_json($user_id);
 
     if ($predict_action === 'predict') {
         if (!in_array((int)$predict_nom_id, $json['predictions'])) {
@@ -206,8 +350,7 @@ function markAspredict()
             return $id != $predict_nom_id;
         }));
     }
-    $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json, 'prefs');
+    save_user_pred_fav_json($user_id, $json);
 }
 add_action('init', 'markAspredict');
 
@@ -318,7 +461,8 @@ function show_friends() {
 add_shortcode('show_friends', 'show_friends');
 
 
-function get_friends_list() {
+// Core function to generate friends list HTML
+function get_friends_list_html() {
     if ( ! is_user_logged_in() ) {
         return '';
     }
@@ -361,9 +505,49 @@ function get_friends_list() {
 
         $output .= '</ul></div>';
     } else {
-        $output .= '<a class="add-friends-link" href="https://stage.oscarschecklist.com/members/"><p>Add friends to compare</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
+        $output .= '<a class="add-friends-link" href="https://oscarschecklist.com/members/"><p>Add friends to compare</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/></svg></a>';
     }
     return $output;
+}
+
+// AJAX handler for loading friends list
+function ajax_get_friends_list() {
+    echo get_friends_list_html();
+    wp_die();
+}
+add_action('wp_ajax_get_friends_list', 'ajax_get_friends_list');
+add_action('wp_ajax_nopriv_get_friends_list', 'ajax_get_friends_list');
+
+// Shortcode that loads friends list via AJAX
+function get_friends_list() {
+    if ( ! is_user_logged_in() ) {
+        return '';
+    }
+    
+    // Return placeholder that will be replaced by AJAX call
+    $ajax_url = admin_url('admin-ajax.php');
+    return '<div id="friends-list-container" class="loading"></div>
+    <script>
+    (function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "' . esc_js($ajax_url) . '", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var container = document.getElementById("friends-list-container");
+                if (container) {
+                    container.innerHTML = xhr.responseText;
+                    container.classList.remove("loading");
+                    
+                    // Dispatch event to notify that friends list has loaded
+                    var event = new CustomEvent("friendsListLoaded");
+                    document.dispatchEvent(event);
+                }
+            }
+        };
+        xhr.send("action=get_friends_list");
+    })();
+    </script>';
 }
 add_shortcode( 'getfriendslist', 'get_friends_list' );
 
@@ -380,7 +564,7 @@ function oscars_year_dropdown_shortcode() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('oscarsYearDropdown').addEventListener('change', function() {
         var year = this.value;
-        window.location.href = 'https://stage.oscarschecklist.com/years/nominations-' + year + '/';
+        window.location.href = 'https://oscarschecklist.com/years/nominations-' + year + '/';
     });
 });
 </script>
@@ -430,7 +614,7 @@ function oscar_nominations_navigation() {
 
     // Add the previous link if it's within the allowed range
     if ($prev_year >= $min_year) {
-        $prev_link = "https://stage.oscarschecklist.com/years/nominations-$prev_year/";
+        $prev_link = "https://oscarschecklist.com/years/nominations-$prev_year/";
         $output .= '<a title="Nominations ' . $prev_year . '" href="' . esc_url($prev_link) . '" class="nominations-nav-button">← ' . $prev_year . '</a>';
     }
 
@@ -444,7 +628,7 @@ function oscar_nominations_navigation() {
 
     // Add the next link if it's within the allowed range
     if ($next_year <= $max_year) {
-        $next_link = "https://stage.oscarschecklist.com/years/nominations-$next_year/";
+        $next_link = "https://oscarschecklist.com/years/nominations-$next_year/";
         $output .= '<a title="Nominations ' . $next_year . '" href="' . esc_url($next_link) . '" class="nominations-nav-button">' . $next_year . ' →</a>';
     }
 
@@ -456,7 +640,7 @@ function oscar_nominations_navigation() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('oscarsYearDropdown').addEventListener('change', function() {
         var year = this.value;
-        window.location.href = 'https://stage.oscarschecklist.com/years/nominations-' + year + '/';
+        window.location.href = 'https://oscarschecklist.com/years/nominations-' + year + '/';
     });
 });
 </script>
@@ -467,8 +651,6 @@ EOT;
 
 // Register the shortcode
 add_shortcode('oscar_navigation', 'oscar_nominations_navigation');
-
-
 
 function unique_films_shortcode($atts) {
     // Get the 'year' from ACF (Advanced Custom Fields)
@@ -661,7 +843,7 @@ function wpb_login_logo() {
 ?>
     <style type="text/css">
         #login h1 a, .login h1 a {
-            background-image: url(https://stage.oscarschecklist.com/wp-content/uploads/2024/08/oscars-checklist-logo.png);
+            background-image: url(https://oscarschecklist.com/wp-content/uploads/2024/08/oscars-checklist-logo.png);
         height:100px;
         width:300px;
         background-size: 300px 100px;
@@ -811,9 +993,10 @@ function custom_toggle_buttons_shortcode() {
     $winners_only = "";
 
     $show_unique_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M48 256C48 141.1 141.1 48 256 48c63.1 0 119.6 28.1 157.8 72.5c8.6 10.1 23.8 11.2 33.8 2.6s11.2-23.8 2.6-33.8C403.3 34.6 333.7 0 256 0C114.6 0 0 114.6 0 256l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40zm458.5-52.9c-2.7-13-15.5-21.3-28.4-18.5s-21.3 15.5-18.5 28.4c2.9 13.9 4.5 28.3 4.5 43.1l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c0-18.1-1.9-35.8-5.5-52.9zM256 80c-19 0-37.4 3-54.5 8.6c-15.2 5-18.7 23.7-8.3 35.9c7.1 8.3 18.8 10.8 29.4 7.9c10.6-2.9 21.8-4.4 33.4-4.4c70.7 0 128 57.3 128 128l0 24.9c0 25.2-1.5 50.3-4.4 75.3c-1.7 14.6 9.4 27.8 24.2 27.8c11.8 0 21.9-8.6 23.3-20.3c3.3-27.4 5-55 5-82.7l0-24.9c0-97.2-78.8-176-176-176zM150.7 148.7c-9.1-10.6-25.3-11.4-33.9-.4C93.7 178 80 215.4 80 256l0 24.9c0 24.2-2.6 48.4-7.8 71.9C68.8 368.4 80.1 384 96.1 384c10.5 0 19.9-7 22.2-17.3c6.4-28.1 9.7-56.8 9.7-85.8l0-24.9c0-27.2 8.5-52.4 22.9-73.1c7.2-10.4 8-24.6-.2-34.2zM256 160c-53 0-96 43-96 96l0 24.9c0 35.9-4.6 71.5-13.8 106.1c-3.8 14.3 6.7 29 21.5 29c9.5 0 17.9-6.2 20.4-15.4c10.5-39 15.9-79.2 15.9-119.7l0-24.9c0-28.7 23.3-52 52-52s52 23.3 52 52l0 24.9c0 36.3-3.5 72.4-10.4 107.9c-2.7 13.9 7.7 27.2 21.8 27.2c10.2 0 19-7 21-17c7.7-38.8 11.6-78.3 11.6-118.1l0-24.9c0-53-43-96-96-96zm24 96c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 24.9c0 59.9-11 119.3-32.5 175.2l-5.9 15.3c-4.8 12.4 1.4 26.3 13.8 31s26.3-1.4 31-13.8l5.9-15.3C267.9 411.9 280 346.7 280 280.9l0-24.9z"/></svg>';
-    $hide_watched_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M288 32c-26.5 0-48.1 21.8-47.1 48.2c.2 5.3 .4 10.6 .7 15.8L24 64C10.7 64 0 74.7 0 88c0 92.6 33.5 157 78.5 200.7c44.3 43.1 98.3 64.8 138.1 75.8c23.4 6.5 39.4 26 39.4 45.6c0 20.9-17 37.9-37.9 37.9L192 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l192 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-26.1 0C337 448 320 431 320 410.1c0-19.6 15.9-39.2 39.4-45.6c39.9-11 93.9-32.7 138.2-75.8C542.5 245 576 180.6 576 88c0-13.3-10.7-24-24-24L446.4 64c.3-5.2 .5-10.4 .7-15.8C448.1 21.8 426.5 0 400 0zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"/></svg>';
+    $hide_watched_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M73 39.1C63.6 29.7 48.4 29.7 39.1 39.1C29.8 48.5 29.7 63.7 39 73.1L567 601.1C576.4 610.5 591.6 610.5 600.9 601.1C610.2 591.7 610.3 576.5 600.9 567.2L504.5 470.8C507.2 468.4 509.9 466 512.5 463.6C559.3 420.1 590.6 368.2 605.5 332.5C608.8 324.6 608.8 315.8 605.5 307.9C590.6 272.2 559.3 220.2 512.5 176.8C465.4 133.1 400.7 96.2 319.9 96.2C263.1 96.2 214.3 114.4 173.9 140.4L73 39.1zM236.5 202.7C260 185.9 288.9 176 320 176C399.5 176 464 240.5 464 320C464 351.1 454.1 379.9 437.3 403.5L402.6 368.8C415.3 347.4 419.6 321.1 412.7 295.1C399 243.9 346.3 213.5 295.1 227.2C286.5 229.5 278.4 232.9 271.1 237.2L236.4 202.5zM357.3 459.1C345.4 462.3 332.9 464 320 464C240.5 464 176 399.5 176 320C176 307.1 177.7 294.6 180.9 282.7L101.4 203.2C68.8 240 46.4 279 34.5 307.7C31.2 315.6 31.2 324.4 34.5 332.3C49.4 368 80.7 420 127.5 463.4C174.6 507.1 239.3 544 320.1 544C357.4 544 391.3 536.1 421.6 523.4L357.4 459.2z"/></svg>';
     $winners_only_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M400 0L176 0c-26.5 0-48.1 21.8-47.1 48.2c.2 5.3 .4 10.6 .7 15.8L24 64C10.7 64 0 74.7 0 88c0 92.6 33.5 157 78.5 200.7c44.3 43.1 98.3 64.8 138.1 75.8c23.4 6.5 39.4 26 39.4 45.6c0 20.9-17 37.9-37.9 37.9L192 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l192 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-26.1 0C337 448 320 431 320 410.1c0-19.6 15.9-39.2 39.4-45.6c39.9-11 93.9-32.7 138.2-75.8C542.5 245 576 180.6 576 88c0-13.3-10.7-24-24-24L446.4 64c.3-5.2 .5-10.4 .7-15.8C448.1 21.8 426.5 0 400 0zM48.9 112l84.4 0c9.1 90.1 29.2 150.3 51.9 190.6c-24.9-11-50.8-26.5-73.2-48.3c-32-31.1-58-76-63-142.3zM464.1 254.3c-22.4 21.8-48.3 37.3-73.2 48.3c22.7-40.3 42.8-100.5 51.9-190.6l84.4 0c-5.1 66.3-31.1 111.2-63 142.3z"/></svg>';
-    $progress_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M24 32c13.3 0 24 10.7 24 24l0 352c0 13.3 10.7 24 24 24l416 0c13.3 0 24 10.7 24 24s-10.7 24-24 24L72 480c-39.8 0-72-32.2-72-72L0 56C0 42.7 10.7 32 24 32zM128 136c0-13.3 10.7-24 24-24l208 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-208 0c-13.3 0-24-10.7-24-24zm24 72l144 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-144 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 96l272 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-272 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg>';
+    $progress_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 96C113.7 96 128 110.3 128 128L128 464C128 472.8 135.2 480 144 480L544 480C561.7 480 576 494.3 576 512C576 529.7 561.7 544 544 544L144 544C99.8 544 64 508.2 64 464L64 128C64 110.3 78.3 96 96 96zM208 288C225.7 288 240 302.3 240 320L240 384C240 401.7 225.7 416 208 416C190.3 416 176 401.7 176 384L176 320C176 302.3 190.3 288 208 288zM352 224L352 384C352 401.7 337.7 416 320 416C302.3 416 288 401.7 288 384L288 224C288 206.3 302.3 192 320 192C337.7 192 352 206.3 352 224zM432 256C449.7 256 464 270.3 464 288L464 384C464 401.7 449.7 416 432 416C414.3 416 400 401.7 400 384L400 288C400 270.3 414.3 256 432 256zM576 160L576 384C576 401.7 561.7 416 544 416C526.3 416 512 401.7 512 384L512 160C512 142.3 526.3 128 544 128C561.7 128 576 142.3 576 160z"/></svg>';
+    $watchlist_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M112 208C138.5 208 160 186.5 160 160C160 133.5 138.5 112 112 112C85.5 112 64 133.5 64 160C64 186.5 85.5 208 112 208zM256 128C238.3 128 224 142.3 224 160C224 177.7 238.3 192 256 192L544 192C561.7 192 576 177.7 576 160C576 142.3 561.7 128 544 128L256 128zM256 288C238.3 288 224 302.3 224 320C224 337.7 238.3 352 256 352L544 352C561.7 352 576 337.7 576 320C576 302.3 561.7 288 544 288L256 288zM256 448C238.3 448 224 462.3 224 480C224 497.7 238.3 512 256 512L544 512C561.7 512 576 497.7 576 480C576 462.3 561.7 448 544 448L256 448zM112 528C138.5 528 160 506.5 160 480C160 453.5 138.5 432 112 432C85.5 432 64 453.5 64 480C64 506.5 85.5 528 112 528zM160 320C160 293.5 138.5 272 112 272C85.5 272 64 293.5 64 320C64 346.5 85.5 368 112 368C138.5 368 160 346.5 160 320z"/></svg>';
 
     if (is_user_logged_in()) {
         $user_id = get_current_user_id();
@@ -836,6 +1019,7 @@ function custom_toggle_buttons_shortcode() {
     $output .= '<button id="toggle-winners-only" class="toggle-winners-only-button">' . $winners_only_icon . '<span>' . $winners_only_text . '</span></button>';
     $output .= '<button id="toggle-predicted" class="toggle-predicted-button">' . $winners_only_icon . '<span>' . $predicted_text . '</span></button>';
     $output .= '<button id="toggle-progress" class="progress-toggle">' . $progress_icon . '<span>Progress</span></button>';
+    $output .= '<button id="toggle-watchlist" class="watchlist-toggle">' . $watchlist_icon . '<span>Watchlist</span></button>';
 
     // Output the script to handle the button clicks
     $output .= '
@@ -928,6 +1112,9 @@ function add_custom_body_classes($classes) {
     if (is_user_logged_in()) {
         $user_id = get_current_user_id();
 
+        // Add user ID class
+        $classes[] = 'user-id-' . $user_id;
+
         // Get user preferences
         $show_unique = get_user_meta($user_id, 'show_unique_films', true);
         $hide_watched = get_user_meta($user_id, 'hide_watched_films', true);
@@ -967,8 +1154,6 @@ function add_custom_js_to_footer() {
                         notification.style.display = 'block'; // Show the message
                     }
                 });
-            } else {
-                console.log("Username input field not found");
             }
         });
     </script>
@@ -1261,5 +1446,216 @@ add_shortcode('prediction_count', 'prediction_count_shortcode');
 
 
 
-require_once get_stylesheet_directory() . '/update_meta.php';
+// require_once get_stylesheet_directory() . '/update_meta.php';
 require_once get_stylesheet_directory() . '/film_stats.php';
+
+
+
+
+
+
+function aggregate_watched_dates_to_by_day_json() {
+    if ( ! current_user_can('manage_options') ) {
+        return;
+    }
+
+    $upload_dir = wp_upload_dir();
+    $user_meta_dir = $upload_dir['basedir'] . '/user_meta';
+    $watched_by_day_path = $upload_dir['basedir'] . '/watched_by_day.json';
+
+    // Load or initialize watched_by_day data
+    if (file_exists($watched_by_day_path)) {
+        $json = file_get_contents($watched_by_day_path);
+        $data = json_decode($json, true);
+        if (!is_array($data)) $data = [];
+    } else {
+        $data = [];
+    }
+    if (!isset($data['days'])) $data['days'] = [];
+    if (!isset($data['films'])) $data['films'] = [];
+
+    // Loop through all user json files
+    foreach (glob($user_meta_dir . '/user_*.json') as $user_file) {
+        $user_json = file_get_contents($user_file);
+        $user_data = json_decode($user_json, true);
+        if (!isset($user_data['watched']) || !is_array($user_data['watched'])) continue;
+
+        foreach ($user_data['watched'] as $film) {
+            if (!empty($film['watched-date']) && !empty($film['film-id'])) {
+                $date = $film['watched-date'];
+                $film_id = $film['film-id'];
+
+                // Increment total watched for this date
+                if (!isset($data['days'][$date])) {
+                    $data['days'][$date] = 1;
+                } else {
+                    $data['days'][$date]++;
+                }
+
+                // Increment watched for this film for this date
+                if (!isset($data['films'][$film_id])) $data['films'][$film_id] = [];
+                if (!isset($data['films'][$film_id][$date])) {
+                    $data['films'][$film_id][$date] = 1;
+                } else {
+                    $data['films'][$film_id][$date]++;
+                }
+            }
+        }
+    }
+
+    // Save back to file
+    file_put_contents($watched_by_day_path, json_encode($data));
+}
+
+function watched_by_day_admin_button() {
+    if (!current_user_can('manage_options')) return '';
+    $nonce = wp_create_nonce('aggregate_watched_dates');
+    return '
+        <div style="margin-bottom:1em;">
+            <button id="aggregate-watched-dates" style="padding:8px 16px;font-size:16px;">Aggregate Watched Dates</button>
+            <span id="aggregate-watched-dates-status"></span>
+        </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var btn = document.getElementById("aggregate-watched-dates");
+            if(btn){
+                btn.addEventListener("click", function() {
+                    btn.disabled = true;
+                    document.getElementById("aggregate-watched-dates-status").textContent = "Processing...";
+                    fetch("' . admin_url('admin-ajax.php') . '?action=aggregate_watched_dates&nonce=' . $nonce . '")
+                        .then(r => r.text())
+                        .then(txt => {
+                            document.getElementById("aggregate-watched-dates-status").textContent = txt;
+                            btn.disabled = false;
+                        });
+                });
+            }
+        });
+        </script>
+    ';
+}
+add_shortcode('watched_by_day_admin_button', 'watched_by_day_admin_button');
+
+// AJAX handler
+add_action('wp_ajax_aggregate_watched_dates', function() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Not allowed');
+    }
+    if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'aggregate_watched_dates')) {
+        wp_die('Invalid nonce');
+    }
+    aggregate_watched_dates_to_by_day_json();
+    wp_die('Aggregation complete!');
+});
+
+// Schedule daily cron job for watched dates aggregation
+add_action('wp', function() {
+    if (!wp_next_scheduled('daily_aggregate_watched_dates')) {
+        wp_schedule_event(time(), 'daily', 'daily_aggregate_watched_dates');
+    }
+});
+
+// Hook the aggregation function to the cron event
+add_action('daily_aggregate_watched_dates', 'aggregate_watched_dates_to_by_day_json');
+
+
+require_once get_stylesheet_directory() . '/watchlist/watchlist.php';
+
+// === AJAX: Get user data as JSON ===
+add_action('wp_ajax_get_user_data', 'oscars_get_user_data');
+add_action('wp_ajax_nopriv_get_user_data', 'oscars_get_user_data');
+function oscars_get_user_data() {
+    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    if (!$user_id) {
+        wp_send_json_error(['error' => 'No user_id provided']);
+    }
+    $file = get_user_meta_json_path($user_id);
+    if (!file_exists($file)) {
+        wp_send_json_error(['error' => 'User file not found']);
+    }
+    $json = file_get_contents($file);
+    wp_send_json(json_decode($json, true));
+}
+
+// === AJAX: Initialize user data file ===
+add_action('wp_ajax_init_user_data', 'oscars_init_user_data');
+add_action('wp_ajax_nopriv_init_user_data', 'oscars_init_user_data');
+function oscars_init_user_data() {
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    if (!$user_id) {
+        wp_send_json_error(['error' => 'No user_id provided']);
+    }
+    
+    $file = get_user_meta_json_path($user_id);
+    $pred_fav_file = get_user_pred_fav_json_path($user_id);
+    
+    // If file already exists, return it
+    if (file_exists($file)) {
+        $json = file_get_contents($file);
+        wp_send_json_success(json_decode($json, true));
+        return;
+    }
+    
+    // Create new user data file
+    $user = get_userdata($user_id);
+    $username = $user ? $user->user_login : '';
+    $data = [
+        'watched' => [],
+        'watchlist' => [],
+        'favourite-categories' => [],
+        'hidden-categories' => [],
+        'public' => false,
+        'username' => $username,
+        'total-watched' => 0,
+        'last-updated' => date('Y-m-d'),
+        'this_page_only' => true,
+        'auto_remove_watched' => true,
+        'compact_view' => true,
+    ];
+    
+    // Also create pred_fav file if it doesn't exist
+    if (!file_exists($pred_fav_file)) {
+        $pred_fav_data = [
+            'username' => $username,
+            'favourites' => [],
+            'predictions' => [],
+            'correct-predictions' => "",
+            'incorrect-predictions' => "",
+            'correct-prediction-rate' => "",
+        ];
+        file_put_contents($pred_fav_file, wp_json_encode($pred_fav_data));
+    }
+    
+    file_put_contents($file, wp_json_encode($data));
+    wp_send_json_success($data);
+}
+
+// === AJAX: Update category favourite/hidden ===
+add_action('wp_ajax_update_category', 'oscars_update_category');
+add_action('wp_ajax_nopriv_update_category', 'oscars_update_category');
+function oscars_update_category() {
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    $category_slug = isset($_POST['category_slug']) ? sanitize_text_field($_POST['category_slug']) : '';
+    $action = isset($_POST['category_action']) ? sanitize_text_field($_POST['category_action']) : '';
+    $is_adding = isset($_POST['is_adding']) ? filter_var($_POST['is_adding'], FILTER_VALIDATE_BOOLEAN) : false;
+    if (!$user_id || !$category_slug || !in_array($action, ['favourite', 'hidden-category'])) {
+        wp_send_json_error(['error' => 'Invalid parameters']);
+    }
+    $file = get_user_meta_json_path($user_id);
+    if (!file_exists($file)) {
+        wp_send_json_error(['error' => 'User file not found']);
+    }
+    $data = json_decode(file_get_contents($file), true);
+    $key = $action === 'favourite' ? 'favourite-categories' : 'hidden-categories';
+    if (!isset($data[$key])) $data[$key] = [];
+    if ($is_adding) {
+        if (!in_array($category_slug, $data[$key])) {
+            $data[$key][] = $category_slug;
+        }
+    } else {
+        $data[$key] = array_values(array_diff($data[$key], [$category_slug]));
+    }
+    file_put_contents($file, json_encode($data));
+    wp_send_json_success(['data' => $data]);
+}
+

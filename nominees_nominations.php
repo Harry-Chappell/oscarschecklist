@@ -60,11 +60,6 @@ function nominees_nominations_function() {
         echo '<h1>' . esc_html($term->name) . '</h1>'; // Display term title
     
 
-        if (category_description() != "") {
-            echo '<details class="description"><summary>Bio:</summary>';
-            echo '<p>' . category_description() . '</p>'; // Display term description
-            echo '</details>';
-        }
 
 
         // Query nominations and count winners
@@ -102,12 +97,12 @@ function nominees_nominations_function() {
         
         // Output win icons
         for ($i = 0; $i < $winner_count; $i++) {
-            echo '<div class="icon winner">' . file_get_contents("https://stage.oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
+            echo '<div class="icon winner">' . file_get_contents("https://oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
         }
         
         // Output non-win icons
         for ($i = 0; $i < $non_wins_count; $i++) {
-            echo '<div class="icon nomination">' . file_get_contents("https://stage.oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
+            echo '<div class="icon nomination">' . file_get_contents("https://oscarschecklist.com/wp-content/uploads/2025/01/trophy-solid.svg") . '</div>';
         }
         echo '</div>'; // Close nominations-icons
         echo '</div>'; // Close nominations-summary
@@ -115,7 +110,7 @@ function nominees_nominations_function() {
 
 
 
-        
+        echo '<div class="details-blocks">';
         
         if ($taxonomy == 'films') {
 
@@ -148,6 +143,21 @@ function nominees_nominations_function() {
             
             echo "</details>";
         }
+
+
+        if (category_description() != "") {
+            echo '<details class="description"><summary>Bio</summary>';
+            echo '<p>' . category_description() . '</p>'; // Display term description
+            echo '</details>';
+        }
+
+        if ($taxonomy == 'films') {
+            echo '<details class="watch-history"><summary>Watched History</summary>';
+            echo do_shortcode('[oscars_active_users_barchart interval="day" timeframe="" film_id="' . esc_attr($term->term_id) . '"]');
+            echo '</details>';
+        }
+
+        echo '</div>'; // Close details-blocks
     }
 
     if ($query->have_posts()) {
@@ -200,16 +210,28 @@ function nominees_nominations_function() {
             $year = get_the_date('Y'); // Get the year from the post's publish date
             
             echo '<li class="';
-            // Display categories without the "Category: " prefix and link them to their respective pages
             foreach ($categories as $category) {
                 echo ' ' . esc_html($category->slug);
             }
             echo ' nominee-visibility-' . $nominee_visibility;
 
-            if (is_user_logged_in()) {
-                $post_id = $film->term_id;
-                // Original line to get user's watched status
-                $user_watched = get_user_meta(get_current_user_id(), 'watched_' . $post_id, true);
+            $user_watched = false;
+            $post_id = ($film && isset($film->term_id)) ? $film->term_id : null;
+            if (is_user_logged_in() && $post_id) {
+                $user_id = get_current_user_id();
+                $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                if (file_exists($json_path)) {
+                    $json_data = file_get_contents($json_path);
+                    $user_meta = json_decode($json_data, true);
+                    if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                        foreach ($user_meta['watched'] as $watched_film) {
+                            if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post_id) {
+                                $user_watched = true;
+                                break;
+                            }
+                        }
+                    }
+                }
                 if ($user_watched) {
                     echo ' watched ';
                 }
@@ -232,13 +254,13 @@ function nominees_nominations_function() {
             echo '<div class="year-category">';
             // Display the year with a link to the relevant year page
             if ($year) {
-                $year_link = 'https://stage.oscarschecklist.com/years/nominations-' . $year . '/';
+                $year_link = 'https://oscarschecklist.com/years/nominations-' . $year . '/';
                 echo '<a class="year" href="' . esc_url($year_link) . '">' . esc_html($year) . '</a><p> - </p>';
             }
 
             // Display categories without the "Category: " prefix and link them to their respective pages
             foreach ($categories as $category) {
-                $category_link = 'https://stage.oscarschecklist.com/category-pages/' . $category->slug;
+                $category_link = 'https://oscarschecklist.com/category-pages/' . $category->slug;
                 echo '<a class="category ' . esc_html($category->name) . '" href="' . esc_url($category_link) . '">' . esc_html($category->name) . '</a>';
             }
             echo '</div>';
@@ -286,18 +308,29 @@ function nominees_nominations_function() {
             echo '</div>';
 
             if (is_user_logged_in()) {
+                $user_id = get_current_user_id();
                 $post_id = $film->term_id;
-                $user_watched = get_user_meta(get_current_user_id(), 'watched_' . $post_id, true);
-                
+                $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                $user_watched = false;
+                if (file_exists($json_path)) {
+                    $json_data = file_get_contents($json_path);
+                    $user_meta = json_decode($json_data, true);
+                    if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                        foreach ($user_meta['watched'] as $watched_film) {
+                            if (isset($watched_film['film-id']) && $watched_film['film-id'] == $post_id) {
+                                $user_watched = true;
+                                break;
+                            }
+                        }
+                    }
+                }
                 $button_class = $user_watched ? 'mark-as-unwatched-button' : 'mark-as-watched-button';
                 $button_text = $user_watched ? 'Watched' : 'Unwatched';
                 $watched_action = $user_watched ? 'unwatched' : 'watched';
-                
                 echo '<button class="' . $button_class . '" data-film-id="' . $post_id . '" data-action="' . $watched_action . '">' . $button_text;
                 echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
                 echo '</button>';
-            } else {
-                $post_id = $film->term_id;
+            } else if ($post_id) {
                 $button_class = 'mark-as-watched-button';
                 $button_text = 'Unwatched';
                 $watched_action = 'watched';
