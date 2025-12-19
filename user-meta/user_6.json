@@ -1,0 +1,81 @@
+{
+    "username": "HC-Digital",
+    "public": true,
+    "last-updated": "2025-08-03",
+    "total-watched": 508,
+    "correct-predictions": 14,
+    "incorrect-predictions": 9,
+    "correct-prediction-rate": 0.609,
+    "predictions": [
+        123486,
+        123492,
+        123559,
+        123509,
+        123579
+    ],
+    "favourites": [
+        112126,
+        112139,
+        112151,
+        112145,
+        123583,
+        123589,
+        123483,
+        123568
+    ],
+    "watched": [
+        {
+            "film-id": 35255,
+            "film-name": "The Boy and the Heron",
+            "film-year": 2024,
+            "film-url": "the_boy_and_the_heron"
+        },
+        {
+            "film-id": 35292,
+            "film-name": "Godzilla Minus One",
+            "film-year": 2024,
+            "film-url": "godzilla_minus_one"
+        },
+        {
+            "film-id": 51862,
+            "film-name": "Conclave",
+            "film-year": 2025,
+            "film-url": "conclave_film",
+            "watched-date": "2025-08-06"
+        },
+        {
+            "film-id": 51849,
+            "film-name": "A Complete Unknown",
+            "film-year": 2025,
+            "film-url": "a_complete_unknown",
+            "watched-date": "2025-08-06"
+        }
+    ],
+    "watchlist": [
+        {
+            "film-id": 51874,
+            "order": 1
+        },
+        {
+            "film-id": 51854,
+            "order": null
+        },
+        {
+            "film-id": 51903,
+            "order": 2
+        }
+    ],
+    "favourite-categories": [
+        "best-picture",
+        "best-director",
+        "best-actor"
+    ],
+    "hidden-categories": [
+        "best-animated-feature",
+        "best-international-feature",
+        "best-sound"
+    ],
+    "auto_remove_watched": true,
+    "this_page_only": false,
+    "compact_view": false
+}
