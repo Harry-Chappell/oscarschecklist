@@ -1560,6 +1560,7 @@ add_action('daily_aggregate_watched_dates', 'aggregate_watched_dates_to_by_day_j
 
 
 require_once get_stylesheet_directory() . '/watchlist/watchlist.php';
+require_once get_stylesheet_directory() . '/quick_check/quick_check.php';
 
 // === AJAX: Get user data as JSON ===
 add_action('wp_ajax_get_user_data', 'oscars_get_user_data');
