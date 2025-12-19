@@ -1439,6 +1439,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Then apply user status (watched, favourites, predictions) from cache
     applyUserStatusFromCache();
     
+    // Dispatch event that watched classes have been applied
+    document.dispatchEvent(new CustomEvent('watchedClassesApplied'));
+    
     // Update TOC and progress indicators after applying watched status
     try {
         if (typeof window.updateTOC === 'function') {
