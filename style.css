@@ -3220,27 +3220,21 @@ ul.film-categories li:hover::after {
 }
 
 /* Responsive adjustments for all films section */
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
     ul.all-films-list > li.all-film-card {
         width: calc((100% - (10px * 3)) / 4);
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 700px) {
     ul.all-films-list > li.all-film-card {
         width: calc((100% - (10px * 2)) / 3);
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 500px) {
     ul.all-films-list > li.all-film-card {
         width: calc((100% - 10px) / 2);
-    }
-}
-
-@media (max-width: 400px) {
-    ul.all-films-list > li.all-film-card {
-        width: 100%;
     }
 }
 
@@ -3260,9 +3254,9 @@ ul.film-categories li:hover::after {
     font-weight: 600;
 }
 
-
+body:not(.nominations-by-year) #toggle-unique-films,
 body:not(.show-unique-films) .all-films-section,
-body.show-unique-films .awards-category {
+body.nominations-by-year.show-unique-films .awards-category {
     display: none !important;
 }
 
