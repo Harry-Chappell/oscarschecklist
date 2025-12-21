@@ -1736,10 +1736,6 @@ body.invitations #buddypress div.item-list-tabs#subnav {
     display: none;
 }
 
-button#toggle-unique-films {
-    display: none !important;
-}
-
 
 
 
@@ -2989,17 +2985,6 @@ body.user-id-2393 ul.nominations-list > li.test-watched {
 }
 
 /* All Films Section */
-.all-films-section {
-    margin-top: 60px;
-    padding-top: 40px;
-    border-top: 3px solid var(--theme-palette-color-6);
-}
-
-.all-films-section > h2 {
-    font-size: 2em;
-    margin-bottom: 30px;
-    color: var(--theme-palette-color-1);
-}
 
 ul.all-films-list {
     display: flex;
@@ -3081,14 +3066,6 @@ ul.film-categories li svg {
 
 ul.film-categories li:hover svg {
     transform: scale(1.2);
-}
-
-ul.film-categories li.trophy-grey svg {
-    fill: #999;
-}
-
-ul.film-categories li.trophy-gold svg {
-    fill: #FFD700;
 }
 
 /* Tooltip styling */
@@ -3269,11 +3246,41 @@ ul.film-categories li:hover::after {
 
 
 
-ul.film-categories li.trophy-icon {
-    cursor: default;
-    width: 16px;
-    height: 16px;
+.film-stats {
+    margin-bottom: -0.5rem;
+    font-size: 0.7rem;
 }
-ul.film-categories:has(>.trophy-icon) {
-    margin-bottom: 1rem;
+
+.wins-number, .noms-number {
+    font-size: 2.5em;
+}
+
+.film-stats .wins-count {
+    color: var(--theme-palette-color-1);
+    font-weight: 600;
+}
+
+
+body:not(.show-unique-films) .all-films-section,
+body.show-unique-films .awards-category {
+    display: none !important;
+}
+
+details.film-categories-details {
+    margin-bottom: 1em;
+}
+details.film-categories-details summary {
+    font-size: 0.7em;
+}
+details.film-categories-details ul.categories-list {
+    padding: inherit;
+    list-style: none;
+    line-height: 1;
+    font-size: 0.7em;
+}
+details.film-categories-details ul.categories-list li {
+    margin-top: 0.5em;
+}
+details.film-categories-details li.category-nominee a {
+    color: var(--theme-palette-color-4);
 }
