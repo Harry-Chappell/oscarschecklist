@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.value = this.value.replace(/\s+/g, ''); // Remove spaces
             }
         });
-    } else {
-        console.log("Input field not found");
+    // } else {
+        // console.log("Input field not found");
     }
 });
 
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
         usernameInput.addEventListener('input', function(event) {
             this.value = this.value.replace(/\s+/g, '-'); // Replace all spaces with hyphens
         });
-    } else {
-        console.log("Input field not found");
+    // } else {
+        // console.log("Input field not found");
     }
 });

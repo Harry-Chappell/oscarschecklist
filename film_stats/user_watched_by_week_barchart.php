@@ -44,13 +44,13 @@ function oscars_user_watched_by_week_barchart_shortcode() {
             })
             .then(response => response.json())
             .then(json => {
-                console.log('AJAX response:', json);
+                // console.log('AJAX response:', json);
                 if (json.success) {
                     if (chart) chart.destroy();
                     // Prepare datasets: current user and friends
                     var datasets = [];
                     if (json.data.friends && Array.isArray(json.data.friends)) {
-                        console.log('Friends data:', json.data.friends);
+                        // console.log('Friends data:', json.data.friends);
                         var friendColors = [
                             '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab'
                         ];
@@ -66,8 +66,8 @@ function oscars_user_watched_by_week_barchart_shortcode() {
                                 tension: 0.3
                             });
                         });
-                    } else {
-                        console.log('No friends data found in AJAX response.');
+                    // } else {
+                        // console.log('No friends data found in AJAX response.');
                     }
                     // Current user on top
                     datasets.push({
@@ -101,8 +101,8 @@ function oscars_user_watched_by_week_barchart_shortcode() {
                             }
                         }
                     });
-                } else {
-                    console.log('AJAX error:', json);
+                // } else {
+                    // console.log('AJAX error:', json);
                 }
             });
         }

@@ -150,9 +150,17 @@ function load_user_pred_fav_json($user_id) {
     ];
 }
 
-function save_user_meta_json($user_id, $data) {
+function save_user_meta_json($user_id, $data, $timer_start = null) {
+    if ($timer_start === null) $timer_start = microtime(true);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 💾 save_user_meta_json() START - user_id: ' . $user_id);
     $file_path = get_user_meta_json_path($user_id);
-    file_put_contents($file_path, wp_json_encode($data));
+    $json = wp_json_encode($data);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 📝 Writing JSON file - size: ' . strlen($json) . ' bytes');
+    file_put_contents($file_path, $json);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] ✅ save_user_meta_json() COMPLETE');
 }
 function save_user_pred_fav_json($user_id, $data) {
     $file_path = get_user_pred_fav_json_path($user_id);
@@ -168,31 +176,60 @@ function save_user_pred_fav_json($user_id, $data) {
     file_put_contents($file_path, wp_json_encode($filtered_data));
 }
 
-function oscars_update_film_stats_json($film_id, $action) {
+function oscars_update_film_stats_json($film_id, $action, $timer_start = null) {
+    if ($timer_start === null) $timer_start = microtime(true);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 📊 oscars_update_film_stats_json() START - film_id: ' . $film_id . ', action: ' . $action);
     $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
-    if (!file_exists($output_path)) return;
+    if (!file_exists($output_path)) {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ❌ films_stats.json not found');
+        return;
+    }
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 📖 Reading films_stats.json');
     $json = file_get_contents($output_path);
     $films = json_decode($json, true);
-    if (!$films || !is_array($films)) return;
+    if (!$films || !is_array($films)) {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ❌ Invalid films_stats.json data');
+        return;
+    }
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 🔍 Searching for film in stats array');
     foreach ($films as &$film) {
         if (isset($film['film-id']) && $film['film-id'] == $film_id) {
             if (!isset($film['watched-count'])) $film['watched-count'] = 0;
             if ($action === 'watched') {
                 $film['watched-count']++;
+                $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+                error_log('[+' . $elapsed . 'ms] ➕ Incremented watched-count to: ' . $film['watched-count']);
             } elseif ($action === 'unwatched' && $film['watched-count'] > 0) {
                 $film['watched-count']--;
+                $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+                error_log('[+' . $elapsed . 'ms] ➖ Decremented watched-count to: ' . $film['watched-count']);
             }
             break;
         }
     }
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 💾 Writing updated films_stats.json');
     file_put_contents($output_path, json_encode($films));
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] ✅ oscars_update_film_stats_json() COMPLETE');
 }
 
 function markAsWatched() {
+    static $timer_start = null;
+    if ($timer_start === null) $timer_start = microtime(true);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 🎬 markAsWatched() START - POST data: ' . json_encode(['post_id' => $_POST['watched_post_id'] ?? null, 'action' => $_POST['watched_action'] ?? null, 'film_name' => $_POST['film_name'] ?? null, 'film_slug' => $_POST['film_slug'] ?? null, 'film_year' => $_POST['film_year'] ?? null]));
     $post_id = $_POST['watched_post_id'] ?? null;
     $action = $_POST['watched_action'] ?? null;
 
     if (!$post_id || !is_user_logged_in() || !$action) {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ❌ markAsWatched() - Missing required data or user not logged in');
         return;
     }
 
@@ -210,31 +247,50 @@ function markAsWatched() {
             }
         }
         if (!$already) {
-            // Use get_term to fetch the film term by ID
-            $film_term = get_term((int)$post_id, 'films');
-            $film_name = ($film_term && !is_wp_error($film_term)) ? $film_term->name : '';
-            $film_slug = ($film_term && !is_wp_error($film_term)) ? $film_term->slug : '';
-            $film_url = ($film_term && !is_wp_error($film_term)) ? get_term_link($film_term) : '';
-            $film_url = $film_slug;
-            $film_year = null;
-
-            // Get year from first nomination post (if any)
-            $nomination_query = new WP_Query([
-                'post_type' => 'nominations',
-                'posts_per_page' => 1,
-                'tax_query' => [[
-                    'taxonomy' => 'films',
-                    'field'    => 'term_id',
-                    'terms'    => (int)$post_id,
-                ]],
-                'orderby' => 'date',
-                'order'   => 'ASC',
-            ]);
-            if ($nomination_query->have_posts()) {
-                $nomination = $nomination_query->posts[0];
-                $film_year = (int) date('Y', strtotime($nomination->post_date));
+            // Get film data from POST if available (sent from frontend to avoid DB queries)
+            $film_name = isset($_POST['film_name']) && !empty($_POST['film_name']) 
+                ? sanitize_text_field($_POST['film_name']) 
+                : '';
+            $film_slug = isset($_POST['film_slug']) && !empty($_POST['film_slug']) 
+                ? sanitize_text_field($_POST['film_slug']) 
+                : '';
+            $film_year = isset($_POST['film_year']) && !empty($_POST['film_year']) 
+                ? (int)$_POST['film_year'] 
+                : null;
+            
+            // Only query database if data not provided
+            if (empty($film_name) || empty($film_slug)) {
+                $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+                error_log('[+' . $elapsed . 'ms] ⚠️ Film data not in POST, querying database as fallback');
+                $film_term = get_term((int)$post_id, 'films');
+                $film_name = ($film_term && !is_wp_error($film_term)) ? $film_term->name : '';
+                $film_slug = ($film_term && !is_wp_error($film_term)) ? $film_term->slug : '';
             }
-            wp_reset_postdata();
+            
+            // Only query for year if not provided
+            if ($film_year === null) {
+                $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+                error_log('[+' . $elapsed . 'ms] ⚠️ Film year not in POST, querying database as fallback');
+                // Get year from first nomination post (if any)
+                $nomination_query = new WP_Query([
+                    'post_type' => 'nominations',
+                    'posts_per_page' => 1,
+                    'tax_query' => [[
+                        'taxonomy' => 'films',
+                        'field'    => 'term_id',
+                        'terms'    => (int)$post_id,
+                    ]],
+                    'orderby' => 'date',
+                    'order'   => 'ASC',
+                ]);
+                if ($nomination_query->have_posts()) {
+                    $nomination = $nomination_query->posts[0];
+                    $film_year = (int) date('Y', strtotime($nomination->post_date));
+                }
+                wp_reset_postdata();
+            }
+            
+            $film_url = $film_slug;
 
             $entry = [
                 'film-id' => (int)$post_id,
@@ -243,31 +299,58 @@ function markAsWatched() {
                 'film-url' => $film_url,
                 'watched-date' => date('Y-m-d'),
             ];
+            $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+            error_log('[+' . $elapsed . 'ms] ➕ Adding film to watched list: ' . json_encode($entry));
             $json['watched'][] = $entry;
             $changed = true;
 
-            update_watched_by_day_json($post_id);
+            $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+            error_log('[+' . $elapsed . 'ms] 📊 Calling update_watched_by_day_json()');
+            update_watched_by_day_json($post_id, $timer_start);
+            $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+            error_log('[+' . $elapsed . 'ms] ✅ update_watched_by_day_json() completed');
         }
     } elseif ($action === 'unwatched') {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ➖ Removing film from watched list: ' . $post_id);
         $before = count($json['watched']);
         $json['watched'] = array_values(array_filter($json['watched'], function($film) use ($post_id) {
             return $film['film-id'] != $post_id;
         }));
         if (count($json['watched']) < $before) {
             $changed = true;
+            $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+            error_log('[+' . $elapsed . 'ms] ✅ Film removed successfully');
         }
     }
     // Update stats and last-updated
     $json['total-watched'] = count($json['watched']);
     $json['last-updated'] = date('Y-m-d');
-    save_user_meta_json($user_id, $json);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 💾 Calling save_user_meta_json() - total watched: ' . $json['total-watched']);
+    save_user_meta_json($user_id, $json, $timer_start);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] ✅ save_user_meta_json() completed');
     if ($changed) {
-        oscars_update_film_stats_json($post_id, $action);
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] 📊 Calling oscars_update_film_stats_json()');
+        oscars_update_film_stats_json($post_id, $action, $timer_start);
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ✅ oscars_update_film_stats_json() completed');
     }
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 🏁 markAsWatched() COMPLETE');
+    wp_die();
 }
-add_action('init', 'markAsWatched', 30);
+// Hook for logged-in users
+add_action('wp_ajax_mark_as_watched', 'markAsWatched');
+// Hook for non-logged-in users (if needed)
+add_action('wp_ajax_nopriv_mark_as_watched', 'markAsWatched');
 
-function update_watched_by_day_json($film_id) {
+function update_watched_by_day_json($film_id, $timer_start = null) {
+    if ($timer_start === null) $timer_start = microtime(true);
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 📅 update_watched_by_day_json() START - film_id: ' . $film_id);
     $upload_dir = wp_upload_dir();
     $file_path = $upload_dir['basedir'] . '/watched_by_day.json';
     $today = date('Y-m-d');
@@ -301,7 +384,11 @@ function update_watched_by_day_json($film_id) {
     }
 
     // Save back to file
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 💾 Saving watched_by_day.json');
     file_put_contents($file_path, json_encode($data));
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] ✅ update_watched_by_day_json() COMPLETE');
 }
 
 function markAsFav()
@@ -1076,7 +1163,6 @@ function custom_toggle_buttons_shortcode() {
                     return response.text();
                 })
                 .catch(error => {
-                    console.error("Error:", error);
                 });
             }
         });
@@ -1307,14 +1393,11 @@ function winner_class_updater_script() {
         let refreshInterval = 10000;
         let intervalId;
     
-        // console.log("Winner updater script initialized.");
     
         function fetchAndUpdate() {
-            // console.log("Fetching data from server...");
             fetch("https://results.oscarschecklist.com/serve-results.php")
                 .then(response => response.json())
                 .then(data => {
-                    // console.log("Data received:", data);
     
                     // Remove 'Winner' class from all nominations before applying updates
                     document.querySelectorAll(".nomination.Winner").forEach(nomination => {
@@ -1325,22 +1408,18 @@ function winner_class_updater_script() {
                     if (data.wI) {
                         let winningNomination = document.getElementById(`nomination-${data.wI}`);
                         if (winningNomination) {
-                            // console.log("Applying 'Winner' class to nomination ID:", data.wI);
                             winningNomination.classList.add("winner");
                         } else {
-                            console.warn("No matching nomination found for ID:", data.wI);
                         }
                     }
     
                     // Update refresh interval if 'rI' value is different
                     if (data.rI && data.rI * 1000 !== refreshInterval) {
-                        // console.log("Updating refresh interval to:", data.rI * 1000, "ms");
                         refreshInterval = data.rI * 1000;
                         clearInterval(intervalId);
                         intervalId = setInterval(fetchAndUpdate, refreshInterval);
                     }
                 })
-                .catch(error => console.error("Error fetching results:", error));
         }
     
         fetchAndUpdate();

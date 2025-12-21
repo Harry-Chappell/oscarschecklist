@@ -127,7 +127,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Listen for the custom event dispatched when watched classes are applied
-    document.addEventListener('watchedClassesApplied', initializeWhenReady);
+    let qcTimerStart = performance.now();
+    document.addEventListener('watchedClassesApplied', function() {
+        initializeWhenReady();
+    });
     
     // Fallback: also try after a short delay if event doesn't fire
     setTimeout(initializeWhenReady, 1000);
@@ -144,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function() {
             );
             
             totalCategories = categoryElements.length;
-            console.log(`Quick Check: Found ${totalCategories} categories (nominations-list elements)`);
             
             // Find all unique film elements, excluding watched ones
             const filmElements = document.querySelectorAll('li[data-film-id]');
@@ -201,7 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initialize progress rings
             updateProgressRings();
         } catch (error) {
-            console.error('Error building cards:', error);
             // Fallback to default cards on error
             totalFilms = 5;
             for (let i = 5; i >= 1; i--) {
@@ -483,7 +484,6 @@ document.addEventListener('DOMContentLoaded', function() {
             initialX = rect.left + rect.width / 2 - window.innerWidth / 2;
             initialY = rect.top;
         } catch (error) {
-            console.error('Error in handleStart:', error);
             isDragging = false;
         }
     }
@@ -535,7 +535,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (error) {
-            console.error('Error in handleMove:', error);
         }
     }
     
@@ -573,7 +572,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (rightIndicator) rightIndicator.style.opacity = 0;
             }
         } catch (error) {
-            console.error('Error in handleEnd:', error);
             isDragging = false;
         }
     }

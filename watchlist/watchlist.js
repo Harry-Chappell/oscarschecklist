@@ -15,7 +15,7 @@ document.addEventListener('click', function (e) {
   if (addToWatchlist) {
     // Find nomination <li> for this film id (assuming nomination has .film-id-XXXX class)
     const nominationLi = document.querySelector(`li.film-id-${filmId}`);
-    console.log('Nomination element:', nominationLi);
+    // console.log('Nomination element:', nominationLi);
 
     if (!nominationLi) {
       console.warn('Nomination item not found for film id', filmId);
@@ -24,7 +24,7 @@ document.addEventListener('click', function (e) {
 
     // Find watchlist <ul> container
     let watchlistUl = document.querySelector('.watchlist-cntr .watchlist');
-    console.log('Watchlist container:', watchlistUl);
+    // console.log('Watchlist container:', watchlistUl);
     if (!watchlistUl) {
       // If missing, create it inside the .watchlist-cntr
       const watchlistCntr = document.querySelector('.watchlist-cntr');
@@ -32,7 +32,7 @@ document.addEventListener('click', function (e) {
         watchlistUl = document.createElement('ul');
         watchlistUl.className = 'watchlist';
         watchlistCntr.appendChild(watchlistUl);
-        console.log('Created new watchlist <ul>');
+        // console.log('Created new watchlist <ul>');
       } else {
         console.warn('Watchlist container not found');
         return;
@@ -47,7 +47,7 @@ document.addEventListener('click', function (e) {
 
     // Create new watchlist item and append it
     const newWatchlistItem = convertNominationToWatchlistItem(nominationLi);
-        console.log('New watchlist item element:', newWatchlistItem);
+        // console.log('New watchlist item element:', newWatchlistItem);
 
         if (newWatchlistItem) {
       // Add 'current-page' class if this film is on the current page
@@ -64,12 +64,12 @@ document.addEventListener('click', function (e) {
 
         // Immediately check if it exists in DOM
         const foundInDom = watchlistUl.querySelector(`li[data-film-id="${filmId}"]`);
-        console.log('Found appended item in watchlist after append?', foundInDom);
+        // console.log('Found appended item in watchlist after append?', foundInDom);
 
         // Check if it's visible
         if (foundInDom) {
             const style = window.getComputedStyle(foundInDom);
-            console.log('Appended item display style:', style.display, 'visibility:', style.visibility, 'opacity:', style.opacity);
+            // console.log('Appended item display style:', style.display, 'visibility:', style.visibility, 'opacity:', style.opacity);
         }
     }
 

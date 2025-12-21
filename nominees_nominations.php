@@ -327,15 +327,17 @@ function nominees_nominations_function() {
                 $button_class = $user_watched ? 'mark-as-unwatched-button' : 'mark-as-watched-button';
                 $button_text = $user_watched ? 'Watched' : 'Unwatched';
                 $watched_action = $user_watched ? 'unwatched' : 'watched';
-                echo '<button class="' . $button_class . '" data-film-id="' . $post_id . '" data-action="' . $watched_action . '">' . $button_text;
+                $post_year = get_the_date('Y');
+                echo '<button class="' . $button_class . '" data-film-id="' . $post_id . '" data-action="' . $watched_action . '" data-film-name="' . esc_attr($film->name) . '" data-film-slug="' . esc_attr($film->slug) . '" data-film-year="' . esc_attr($post_year) . '">' . $button_text;
                 echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
                 echo '</button>';
             } else if ($post_id) {
                 $button_class = 'mark-as-watched-button';
                 $button_text = 'Unwatched';
                 $watched_action = 'watched';
+                $post_year = get_the_date('Y');
             
-                echo '<button class="' . $button_class . '" data-film-id="' . $post_id . '" data-action="' . $watched_action . '">' . $button_text;
+                echo '<button class="' . $button_class . '" data-film-id="' . $post_id . '" data-action="' . $watched_action . '" data-film-name="' . esc_attr($film->name) . '" data-film-slug="' . esc_attr($film->slug) . '" data-film-year="' . esc_attr($post_year) . '">' . $button_text;
                 echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
                 echo '</button>';
             }

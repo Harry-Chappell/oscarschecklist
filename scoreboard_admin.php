@@ -224,7 +224,7 @@ function winner_submission_form_shortcode() {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('AJAX Response:', data); // Log the response for debugging
+                    // console.log('AJAX Response:', data); // Log the response for debugging
                     if (data.success) {
                         // alert('Data submitted successfully');
                         // Update the form with the new data from the server

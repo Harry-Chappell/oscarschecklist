@@ -1,67 +1,86 @@
+// Performance logging utility with timer
+let perfTimerStart = null;
+function perfLog(message, data = {}) {
+    const now = performance.now();
+    if (perfTimerStart === null) {
+        perfTimerStart = now;
+    }
+    const elapsed = (now - perfTimerStart).toFixed(2);
+    // console.log(`[+${elapsed}ms] ${message}`, data);
+}
+function resetPerfTimer() {
+    perfTimerStart = null;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
     // Function to handle marking films as watched or unwatched
     function handleWatchButtons() {
         document.querySelectorAll('.mark-as-watched-button, .mark-as-unwatched-button').forEach(function(button) {
             button.addEventListener('click', function(event) {
+                resetPerfTimer();
+                perfLog('🎬 WATCH BUTTON CLICKED - START', {filmId: button.getAttribute('data-film-id'), action: button.getAttribute('data-action')});
                 event.preventDefault();
     
                 var filmId = button.getAttribute('data-film-id');
                 var action = button.getAttribute('data-action');
-                var listItem = button.closest('li'); // Get the closest <li> element
+                var filmName = button.getAttribute('data-film-name') || '';
+                var filmSlug = button.getAttribute('data-film-slug') || '';
+                var filmYear = button.getAttribute('data-film-year') || '';
+                var listItem = button.closest('li');
+                var isWatched = action === 'watched';
+                
+                // INSTANT UI UPDATE - Don't wait for server
+                perfLog('🔄 Starting UI updates - toggle classes', {filmId, isWatched});
+                button.classList.toggle('mark-as-watched-button', !isWatched);
+                button.classList.toggle('mark-as-unwatched-button', isWatched);
+                button.setAttribute('data-action', isWatched ? 'unwatched' : 'watched');
+                listItem.classList.toggle('watched', isWatched);
+                
+                // Update all duplicate buttons instantly
+                perfLog('🔍 Searching for duplicate buttons to update', {filmId});
+                const duplicateButtons = document.querySelectorAll('button.mark-as-watched-button[data-film-id="' + filmId + '"], button.mark-as-unwatched-button[data-film-id="' + filmId + '"]');
+                perfLog('📝 Found duplicate buttons', {count: duplicateButtons.length});
+                duplicateButtons.forEach(function(duplicateButton) {
+                    var duplicateListItem = duplicateButton.closest('li');
+                    if (duplicateButton !== button) {
+                        duplicateButton.classList.toggle('mark-as-watched-button', !isWatched);
+                        duplicateButton.classList.toggle('mark-as-unwatched-button', isWatched);
+                        duplicateButton.setAttribute('data-action', isWatched ? 'unwatched' : 'watched');
+                        duplicateListItem.classList.toggle('watched', isWatched);
+                    }
+                });
+                perfLog('✅ Duplicate buttons updated', {filmId});
+                
+                // Update TOC instantly
+                perfLog('📊 Calling updateTOC()', {filmId});
+                updateTOC();
+                perfLog('✅ updateTOC() completed', {filmId});
+                perfLog('🏁 WATCH BUTTON CLICK - COMPLETE (UI updated, server request sent)', {filmId, action});
+                
+                // Send to server in background (fire and forget)
                 var formData = new FormData();
+                formData.append('action', 'mark_as_watched');
                 formData.append('watched_post_id', filmId);
                 formData.append('watched_action', action);
+                formData.append('film_name', filmName);
+                formData.append('film_slug', filmSlug);
+                formData.append('film_year', filmYear);
     
-                fetch('https://oscarschecklist.com/', {
+                perfLog('📤 Sending AJAX request to server', {filmId, action, filmName, filmSlug, filmYear});
+                fetch('/wp-admin/admin-ajax.php', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => {
+                    perfLog('📥 Server response received', {status: response.status, ok: response.ok});
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
-    
-                    // Toggle the watched status
-                    var isWatched = action === 'watched';
-                    button.classList.toggle('mark-as-watched-button', !isWatched);
-                    button.classList.toggle('mark-as-unwatched-button', isWatched);
-    
-                    // Update the button's text while preserving the SVG
-                    // var textNode = document.createTextNode(isWatched ? 'Watched' : 'Unwatched');
-                    // Clear existing text nodes (but keep the SVG)
-                    // button.firstChild.replaceWith(textNode);
-    
-                    button.setAttribute('data-action', isWatched ? 'unwatched' : 'watched');
-    
-                    // Toggle the 'watched' class on the <li> element
-                    listItem.classList.toggle('watched', isWatched);
-    
-                    // Update all other elements with the same film ID
-                    document.querySelectorAll('button.mark-as-watched-button[data-film-id="' + filmId + '"], button.mark-as-unwatched-button[data-film-id="' + filmId + '"]').forEach(function(duplicateButton) {
-                        var duplicateListItem = duplicateButton.closest('li');
-                        if (duplicateButton !== button) {
-                            duplicateButton.classList.toggle('mark-as-watched-button', !isWatched);
-                            duplicateButton.classList.toggle('mark-as-unwatched-button', isWatched);
-    
-                            // Update the duplicate button's text while preserving the SVG
-                            // var duplicateTextNode = document.createTextNode(isWatched ? 'Watched' : 'Unwatched');
-                            // duplicateButton.firstChild.replaceWith(duplicateTextNode);
-    
-                            // duplicateButton.setAttribute('data-action', isWatched ? 'unwatched' : 'watched');
-    
-                            // Toggle the 'watched' class on the corresponding <li> element
-                            duplicateListItem.classList.toggle('watched', isWatched);
-                        }
-                    });
-    
                     return response.text();
                 })
-                .then(data => {
-                    // Update the TOC with new watched counts if needed
-                    updateTOC();
-                })
                 .catch(error => {
+                    perfLog('❌ Error in watch button handler', {error: error.message});
                     console.error('Error:', error);
                 });
             });
@@ -668,13 +687,13 @@ async function syncUserDataFiles() {
         const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
         
         if (!currentUserId) {
-            console.log('[UserDataSync] No current user ID found, skipping sync');
+            // console.log('[UserDataSync] No current user ID found, skipping sync');
             return;
         }
 
         // Get friend IDs from the DOM (they're already rendered in the friends list)
         const friendIds = getUserFriendIdsFromDOM();
-        console.log(`[UserDataSync] Found ${friendIds.length} friends to sync`);
+        // console.log(`[UserDataSync] Found ${friendIds.length} friends to sync`);
         
         // Combine current user and friends
         const allUserIds = [currentUserId, ...friendIds];
@@ -684,7 +703,7 @@ async function syncUserDataFiles() {
             await syncUserFile(userId);
         }
         
-        console.log('[UserDataSync] All user data synced successfully');
+        // console.log('[UserDataSync] All user data synced successfully');
         
     } catch (error) {
         console.error('[UserDataSync] Error syncing user data:', error);
@@ -878,7 +897,6 @@ function getCacheInfo() {
         }
     });
     
-    console.table(cacheInfo);
     return cacheInfo;
 }
 
@@ -997,11 +1015,11 @@ async function applyFriendsWatchedStatus() {
     const friendIds = getUserFriendIdsFromDOM();
     
     if (friendIds.length === 0) {
-        console.log('[FriendsWatched] No friends found in DOM, skipping');
+        // console.log('[FriendsWatched] No friends found in DOM, skipping');
         return;
     }
     
-    console.log(`[FriendsWatched] Applying watched status for ${friendIds.length} friends`);
+    // console.log(`[FriendsWatched] Applying watched status for ${friendIds.length} friends`);
 
     // Get all film items on the page
     const filmItems = document.querySelectorAll('li[class*="film-id-"]');
@@ -1095,6 +1113,7 @@ function populateWatchlistFromCache() {
     if (!userData || !userData.watchlist || !Array.isArray(userData.watchlist)) {
         return;
     }
+    
 
     // Apply watchlist settings classes based on user data
     // Default to true if not set
@@ -1395,6 +1414,7 @@ function setupWatchlistInteractions() {
         const pageButton = document.querySelector(`li.film-id-${filmId} .mark-as-watched-button, li.film-id-${filmId} .mark-as-unwatched-button`);
         if (pageButton) {
             pageButton.click();
+        } else {
         }
 
         // Update watchlist item watched status
@@ -1420,7 +1440,9 @@ function setupWatchlistInteractions() {
                 // Trigger remove button
                 const removeBtn = watchlistItem.querySelector('.remove-from-watchlist-button');
                 if (removeBtn) {
-                    setTimeout(() => removeBtn.click(), 300); // Small delay for visual feedback
+                    setTimeout(() => {
+                        removeBtn.click();
+                    }, 300); // Small delay for visual feedback
                 }
             }
         }
@@ -1463,7 +1485,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 // Listen for friends list loaded event and sync friends' data
 document.addEventListener('friendsListLoaded', async function () {
-    console.log('[UserDataSync] Friends list loaded, syncing friends data...');
+    // console.log('[UserDataSync] Friends list loaded, syncing friends data...');
     
     // Get friend IDs from the now-loaded DOM
     const friendIds = getUserFriendIdsFromDOM();
@@ -1474,7 +1496,7 @@ document.addEventListener('friendsListLoaded', async function () {
         await syncUserFile(userId, '_pred_fav');
     }
     
-    console.log('[UserDataSync] Friends data sync complete');
+    // console.log('[UserDataSync] Friends data sync complete');
     
     // Re-apply friends' watched status with the fresh data
     await applyFriendsWatchedStatus();
