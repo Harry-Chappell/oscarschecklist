@@ -959,6 +959,35 @@ function applyUserStatusFromCache() {
         const classList = Array.from(item.classList);
         const filmIdClass = classList.find(cls => cls.startsWith('film-id-'));
 
+        // FIRST: Clear all potentially cached classes and reset buttons to default state
+        // This prevents stale cached data from persisting
+        item.classList.remove('watched', 'fav', 'predict');
+        
+        // Reset watched button to default state
+        const watchedButton = item.querySelector('.mark-as-watched-button, .mark-as-unwatched-button');
+        if (watchedButton) {
+            watchedButton.classList.remove('mark-as-unwatched-button');
+            watchedButton.classList.add('mark-as-watched-button');
+            watchedButton.setAttribute('data-action', 'watched');
+        }
+        
+        // Reset favourite button to default state
+        const favButton = item.querySelector('.mark-as-fav-button, .mark-as-unfav-button');
+        if (favButton) {
+            favButton.classList.remove('mark-as-unfav-button');
+            favButton.classList.add('mark-as-fav-button');
+            favButton.setAttribute('data-action', 'fav');
+        }
+        
+        // Reset prediction button to default state
+        const predictButton = item.querySelector('.mark-as-predict-button, .mark-as-unpredict-button');
+        if (predictButton) {
+            predictButton.classList.remove('mark-as-unpredict-button');
+            predictButton.classList.add('mark-as-predict-button');
+            predictButton.setAttribute('data-action', 'predict');
+        }
+
+        // THEN: Apply current status from user data
         // Apply watched status (by film-id)
         if (filmIdClass) {
             const filmId = parseInt(filmIdClass.replace('film-id-', ''));
@@ -967,7 +996,6 @@ function applyUserStatusFromCache() {
                 watchedCount++;
                 
                 // Update watched button
-                const watchedButton = item.querySelector('.mark-as-watched-button');
                 if (watchedButton) {
                     watchedButton.classList.remove('mark-as-watched-button');
                     watchedButton.classList.add('mark-as-unwatched-button');
@@ -984,7 +1012,6 @@ function applyUserStatusFromCache() {
                 favCount++;
                 
                 // Update favourite button
-                const favButton = item.querySelector('.mark-as-fav-button');
                 if (favButton) {
                     favButton.classList.remove('mark-as-fav-button');
                     favButton.classList.add('mark-as-unfav-button');
@@ -996,7 +1023,6 @@ function applyUserStatusFromCache() {
                 predictCount++;
                 
                 // Update prediction button
-                const predictButton = item.querySelector('.mark-as-predict-button');
                 if (predictButton) {
                     predictButton.classList.remove('mark-as-predict-button');
                     predictButton.classList.add('mark-as-unpredict-button');

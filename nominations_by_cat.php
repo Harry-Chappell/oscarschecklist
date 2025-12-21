@@ -172,16 +172,19 @@ function show_nominations_by_cat_shortcode($atts) {
                                 }
                             }
 
-                            $output .= '<li class="' . $winner . ' ';
-                            if (is_user_logged_in() && $user_watched) {
-                                $output .= 'watched ';
-                            }
-                            if (is_user_logged_in() && $user_fav) {
-                                $output .= 'fav ';
-                            }
-                            if (is_user_logged_in() && $user_predict) {
-                                $output .= 'predict ';
-                            }
+                            // Get the post ID
+                            $nomination_id = get_the_ID();
+
+                            $output .= '<li id="nomination-' . esc_attr($nomination_id) . '" class="' . $winner . ' ';
+                            // if (is_user_logged_in() && $user_watched) {
+                            //     $output .= 'watched ';
+                            // }
+                            // if (is_user_logged_in() && $user_fav) {
+                            //     $output .= 'fav ';
+                            // }
+                            // if (is_user_logged_in() && $user_predict) {
+                            //     $output .= 'predict ';
+                            // }
                             // Watchlist class is added by JavaScript to avoid caching issues
                             // $output .= do_shortcode('[esi watched ttl="3" film-id="' . $film->term_id . '"]');
 
