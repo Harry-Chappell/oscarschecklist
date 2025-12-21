@@ -35,7 +35,7 @@ function oscars_compile_all_user_stats() {
         }
     }
     $output_path = ABSPATH . 'wp-content/uploads/all_user_stats.json';
-    file_put_contents($output_path, json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    file_put_contents($output_path, json_encode($output));
     return 'All user stats JSON generated!';
 }
 // 1. Add a custom schedule for every minute

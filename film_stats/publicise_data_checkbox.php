@@ -64,7 +64,7 @@ add_action('wp_ajax_oscars_publicise_data_toggle', function() {
     if (file_exists($file_path)) {
         $data = json_decode(file_get_contents($file_path), true);
         $data['public'] = $public;
-        file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        file_put_contents($file_path, json_encode($data));
         wp_send_json_success(['public' => $public]);
     }
     wp_send_json_error('File not found');

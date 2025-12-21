@@ -560,7 +560,7 @@ function handle_form_submission() {
     $response = wp_remote_post($secure_url, [
         'method'    => 'POST',
         'headers'   => ['Content-Type' => 'application/json'],
-        'body'      => json_encode($updated_data, JSON_PRETTY_PRINT),
+        'body'      => json_encode($updated_data),
         'timeout'   => 15,
     ]);
 
@@ -597,7 +597,7 @@ add_action('admin_post_nopriv_update_winners_file_frontend', 'handle_form_submis
 //     $response = wp_remote_post($secure_url, [
 //         'method'    => 'POST',
 //         'headers'   => ['Content-Type' => 'application/json'],
-//         'body'      => json_encode($updated_data, JSON_PRETTY_PRINT),
+//         'body'      => json_encode($updated_data),
 //         'timeout'   => 15,
 //     ]);
 

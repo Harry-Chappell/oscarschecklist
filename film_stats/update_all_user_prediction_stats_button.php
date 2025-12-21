@@ -36,7 +36,7 @@ function oscars_update_all_user_prediction_stats() {
         $data['incorrect-predictions'] = $incorrect;
         $total = $correct + $incorrect;
         $data['correct-prediction-rate'] = $total > 0 ? round($correct / $total, 3) : null;
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        file_put_contents($file, json_encode($data));
         $count++;
     }
     return "Prediction stats updated for $count users.";

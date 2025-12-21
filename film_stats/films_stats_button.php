@@ -62,7 +62,7 @@ function oscars_compile_films_stats() {
     }
     // Save JSON
     $output_path = ABSPATH . 'wp-content/uploads/films_stats.json';
-    file_put_contents($output_path, json_encode(array_values($film_stats), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    file_put_contents($output_path, json_encode(array_values($film_stats)));
     return 'Film stats JSON generated!';
 }
 

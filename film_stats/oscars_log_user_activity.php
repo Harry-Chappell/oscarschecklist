@@ -55,7 +55,7 @@ function oscars_log_user_activity($action) {
         }
     }
     $logs[] = $log;
-    file_put_contents($output_path, json_encode($logs, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    file_put_contents($output_path, json_encode($logs));
 }
 
 // Example: log when a user updates their profile

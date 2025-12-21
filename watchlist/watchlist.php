@@ -95,7 +95,7 @@ add_action('wp_ajax_oscars_update_watchlist', function() {
     }
     $json['last-updated'] = date('Y-m-d');
     if ($changed) {
-        file_put_contents($file_path, wp_json_encode($json, JSON_PRETTY_PRINT));
+        file_put_contents($file_path, wp_json_encode($json));
     }
     wp_send_json_success(['watchlist' => $json['watchlist']]);
 });
@@ -277,7 +277,7 @@ add_action('wp_ajax_oscars_update_setting', function() {
     $json[$setting] = $value;
     $json['last-updated'] = date('Y-m-d');
 
-    file_put_contents($file_path, wp_json_encode($json, JSON_PRETTY_PRINT));
+    file_put_contents($file_path, wp_json_encode($json));
 
     wp_send_json_success(['setting' => $setting, 'value' => $value]);
 });
@@ -317,6 +317,6 @@ add_action('wp_ajax_oscars_reorder_watchlist', function() {
     }
     $json['watchlist'] = $reordered;
     $json['last-updated'] = date('Y-m-d');
-    file_put_contents($file_path, wp_json_encode($json, JSON_PRETTY_PRINT));
+    file_put_contents($file_path, wp_json_encode($json));
     wp_send_json_success(['watchlist' => $json['watchlist']]);
 });
