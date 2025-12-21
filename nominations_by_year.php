@@ -484,6 +484,212 @@ function show_nominations_by_year_shortcode($atts) {
                 }
                 wp_reset_postdata();
             }
+
+            // Admin-only section: Show all unique films from this year
+            if (current_user_can('administrator')) {
+                $output .= '<div class="all-films-section">';
+                $output .= '<h2>All Films This Year (Admin Only)</h2>';
+                
+                // Query all nominations for this year
+                $all_nominations_args = array(
+                    'post_type' => 'nominations',
+                    'posts_per_page' => -1,
+                    'date_query' => array(
+                        array(
+                            'year' => $year,
+                        ),
+                    ),
+                );
+                
+                $all_nominations_query = new WP_Query($all_nominations_args);
+                $films_data = array(); // Store film data with their nominations
+                
+                if ($all_nominations_query->have_posts()) {
+                    while ($all_nominations_query->have_posts()) {
+                        $all_nominations_query->the_post();
+                        
+                        $nomination_id = get_the_ID();
+                        $films = get_the_terms($nomination_id, 'films');
+                        $categories = get_the_terms($nomination_id, 'award-categories');
+                        
+                        if ($films && !is_wp_error($films)) {
+                            foreach ($films as $film) {
+                                $film_id = $film->term_id;
+                                
+                                // Initialize film data if not exists
+                                if (!isset($films_data[$film_id])) {
+                                    $films_data[$film_id] = array(
+                                        'film' => $film,
+                                        'nominations' => array(),
+                                    );
+                                }
+                                
+                                // Check if this nomination is a winner
+                                $is_winner = false;
+                                $category_name = '';
+                                
+                                if ($categories && !is_wp_error($categories)) {
+                                    foreach ($categories as $category) {
+                                        if ($category->slug === 'winner') {
+                                            $is_winner = true;
+                                        } elseif ($category->slug !== 'winner') {
+                                            $category_name = $category->name;
+                                        }
+                                    }
+                                }
+                                
+                                // Store each nomination separately
+                                $films_data[$film_id]['nominations'][] = array(
+                                    'nomination_id' => $nomination_id,
+                                    'category_name' => $category_name,
+                                    'is_winner' => $is_winner,
+                                );
+                            }
+                        }
+                    }
+                    wp_reset_postdata();
+                }
+                
+                // Sort and output the films
+                if (!empty($films_data)) {
+                    // Calculate wins and total nominations for each film, and sort nominations
+                    foreach ($films_data as $film_id => &$film_data) {
+                        $win_count = 0;
+                        $total_nominations = count($film_data['nominations']);
+                        
+                        // Count wins
+                        foreach ($film_data['nominations'] as $nomination) {
+                            if ($nomination['is_winner']) {
+                                $win_count++;
+                            }
+                        }
+                        
+                        // Store counts for sorting
+                        $film_data['win_count'] = $win_count;
+                        $film_data['total_nominations'] = $total_nominations;
+                        
+                        // Sort nominations: winners first, then non-winners
+                        usort($film_data['nominations'], function($a, $b) {
+                            if ($a['is_winner'] == $b['is_winner']) {
+                                return 0;
+                            }
+                            return $a['is_winner'] ? -1 : 1;
+                        });
+                    }
+                    unset($film_data); // Break reference
+                    
+                    // Sort films: most wins first, then most nominations
+                    uasort($films_data, function($a, $b) {
+                        if ($a['win_count'] != $b['win_count']) {
+                            return $b['win_count'] - $a['win_count']; // More wins first
+                        }
+                        return $b['total_nominations'] - $a['total_nominations']; // More nominations first
+                    });
+                    
+                    $output .= '<ul class="all-films-list">';
+                    
+                    foreach ($films_data as $film_id => $film_data) {
+                        $film = $film_data['film'];
+                        $nominations = $film_data['nominations'];
+                        
+                        // Check if user has watched this film
+                        $user_watched = false;
+                        $user_watchlist = false;
+                        if (is_user_logged_in()) {
+                            $user_id = get_current_user_id();
+                            $json_path = ABSPATH . 'wp-content/uploads/user_meta/user_' . $user_id . '.json';
+                            
+                            if (file_exists($json_path)) {
+                                $json_data = file_get_contents($json_path);
+                                $user_meta = json_decode($json_data, true);
+                                
+                                if (isset($user_meta['watched']) && is_array($user_meta['watched'])) {
+                                    foreach ($user_meta['watched'] as $watched_film) {
+                                        if (isset($watched_film['film-id']) && $watched_film['film-id'] == $film_id) {
+                                            $user_watched = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                // Check watchlist
+                                if (isset($user_meta['watchlist']) && is_array($user_meta['watchlist'])) {
+                                    foreach ($user_meta['watchlist'] as $watchlist_item) {
+                                        if (is_array($watchlist_item) && isset($watchlist_item['film-id']) && $watchlist_item['film-id'] == $film_id) {
+                                            $user_watchlist = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        $watched_class = $user_watched ? 'watched' : '';
+                        $output .= '<li class="all-film-card film-id-' . $film_id . ' ' . $watched_class . '" data-film-id="' . $film_id . '">';
+                        
+                        // Film poster
+                        $output .= '<span class="film-poster">';
+                        $poster = get_field('poster', "films_" . $film_id);
+                        if ($poster) {
+                            $output .= '<img src="' . $poster . '" alt="' . esc_attr($film->name) . '">';
+                        } else {
+                            $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M0 96C0 60.7 28.7 32 64 32l384 0c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM48 368l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 240l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 112l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16L64 96c-8.8 0-16 7.2-16 16zM416 96c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM160 128l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L192 96c-17.7 0-32 14.3-32 32zm32 160c-17.7 0-32 14.3-32 32l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32l-128 0z"/></svg>';
+                        }
+                        $output .= '</span>';
+                        
+                        // Film name
+                        $output .= '<a class="film-name" href="' . get_term_link($film) . '"><h3>' . esc_html($film->name) . '</h3></a>';
+                        
+                        // Trophy icons - one per nomination (winners displayed first)
+                        if (!empty($nominations)) {
+                            $output .= '<ul class="film-categories">';
+                            foreach ($nominations as $nomination) {
+                                $trophy_class = $nomination['is_winner'] ? 'trophy-gold' : 'trophy-grey';
+                                $output .= '<li class="trophy-icon ' . $trophy_class . '" title="' . esc_attr($nomination['category_name']) . '">';
+                                $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.7.2 by @fontawesome--><path d="M400 0L176 0c-26.5 0-48.1 21.8-47.1 48.2c.2 5.3 .4 10.6 .7 15.8L24 64C10.7 64 0 74.7 0 88c0 92.6 33.5 157 78.5 200.7c44.3 43.1 98.3 64.8 138.1 75.8c23.4 6.5 39.4 26 39.4 45.6c0 20.9-17 37.9-37.9 37.9L192 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l192 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-26.1 0C337 448 320 431 320 410.1c0-19.6 15.9-39.2 39.4-45.6c39.9-11 93.9-32.7 138.2-75.8C542.5 245 576 180.6 576 88c0-13.3-10.7-24-24-24L446.4 64c.3-5.2 .5-10.4 .7-15.8C448.1 21.8 426.5 0 400 0zM48.9 112l84.4 0c9.1 90.1 29.2 150.3 51.9 190.6c-24.9-11-50.8-26.5-73.2-48.3c-32-31.1-58-76-63-142.3zM464.1 254.3c-22.4 21.8-48.3 37.3-73.2 48.3c22.7-40.3 42.8-100.5 51.9-190.6l84.4 0c-5.1 66.3-31.1 111.2-63 142.3z"/></svg>';
+                                $output .= '</li>';
+                            }
+                            $output .= '</ul>';
+                        }
+                        
+                        // Buttons
+                        $output .= '<div class="buttons-cntr">';
+                        
+                        // Watched button
+                        $watched_button_class = $user_watched ? 'mark-as-unwatched-button' : 'mark-as-watched-button';
+                        $watched_action = $user_watched ? 'unwatched' : 'watched';
+                        $output .= '<button title="Watched" class="' . $watched_button_class . '" data-film-id="' . $film_id . '" data-action="' . $watched_action . '">';
+                        $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome--><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>';
+                        $output .= '</button>';
+                        
+                        // Watchlist button
+                        if (is_user_logged_in()) {
+                            $watchlist_button_class = $user_watchlist ? 'mark-as-unwatchlist-button' : 'mark-as-watchlist-button';
+                            $watchlist_action = $user_watchlist ? 'unwatchlist' : 'watchlist';
+                            $output .= '<button title="Watchlist" class="' . $watchlist_button_class . '" data-film-id="' . $film_id . '" data-action="' . $watchlist_action . '">';
+                            $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"/></svg>';
+                            $output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M352 128C352 110.3 337.7 96 320 96C302.3 96 288 110.3 288 128L288 288L128 288C110.3 288 96 302.3 96 320C96 337.7 110.3 352 128 352L288 352L288 512C288 529.7 302.3 544 320 544C337.7 544 352 529.7 352 512L352 352L512 352C529.7 352 544 337.7 544 320C544 302.3 529.7 288 512 288L352 288L352 128z"/></svg>';
+                            $output .= '</button>';
+                        }
+                        
+                        $output .= '</div>';
+                        
+                        // Friends watched section
+                        $output .= '<div class="friends-watched">';
+                        // JavaScript will populate friend avatars dynamically
+                        $output .= '</div>';
+                        
+                        $output .= '</li>';
+                    }
+                    
+                    $output .= '</ul>';
+                } else {
+                    $output .= '<p>No films found for this year.</p>';
+                }
+                
+                $output .= '</div>';
+            }
+
             return $output;
         }
     // } else {

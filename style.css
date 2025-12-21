@@ -2987,3 +2987,293 @@ body.user-id-2393 ul.nominations-list > li.test-watched {
     scale: 0.9;
     opacity: 0.5;
 }
+
+/* All Films Section */
+.all-films-section {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 3px solid var(--theme-palette-color-6);
+}
+
+.all-films-section > h2 {
+    font-size: 2em;
+    margin-bottom: 30px;
+    color: var(--theme-palette-color-1);
+}
+
+ul.all-films-list {
+    display: flex;
+    flex-flow: row wrap;
+    list-style-type: none;
+    padding: 0;
+    gap: 50px 10px;
+    margin-bottom: 50px !important;
+}
+
+ul.all-films-list > li.all-film-card {
+    background: var(--theme-palette-color-7);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 10px 40px;
+    border: 1px solid var(--theme-palette-color-6);
+    border-radius: 10px;
+    width: calc((100% - (10px * 4)) / 5);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+ul.all-films-list > li.all-film-card.watched {
+    border-color: var(--theme-palette-color-10);
+    background-color: var(--theme-palette-color-11);
+}
+
+.all-film-card .film-name {
+    margin: 10px 0;
+}
+
+.all-film-card .film-name h3 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.all-film-card .film-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    display: block;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.all-film-card .film-poster img,
+.all-film-card .film-poster svg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.all-film-card .film-poster svg {
+    fill: var(--theme-palette-color-5);
+    padding: 20%;
+}
+
+/* Trophy Icons for Categories */
+ul.film-categories {
+    display: flex;
+    flex-flow: row wrap;
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    gap: 8px;
+}
+
+ul.film-categories li {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    position: relative;
+}
+
+ul.film-categories li svg {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.2s ease;
+}
+
+ul.film-categories li:hover svg {
+    transform: scale(1.2);
+}
+
+ul.film-categories li.trophy-grey svg {
+    fill: #999;
+}
+
+ul.film-categories li.trophy-gold svg {
+    fill: #FFD700;
+}
+
+/* Tooltip styling */
+ul.film-categories li::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--theme-palette-color-8);
+    color: var(--theme-palette-color-1);
+    padding: 5px 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    font-size: 0.85em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+ul.film-categories li:hover::after {
+    opacity: 1;
+}
+
+/* Button styling for all film cards */
+.all-film-card .buttons-cntr {
+    position: absolute;
+    inset: auto 50% -1px;
+    display: flex;
+    height: 30px;
+    width: calc(100% + 2px);
+    transform: translate(-50%);
+    justify-content: center;
+    gap: 1px;
+    border-radius: 0 0 10px 10px;
+    padding: 1px;
+    overflow: hidden;
+}
+
+.all-film-card.watched > .buttons-cntr {
+    background: var(--theme-palette-color-10);
+}
+
+.all-film-card .buttons-cntr button {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--theme-palette-color-6);
+    color: var(--theme-palette-color-4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.all-film-card .buttons-cntr:has(button:last-child:nth-child(2)) button {
+    width: calc((100% - 1px) / 2);
+}
+
+.all-film-card .buttons-cntr:has(button:last-child:nth-child(3)) button {
+    width: calc((100% - 2px) / 3);
+}
+
+.all-film-card .buttons-cntr button:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+.all-film-card .buttons-cntr button:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+.all-film-card .buttons-cntr button:active,
+.all-film-card .buttons-cntr button:active ~ svg {
+    scale: 0.9;
+}
+
+.all-film-card .buttons-cntr button svg {
+    aspect-ratio: 1;
+    height: 20px;
+    pointer-events: none;
+}
+
+.all-film-card .buttons-cntr button svg path {
+    fill: var(--theme-palette-color-5);
+    opacity: 0.2;
+}
+
+.all-film-card .buttons-cntr button:hover svg path {
+    fill: var(--theme-palette-color-8);
+    opacity: 1;
+}
+
+.all-film-card .buttons-cntr button:hover {
+    border-color: var(--theme-palette-color-5);
+    background: var(--theme-palette-color-9);
+}
+
+.all-film-card .buttons-cntr button.mark-as-unwatched-button {
+    border-color: var(--theme-palette-color-9);
+    background: var(--theme-palette-color-10);
+}
+
+.all-film-card .buttons-cntr button.mark-as-unwatched-button svg path {
+    fill: var(--theme-palette-color-4);
+    opacity: 1;
+}
+
+.all-film-card .buttons-cntr button.mark-as-unwatched-button:hover {
+    background: var(--theme-palette-color-9);
+}
+
+.all-film-card .buttons-cntr button.mark-as-unwatched-button:hover svg path {
+    fill: var(--theme-palette-color-8);
+    opacity: 1;
+}
+
+.all-film-card .buttons-cntr button.mark-as-unfav-button {
+    background: #f18585;
+}
+
+.all-film-card .buttons-cntr button.mark-as-unfav-button svg path {
+    fill: #732b2b;
+    opacity: 1;
+}
+
+.all-film-card .buttons-cntr button.mark-as-unfav-button:hover,
+.all-film-card .buttons-cntr button.mark-as-fav-button:hover {
+    background: #cd5c5c;
+}
+
+.all-film-card .buttons-cntr button.mark-as-watchlist-button svg:first-child,
+.all-film-card .buttons-cntr button.mark-as-unwatchlist-button svg:last-child {
+    display: none;
+}
+
+.all-film-card .buttons-cntr button.mark-as-unwatchlist-button {
+    background: #5b78cd;
+}
+
+.all-film-card .buttons-cntr button.mark-as-watchlist-button:hover,
+.all-film-card .buttons-cntr button.mark-as-unwatchlist-button:hover {
+    background: #82a8f2;
+}
+
+.all-film-card .buttons-cntr button.mark-as-unwatchlist-button svg path {
+    fill: black !important;
+    opacity: 0.5;
+}
+
+/* Responsive adjustments for all films section */
+@media (max-width: 1200px) {
+    ul.all-films-list > li.all-film-card {
+        width: calc((100% - (10px * 3)) / 4);
+    }
+}
+
+@media (max-width: 900px) {
+    ul.all-films-list > li.all-film-card {
+        width: calc((100% - (10px * 2)) / 3);
+    }
+}
+
+@media (max-width: 600px) {
+    ul.all-films-list > li.all-film-card {
+        width: calc((100% - 10px) / 2);
+    }
+}
+
+@media (max-width: 400px) {
+    ul.all-films-list > li.all-film-card {
+        width: 100%;
+    }
+}
+
+
+
+ul.film-categories li.trophy-icon {
+    cursor: default;
+    width: 16px;
+    height: 16px;
+}
+ul.film-categories:has(>.trophy-icon) {
+    margin-bottom: 1rem;
+}
