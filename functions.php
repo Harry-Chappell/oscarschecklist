@@ -1115,14 +1115,57 @@ function custom_toggle_buttons_shortcode() {
         document.addEventListener("DOMContentLoaded", function() {
             var body = document.body;
 
+            // Load user preferences from JSON via AJAX
+            function loadPreferences() {
+                var formData = new FormData();
+                formData.append("action", "get_toggle_preferences");
+
+                fetch("' . admin_url('admin-ajax.php') . '", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        var prefs = data.data;
+                        
+                        // Apply classes based on loaded preferences
+                        if (prefs.show_unique_films) {
+                            body.classList.add("show-unique-films");
+                        }
+                        if (prefs.hide_watched_films) {
+                            body.classList.add("hide-watched-films");
+                        }
+                        if (prefs.winners_only) {
+                            body.classList.add("winners-only");
+                        }
+                        
+                        // Update button texts
+                        updateButtonText("toggle-unique-films", prefs.show_unique_films, "Show All", "Show Categories");
+                        updateButtonText("toggle-hide-watched", prefs.hide_watched_films, "Show Watched", "Hide Watched");
+                        updateButtonText("toggle-winners-only", prefs.winners_only, "Winners Only", "Winners Only");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading preferences:", error);
+                });
+            }
+
+            // Helper function to update button text
+            function updateButtonText(buttonId, state, enableText, disableText) {
+                var button = document.getElementById(buttonId);
+                if (button && button.querySelector("span")) {
+                    button.querySelector("span").textContent = state ? disableText : enableText;
+                }
+            }
+
+            // Load preferences on page load
+            loadPreferences();
+
             document.getElementById("toggle-predicted").addEventListener("click", function() {
                 body.classList.toggle("hide-predicted");
             });
-
-            // Initial class application based on user preferences
-            if (' . json_encode($show_unique) . ') { body.classList.add("show-unique-films"); }
-            if (' . json_encode($hide_watched) . ') { body.classList.add("hide-watched-films"); }
-            if (' . json_encode($winners_only) . ') { body.classList.add("winners-only"); }
 
             // Handle "Show All Films" button click
             document.getElementById("toggle-unique-films").addEventListener("click", function() {
@@ -1133,7 +1176,7 @@ function custom_toggle_buttons_shortcode() {
             // Handle "Hide Watched Films" button click
             document.getElementById("toggle-hide-watched").addEventListener("click", function() {
                 body.classList.toggle("hide-watched-films");
-                savePreference("hide_watched_films", body.classList.contains("hide-watched-films"), this, "Hide Watched", "Hide Watched");
+                savePreference("hide_watched_films", body.classList.contains("hide-watched-films"), this, "Show Watched", "Hide Watched");
             });
 
             // Handle "Winners Only" button click
@@ -1163,6 +1206,7 @@ function custom_toggle_buttons_shortcode() {
                     return response.text();
                 })
                 .catch(error => {
+                    console.error("Error saving preference:", error);
                 });
             }
         });
@@ -1181,9 +1225,11 @@ function save_toggle_preference() {
         $meta_key = isset($_POST['meta_key']) ? sanitize_text_field($_POST['meta_key']) : '';
         $state = isset($_POST['state']) ? filter_var($_POST['state'], FILTER_VALIDATE_BOOLEAN) : false;
 
-        // Save the preference in user meta
+        // Save the preference to JSON file
         if ($meta_key) {
-            update_user_meta($user_id, $meta_key, $state);
+            $data = load_user_meta_json($user_id);
+            $data[$meta_key] = $state;
+            save_user_meta_json($user_id, $data);
             echo 'Preference saved.';
         } else {
             echo 'Invalid request.';
@@ -1193,6 +1239,26 @@ function save_toggle_preference() {
     wp_die();
 }
 add_action('wp_ajax_save_toggle_preference', 'save_toggle_preference');
+
+// AJAX handler to get user preferences from JSON
+function get_toggle_preferences() {
+    if (is_user_logged_in()) {
+        $user_id = get_current_user_id();
+        $data = load_user_meta_json($user_id);
+        
+        $preferences = [
+            'show_unique_films' => isset($data['show_unique_films']) ? $data['show_unique_films'] : false,
+            'hide_watched_films' => isset($data['hide_watched_films']) ? $data['hide_watched_films'] : false,
+            'winners_only' => isset($data['winners_only']) ? $data['winners_only'] : false
+        ];
+        
+        wp_send_json_success($preferences);
+    } else {
+        wp_send_json_error('Not logged in');
+    }
+    wp_die();
+}
+add_action('wp_ajax_get_toggle_preferences', 'get_toggle_preferences');
 
 function add_custom_body_classes($classes) {
     // Check if the show_nominations shortcode is present on the page
@@ -1207,15 +1273,8 @@ function add_custom_body_classes($classes) {
         // Add user ID class
         $classes[] = 'user-id-' . $user_id;
 
-        // Get user preferences
-        $show_unique = get_user_meta($user_id, 'show_unique_films', true);
-        $hide_watched = get_user_meta($user_id, 'hide_watched_films', true);
-        $winners_only = get_user_meta($user_id, 'winners_only', true);
-
-        // Add classes based on user preferences
-        if ($show_unique) { $classes[] = 'show-unique-films'; }
-        if ($hide_watched) { $classes[] = 'hide-watched-films'; }
-        if ($winners_only) { $classes[] = 'winners-only'; }
+        // Note: User preference classes (show-unique-films, hide-watched-films, winners-only)
+        // are now added by JavaScript after loading from JSON to avoid caching issues
     }
 
     return $classes;

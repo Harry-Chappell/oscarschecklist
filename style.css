@@ -2867,7 +2867,10 @@ span.watchlist-reorder-btns button {
     opacity: 0;
 }
 
-
+body.winners-only .category-title button.favourite-btn, 
+body.winners-only .category-title button.hidden-btn {
+    display: none;
+}
 .category-title button.favourite-btn, 
 .category-title button.hidden-btn {
     background: rgba(0, 0, 0, 0);
@@ -3256,7 +3259,9 @@ ul.film-categories li:hover::after {
 
 body:not(.nominations-by-year) #toggle-unique-films,
 body:not(.show-unique-films) .all-films-section,
-body.nominations-by-year.show-unique-films .awards-category {
+body.nominations-by-year.show-unique-films .awards-category,
+body.winners-only .all-film-card:not(.winner),
+body.hide-watched-films .all-film-card.watched {
     display: none !important;
 }
 
@@ -3277,4 +3282,12 @@ details.film-categories-details ul.categories-list li {
 }
 details.film-categories-details li.category-nominee a {
     color: var(--theme-palette-color-4);
+}
+
+@media (min-width: 1000px) {
+    button#toggle-watchlist {
+        background: none !important;
+        color: var(--theme-palette-color-4) !important;
+        cursor: default !important;
+    }
 }

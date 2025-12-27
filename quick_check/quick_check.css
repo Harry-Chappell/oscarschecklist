@@ -1,7 +1,7 @@
 /* Floating trigger button */
 .quick-check-trigger {
     position: fixed;
-    bottom: 30px;
+    bottom: 80px;
     right: 30px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;

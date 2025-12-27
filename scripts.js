@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to handle marking films as watched or unwatched
     function handleWatchButtons() {
-        document.querySelectorAll('.mark-as-watched-button, .mark-as-unwatched-button').forEach(function(button) {
+        const buttons = document.querySelectorAll('.mark-as-watched-button, .mark-as-unwatched-button');
+        buttons.forEach(function(button) {
             button.addEventListener('click', function(event) {
                 resetPerfTimer();
                 perfLog('🎬 WATCH BUTTON CLICKED - START', {filmId: button.getAttribute('data-film-id'), action: button.getAttribute('data-action')});
@@ -37,6 +38,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 button.setAttribute('data-action', isWatched ? 'unwatched' : 'watched');
                 listItem.classList.toggle('watched', isWatched);
                 
+                // Update button text
+                const buttonTextNode = button.childNodes[0];
+                if (buttonTextNode && buttonTextNode.nodeType === Node.TEXT_NODE) {
+                    buttonTextNode.textContent = isWatched ? 'Mark as Unwatched' : 'Mark as Watched';
+                }
+                
                 // Update all duplicate buttons instantly
                 perfLog('🔍 Searching for duplicate buttons to update', {filmId});
                 const duplicateButtons = document.querySelectorAll('button.mark-as-watched-button[data-film-id="' + filmId + '"], button.mark-as-unwatched-button[data-film-id="' + filmId + '"]');
@@ -48,6 +55,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         duplicateButton.classList.toggle('mark-as-unwatched-button', isWatched);
                         duplicateButton.setAttribute('data-action', isWatched ? 'unwatched' : 'watched');
                         duplicateListItem.classList.toggle('watched', isWatched);
+                        
+                        // Update duplicate button text
+                        const dupButtonTextNode = duplicateButton.childNodes[0];
+                        if (dupButtonTextNode && dupButtonTextNode.nodeType === Node.TEXT_NODE) {
+                            dupButtonTextNode.textContent = isWatched ? 'Mark as Unwatched' : 'Mark as Watched';
+                        }
                     }
                 });
                 perfLog('✅ Duplicate buttons updated', {filmId});
@@ -317,6 +330,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Rest of your updateTOC logic here...
             
             const toc = document.getElementById("toc");
+            if (!toc) {
+                // TOC doesn't exist on this page, skip update
+                return;
+            }
             toc.innerHTML = ''; // Clear existing TOC
     
             const categories = document.querySelectorAll(".awards-category");
@@ -633,13 +650,19 @@ function handleToggle(buttonName) {
     }
 }
 
-document.querySelector('.progress-toggle').addEventListener('click', function() {
-    handleToggle('progress');
-});
+const progressToggle = document.querySelector('.progress-toggle');
+if (progressToggle) {
+    progressToggle.addEventListener('click', function() {
+        handleToggle('progress');
+    });
+}
 
-document.querySelector('.watchlist-toggle').addEventListener('click', function() {
-    handleToggle('watchlist');
-});
+const watchlistToggle = document.querySelector('.watchlist-toggle');
+if (watchlistToggle) {
+    watchlistToggle.addEventListener('click', function() {
+        handleToggle('watchlist');
+    });
+}
 
 
 
@@ -955,7 +978,7 @@ function applyUserStatusFromCache() {
     let favCount = 0;
     let predictCount = 0;
 
-    filmItems.forEach(item => {
+    filmItems.forEach((item, index) => {
         const classList = Array.from(item.classList);
         const filmIdClass = classList.find(cls => cls.startsWith('film-id-'));
 
@@ -969,6 +992,12 @@ function applyUserStatusFromCache() {
             watchedButton.classList.remove('mark-as-unwatched-button');
             watchedButton.classList.add('mark-as-watched-button');
             watchedButton.setAttribute('data-action', 'watched');
+            
+            // Reset button text
+            const buttonTextNode = watchedButton.childNodes[0];
+            if (buttonTextNode && buttonTextNode.nodeType === Node.TEXT_NODE) {
+                buttonTextNode.textContent = 'Mark as Watched';
+            }
         }
         
         // Reset favourite button to default state
@@ -1000,6 +1029,12 @@ function applyUserStatusFromCache() {
                     watchedButton.classList.remove('mark-as-watched-button');
                     watchedButton.classList.add('mark-as-unwatched-button');
                     watchedButton.setAttribute('data-action', 'unwatched');
+                    
+                    // Update button text to unwatched
+                    const buttonTextNode = watchedButton.childNodes[0];
+                    if (buttonTextNode && buttonTextNode.nodeType === Node.TEXT_NODE) {
+                        buttonTextNode.textContent = 'Mark as Unwatched';
+                    }
                 }
             }
         }

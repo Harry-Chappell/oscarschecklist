@@ -624,8 +624,18 @@ function show_nominations_by_year_shortcode($atts) {
                             }
                         }
                         
+                        // Check if film has any winning nominations
+                        $has_win = false;
+                        foreach ($nominations as $nomination) {
+                            if ($nomination['is_winner']) {
+                                $has_win = true;
+                                break;
+                            }
+                        }
+                        
                         $watched_class = $user_watched ? 'watched' : '';
-                        $output .= '<li class="all-film-card film-id-' . $film_id . ' ' . $watched_class . '" data-film-id="' . $film_id . '">';
+                        $winner_class = $has_win ? 'winner' : '';
+                        $output .= '<li class="all-film-card film-id-' . $film_id . ' ' . $watched_class . ' ' . $winner_class . '" data-film-id="' . $film_id . '">';
                         
                         // Film poster
                         $output .= '<span class="film-poster">';
