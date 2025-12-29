@@ -121,8 +121,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasFilmElements = document.querySelectorAll('li[data-film-id]').length > 0;
         
         if (hasFilmElements) {
+            buildCards();
             isInitialized = true;
-            init();
         }
     }
     
@@ -138,77 +138,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Build cards from film data
     function buildCards() {
         try {
+            // Get the all-films-section container
+            const allFilmsSection = document.querySelector('.all-films-section');
+            if (!allFilmsSection) {
+                console.warn('Quick Check: .all-films-section not found');
+                buildFallbackCards();
+                return;
+            }
+            
+            // Get all film <li> elements from .all-films-section
+            const allFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]');
+            const unwatchedFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]:not(.watched)');
+            
+            if (unwatchedFilmElements.length === 0) {
+                console.warn('Quick Check: No unwatched films found');
+                buildFallbackCards();
+                return;
+            }
+            
             // Categories are the UL elements with class nominations-list
             const nominationLists = document.querySelectorAll('ul.nominations-list');
-            
-            // Filter to only include lists that have film items
             categoryElements = Array.from(nominationLists).filter(ul => 
                 ul.querySelectorAll('li[data-film-id]').length > 0
             );
-            
             totalCategories = categoryElements.length;
             
-            // Find all unique film elements, excluding watched ones
-            const filmElements = document.querySelectorAll('li[data-film-id]');
-            const uniqueFilms = new Map();
-            const alreadyWatched = new Set();
+            // Set film counts
+            totalFilms = allFilmElements.length;
+            watchedFilms = allFilmElements.length - unwatchedFilmElements.length;
             
-            filmElements.forEach(el => {
-                const filmId = el.getAttribute('data-film-id');
-                const classes = el.className || '';
-                const hasWatched = classes.split(' ').includes('watched');
-                
-                if (filmId) {
-                    if (hasWatched) {
-                        alreadyWatched.add(filmId);
-                    } else if (!uniqueFilms.has(filmId)) {
-                        uniqueFilms.set(filmId, el);
-                    }
-                }
+            // Clear the cards wrapper
+            cardsWrapper.innerHTML = '';
+            
+            // Clone and add unwatched film <li> elements as cards (reversed so first is on top)
+            Array.from(unwatchedFilmElements).reverse().forEach((filmEl, index) => {
+                // Invert the counter so it counts up (0/7, 1/7, 2/7...)
+                const invertedIndex = unwatchedFilmElements.length - 2 - index;
+                const clonedCard = createCardFromFilmElement(filmEl, invertedIndex, unwatchedFilmElements.length);
+                cardsWrapper.appendChild(clonedCard);
             });
-            
-            // Set watched count to include already watched films
-            watchedFilms = alreadyWatched.size;
-            
-            if (uniqueFilms.size > 0) {
-                // Create cards from film data (reversed so first film is on top)
-                const filmsArray = Array.from(uniqueFilms.entries()).reverse();
-                totalFilms = filmsArray.length + alreadyWatched.size;
-                filmsArray.forEach(([filmId, filmEl], index) => {
-                    const card = createFilmCard(filmId, filmEl, index, filmsArray.length);
-                    if (card) {
-                        cardsWrapper.appendChild(card);
-                    }
-                });
-                
-                // Add welcome card on top
-                const welcomeCard = createWelcomeCard();
-                cardsWrapper.appendChild(welcomeCard);
-            } else {
-                // Fallback to default cards
-                totalFilms = 5;
-                for (let i = 5; i >= 1; i--) {
-                    const card = createFallbackCard(i, 5);
-                    cardsWrapper.appendChild(card);
-                }
-                
-                // Add welcome card on top
-                const welcomeCard = createWelcomeCard();
-                cardsWrapper.appendChild(welcomeCard);
-            }
-            
-            cards = Array.from(cardsWrapper.querySelectorAll('.card'));
-            currentCardIndex = cards.length - 1;
-            
-            // Initialize progress rings
-            updateProgressRings();
-        } catch (error) {
-            // Fallback to default cards on error
-            totalFilms = 5;
-            for (let i = 5; i >= 1; i--) {
-                const card = createFallbackCard(i, 5);
-                cardsWrapper.appendChild(card);
-            }
             
             // Add welcome card on top
             const welcomeCard = createWelcomeCard();
@@ -217,9 +185,35 @@ document.addEventListener('DOMContentLoaded', function() {
             cards = Array.from(cardsWrapper.querySelectorAll('.card'));
             currentCardIndex = cards.length - 1;
             
+            // Initialize card states and listeners
+            init();
+            
             // Initialize progress rings
             updateProgressRings();
+        } catch (error) {
+            console.error('Quick Check: Error building cards', error);
+            buildFallbackCards();
         }
+    }
+    
+    // Build fallback cards if film data unavailable
+    function buildFallbackCards() {
+        cardsWrapper.innerHTML = '';
+        totalFilms = 5;
+        
+        for (let i = 5; i >= 1; i--) {
+            const card = createFallbackCard(i, 5);
+            cardsWrapper.appendChild(card);
+        }
+        
+        const welcomeCard = createWelcomeCard();
+        cardsWrapper.appendChild(welcomeCard);
+        
+        cards = Array.from(cardsWrapper.querySelectorAll('.card'));
+        currentCardIndex = cards.length - 1;
+        
+        init();
+        updateProgressRings();
     }
     
     // Create welcome card
@@ -227,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.className = 'card welcome-card';
         card.setAttribute('data-card', 'welcome');
+        card.setAttribute('data-counter', 'Start');
         
         const cardContent = document.createElement('div');
         cardContent.className = 'card-content';
@@ -278,69 +273,38 @@ document.addEventListener('DOMContentLoaded', function() {
         return card;
     }
     
-    // Create a card from film data
-    function createFilmCard(filmId, filmEl, index, total) {
+    // Create a card from film <li> element by cloning its contents
+    function createCardFromFilmElement(filmEl, index, total) {
+        // Create the card wrapper
         const card = document.createElement('div');
         card.className = 'card';
         card.setAttribute('data-card', index + 1);
-        card.setAttribute('data-film-id', filmId);
+        card.setAttribute('data-film-id', filmEl.getAttribute('data-film-id'));
         
-        // Extract film data - get text from element inside .film-name
-        const filmNameEl = filmEl.querySelector('.film-name');
-        let filmTitle = 'Unknown Film';
-        if (filmNameEl) {
-            // Get the text content of the child element (h3, h4, or p)
-            const childEl = filmNameEl.querySelector('h3, h4, p');
-            filmTitle = childEl ? childEl.textContent.trim() : filmNameEl.textContent.trim();
+        // Clone the contents of the <li> element
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'quick-check-film-card';
+        contentWrapper.innerHTML = filmEl.innerHTML;
+        
+        // Remove the friends-watched section
+        const friendsWatched = contentWrapper.querySelector('.friends-watched');
+        if (friendsWatched) {
+            friendsWatched.remove();
         }
         
-        const posterImg = filmEl.querySelector('.film-poster img');
-        const posterSrc = posterImg ? posterImg.getAttribute('src') : '';
-        const posterAlt = posterImg ? posterImg.getAttribute('alt') : filmTitle;
+        // Remove all links
+        const links = contentWrapper.querySelectorAll('a');
+        links.forEach(link => {
+            // Replace link with its text content
+            const textNode = document.createTextNode(link.textContent);
+            link.parentNode.replaceChild(textNode, link);
+        });
         
-        // Clone buttons (excluding watched button)
-        const buttonsContainer = filmEl.querySelector('.buttons-cntr');
-        let buttonsHTML = '';
-        if (buttonsContainer) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = buttonsContainer.innerHTML;
-            // Remove watched button
-            const watchedBtn = tempDiv.querySelector('.mark-as-unwatched-button, .mark-as-watched-button');
-            if (watchedBtn) {
-                watchedBtn.remove();
-            }
-            buttonsHTML = tempDiv.innerHTML;
-        }
+        // Store counter info as data attribute for external display
+        card.setAttribute('data-counter', `${index + 1} / ${total}`);
+        console.log(`Card created with data-counter: ${index + 1} / ${total}`);
         
-        // Build card content
-        const cardContent = document.createElement('div');
-        cardContent.className = 'card-content';
-        
-        if (posterSrc) {
-            const posterEl = document.createElement('img');
-            posterEl.src = posterSrc;
-            posterEl.alt = posterAlt;
-            posterEl.className = 'card-poster';
-            cardContent.appendChild(posterEl);
-        }
-        
-        const titleEl = document.createElement('h2');
-        titleEl.textContent = filmTitle;
-        cardContent.appendChild(titleEl);
-        
-        const counterEl = document.createElement('p');
-        counterEl.className = 'card-counter';
-        counterEl.textContent = `${index + 1} / ${total}`;
-        cardContent.appendChild(counterEl);
-        
-        if (buttonsHTML.trim()) {
-            const buttonsDiv = document.createElement('div');
-            buttonsDiv.className = 'card-buttons';
-            buttonsDiv.innerHTML = buttonsHTML;
-            cardContent.appendChild(buttonsDiv);
-        }
-        
-        card.appendChild(cardContent);
+        card.appendChild(contentWrapper);
         
         // Add swipe indicator overlays
         const leftIndicator = document.createElement('div');
@@ -419,8 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize
     function init() {
-        buildCards();
-        
+        console.log('init() called, cards.length:', cards.length);
         cards.forEach((card, index) => {
             // Set z-index dynamically based on position
             card.style.zIndex = index + 1;
@@ -435,6 +398,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeCard = cards[currentCardIndex];
         if (activeCard) {
             addCardListeners(activeCard);
+            console.log('Calling updateCounterDisplay from init()');
+            updateCounterDisplay();
+        } else {
+            console.warn('No active card found in init()');
+        }
+    }
+    
+    // Update the external counter display
+    function updateCounterDisplay() {
+        const counterDisplay = document.querySelector('.quick-check-counter-display');
+        console.log('updateCounterDisplay called');
+        console.log('counterDisplay element:', counterDisplay);
+        console.log('currentCardIndex:', currentCardIndex);
+        console.log('cards.length:', cards.length);
+        
+        if (counterDisplay && currentCardIndex >= 0 && currentCardIndex < cards.length) {
+            const activeCard = cards[currentCardIndex];
+            console.log('activeCard:', activeCard);
+            const counterText = activeCard.getAttribute('data-counter');
+            console.log('counterText from data-counter:', counterText);
+            if (counterText) {
+                counterDisplay.textContent = counterText;
+                console.log('Counter display updated to:', counterText);
+            } else {
+                console.warn('No data-counter attribute found on active card');
+            }
+        } else {
+            console.warn('Counter display conditions not met:', {
+                hasCounterDisplay: !!counterDisplay,
+                currentCardIndex,
+                cardsLength: cards.length
+            });
         }
     }
     
@@ -631,6 +626,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const nextCard = cards[currentCardIndex];
             nextCard.classList.add('active');
             addCardListeners(nextCard);
+            updateCounterDisplay();
+            console.log('Counter updated after swipe, currentCardIndex:', currentCardIndex);
         } else {
             // Wait for animation to finish before showing results
             setTimeout(() => {
@@ -641,6 +638,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove swiped card after animation completes
         setTimeout(() => {
             card.remove();
+            // Update counter in case it was the welcome card
+            if (currentCardIndex >= 0 && cards[currentCardIndex]) {
+                updateCounterDisplay();
+            }
         }, duration);
     }
     
@@ -769,6 +770,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateUndoButton();
         updateProgressRings();
+        updateCounterDisplay();
     }
     
     if (undoButton) {
