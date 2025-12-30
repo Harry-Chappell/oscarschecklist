@@ -169,7 +169,7 @@
 .cards-wrapper {
     position: relative;
     width: 100%;
-    height: 400px;
+    height: 500px;
     perspective: 1000px;
 }
 
@@ -192,37 +192,16 @@
 
 .undo-button {
     position: relative;
-    transform: none;
-    background: rgba(255, 255, 255, 0.95);
-    color: #667eea;
-    border: 2px solid #667eea;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-size: 1em;
-    font-weight: 600;
+    background: none;
+    color: var(--theme-palette-color-4);
+    padding: 5px 15px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000001;
+    pointer-events: none;
 }
 
-.undo-button svg {
-    width: 20px;
-    height: 20px;
-}
-
-.undo-button:hover {
-    background: #667eea;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.undo-button:active {
-    transform: translateY(0);
+.undo-button[style*="opacity: 1"] {
+    pointer-events: auto;
 }
 
 .card {
@@ -235,7 +214,7 @@
     height: 500px;
     background: var(--theme-palette-color-7);
     border-radius: 20px;
-    padding: 30px;
+    padding: 10px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     cursor: grab;
     user-select: none;
@@ -276,6 +255,51 @@
 .card .quick-check-film-card .film-name {
     text-align: center;
     margin: 5px 0;
+    font-size: 1.5em;
+}
+
+/* Indicator cards */
+.indicator-card {
+    position: absolute;
+    width: 90%;
+    max-width: 400px;
+    height: 500px;
+    background: transparent;
+    border: 4px dashed var(--theme-palette-color-6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.indicator-card span {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--theme-palette-color-6);
+    text-align: center;
+    line-height: 1.2;
+    /* writing-mode: vertical-rl; */
+    text-orientation: mixed;
+}
+
+.indicator-card-left {
+    left: -100%;
+    justify-content: flex-end;
+    padding-right: 10px;
+}
+.indicator-card-left span {
+    writing-mode: sideways-lr;
+}
+
+.indicator-card-right {
+    right: -100%;
+    justify-content: flex-start;
+    padding-left: 8px;
+}
+.indicator-card-right span {
+    writing-mode: sideways-rl;
 }
 
 .card .quick-check-film-card .film-name h3 {
@@ -429,14 +453,14 @@
 
 @keyframes swipeLeft {
     to {
-        transform: translateX(-150%) rotate(-30deg);
+        transform: translateX(-150%);
         opacity: 0;
     }
 }
 
 @keyframes swipeRight {
     to {
-        transform: translateX(50%) rotate(30deg);
+        transform: translateX(50%);
         opacity: 0;
     }
 }

@@ -178,12 +178,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 cardsWrapper.appendChild(clonedCard);
             });
             
-            // Add welcome card on top
-            const welcomeCard = createWelcomeCard();
-            cardsWrapper.appendChild(welcomeCard);
-            
             cards = Array.from(cardsWrapper.querySelectorAll('.card'));
             currentCardIndex = cards.length - 1;
+            
+            // Add indicator cards (not part of swipeable cards array)
+            createIndicatorCards();
             
             // Initialize card states and listeners
             init();
@@ -206,71 +205,33 @@ document.addEventListener('DOMContentLoaded', function() {
             cardsWrapper.appendChild(card);
         }
         
-        const welcomeCard = createWelcomeCard();
-        cardsWrapper.appendChild(welcomeCard);
-        
         cards = Array.from(cardsWrapper.querySelectorAll('.card'));
         currentCardIndex = cards.length - 1;
         
+        createIndicatorCards();
         init();
         updateProgressRings();
     }
     
-    // Create welcome card
-    function createWelcomeCard() {
-        const card = document.createElement('div');
-        card.className = 'card welcome-card';
-        card.setAttribute('data-card', 'welcome');
-        card.setAttribute('data-counter', 'Start');
+    // Create indicator cards on left and right
+    function createIndicatorCards() {
+        // Remove existing indicator cards if any
+        const existingLeft = document.querySelector('.indicator-card-left');
+        const existingRight = document.querySelector('.indicator-card-right');
+        if (existingLeft) existingLeft.remove();
+        if (existingRight) existingRight.remove();
         
-        const cardContent = document.createElement('div');
-        cardContent.className = 'card-content';
-        cardContent.style.padding = '20px';
-        cardContent.style.textAlign = 'center';
+        // Create left indicator card (Not Watched)
+        const leftCard = document.createElement('div');
+        leftCard.className = 'indicator-card indicator-card-left';
+        leftCard.innerHTML = '<span>NOT WATCHED</span>';
+        cardsWrapper.appendChild(leftCard);
         
-        const titleEl = document.createElement('h2');
-        titleEl.textContent = 'Welcome to Quick Check!';
-        titleEl.style.fontSize = '1.8em';
-        titleEl.style.marginBottom = '20px';
-        cardContent.appendChild(titleEl);
-        
-        const instructionsEl = document.createElement('div');
-        instructionsEl.innerHTML = `
-            <p style="margin: 15px 0; font-size: 1.1em;">Swipe or use arrow keys to sort films:</p>
-            <p style="margin: 15px 0; font-size: 1.1em;">⬅️ <strong>Left/Swipe Left</strong> = Not Watched Yet</p>
-            <p style="margin: 15px 0; font-size: 1.1em;">➡️ <strong>Right/Swipe Right</strong> = Watched</p>
-            <p style="margin: 20px 0 10px 0; font-size: 0.95em; opacity: 0.9;">Swipe this card to begin!</p>
-        `;
-        cardContent.appendChild(instructionsEl);
-        
-        card.appendChild(cardContent);
-        
-        // Add swipe indicator overlays
-        const leftIndicator = document.createElement('div');
-        leftIndicator.className = 'swipe-indicator swipe-indicator-left';
-        leftIndicator.innerHTML = `
-            <div class="swipe-indicator-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-            </div>
-            <span>NOT<br>WATCHED<br>YET</span>
-        `;
-        card.appendChild(leftIndicator);
-        
-        const rightIndicator = document.createElement('div');
-        rightIndicator.className = 'swipe-indicator swipe-indicator-right';
-        rightIndicator.innerHTML = `
-            <div class="swipe-indicator-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-            </div>
-            <span>WATCHED</span>
-        `;
-        card.appendChild(rightIndicator);
-        
-        return card;
+        // Create right indicator card (Watched)
+        const rightCard = document.createElement('div');
+        rightCard.className = 'indicator-card indicator-card-right';
+        rightCard.innerHTML = '<span>WATCHED</span>';
+        cardsWrapper.appendChild(rightCard);
     }
     
     // Create a card from film <li> element by cloning its contents
@@ -278,8 +239,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create the card wrapper
         const card = document.createElement('div');
         card.className = 'card';
+        const filmId = filmEl.getAttribute('data-film-id');
         card.setAttribute('data-card', index + 1);
-        card.setAttribute('data-film-id', filmEl.getAttribute('data-film-id'));
+        card.setAttribute('data-film-id', filmId);
+        
+        // Get film data from an element on the page with matching data-film-id
+        let filmName = '';
+        let filmSlug = '';
+        let filmYear = '';
+        
+        // Try to find a button with film data attributes
+        const filmDataElement = document.querySelector(`[data-film-id="${filmId}"][data-film-name]`);
+        if (filmDataElement) {
+            filmName = filmDataElement.getAttribute('data-film-name') || '';
+            filmSlug = filmDataElement.getAttribute('data-film-slug') || '';
+            filmYear = filmDataElement.getAttribute('data-film-year') || '';
+        }
+        
+        // Set film data attributes on the card
+        if (filmName) card.setAttribute('data-film-name', filmName);
+        if (filmSlug) card.setAttribute('data-film-slug', filmSlug);
+        if (filmYear) card.setAttribute('data-film-year', filmYear);
         
         // Clone the contents of the <li> element
         const contentWrapper = document.createElement('div');
@@ -292,17 +272,43 @@ document.addEventListener('DOMContentLoaded', function() {
             friendsWatched.remove();
         }
         
-        // Remove all links
+        // Remove all links and wrap film title in span
         const links = contentWrapper.querySelectorAll('a');
         links.forEach(link => {
-            // Replace link with its text content
-            const textNode = document.createTextNode(link.textContent);
-            link.parentNode.replaceChild(textNode, link);
+            // Create a span instead of text node
+            const span = document.createElement('span');
+            span.classList.add('film-name');
+            span.textContent = link.textContent;
+            link.parentNode.replaceChild(span, link);
         });
+        
+        // Wrap any remaining film name text in span if not already wrapped
+        const filmNameEl = contentWrapper.querySelector('.film-name');
+        if (filmNameEl) {
+            const childElements = Array.from(filmNameEl.childNodes);
+            childElements.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                    const span = document.createElement('span');
+                    span.textContent = node.textContent;
+                    node.parentNode.replaceChild(span, node);
+                }
+            });
+        }
+        
+        // Remove all buttons
+        const buttons = contentWrapper.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.remove();
+        });
+        
+        // Remove buttons container
+        const buttonsContainer = contentWrapper.querySelector('.buttons-cntr');
+        if (buttonsContainer) {
+            buttonsContainer.remove();
+        }
         
         // Store counter info as data attribute for external display
         card.setAttribute('data-counter', `${index + 1} / ${total}`);
-        console.log(`Card created with data-counter: ${index + 1} / ${total}`);
         
         card.appendChild(contentWrapper);
         
@@ -383,7 +389,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize
     function init() {
-        console.log('init() called, cards.length:', cards.length);
         cards.forEach((card, index) => {
             // Set z-index dynamically based on position
             card.style.zIndex = index + 1;
@@ -398,7 +403,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeCard = cards[currentCardIndex];
         if (activeCard) {
             addCardListeners(activeCard);
-            console.log('Calling updateCounterDisplay from init()');
             updateCounterDisplay();
         } else {
             console.warn('No active card found in init()');
@@ -408,19 +412,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update the external counter display
     function updateCounterDisplay() {
         const counterDisplay = document.querySelector('.quick-check-counter-display');
-        console.log('updateCounterDisplay called');
-        console.log('counterDisplay element:', counterDisplay);
-        console.log('currentCardIndex:', currentCardIndex);
-        console.log('cards.length:', cards.length);
         
         if (counterDisplay && currentCardIndex >= 0 && currentCardIndex < cards.length) {
             const activeCard = cards[currentCardIndex];
-            console.log('activeCard:', activeCard);
             const counterText = activeCard.getAttribute('data-counter');
-            console.log('counterText from data-counter:', counterText);
             if (counterText) {
                 counterDisplay.textContent = counterText;
-                console.log('Counter display updated to:', counterText);
             } else {
                 console.warn('No data-counter attribute found on active card');
             }
@@ -503,9 +500,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const deltaX = currentX - startX;
             const deltaY = currentY - startY;
-            const rotation = deltaX * 0.1;
             
-            card.style.transform = `translate(calc(-50% + ${deltaX}px), ${deltaY}px) rotate(${rotation}deg)`;
+            card.style.transform = `translate(calc(-50% + ${deltaX}px), ${deltaY}px)`;
             card.style.opacity = 1 - Math.abs(deltaX) / 500;
             
             // Update swipe indicators (skip for welcome card)
@@ -627,7 +623,6 @@ document.addEventListener('DOMContentLoaded', function() {
             nextCard.classList.add('active');
             addCardListeners(nextCard);
             updateCounterDisplay();
-            console.log('Counter updated after swipe, currentCardIndex:', currentCardIndex);
         } else {
             // Wait for animation to finish before showing results
             setTimeout(() => {
@@ -710,9 +705,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateUndoButton() {
         if (undoButton) {
             if (undoStack.length > 0) {
-                undoButton.style.display = 'block';
+                undoButton.style.opacity = '1';
             } else {
-                undoButton.style.display = 'none';
+                undoButton.style.opacity = '0.2';
             }
         }
     }
