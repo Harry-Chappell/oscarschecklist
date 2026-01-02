@@ -62,6 +62,7 @@
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
+    overflow: hidden;
 }
 
 .quick-check-close {
@@ -270,6 +271,7 @@
     text-align: center;
     margin: 5px 0;
     font-size: 1.5em;
+    line-height: 1;
 }
 
 /* Indicator cards */
@@ -630,8 +632,30 @@
     transform: translateY(0);
 }
 
+
+@media (max-width: 500px) {
+    .card .quick-check-film-card .categories-list {
+        display: none;
+    }
+    .card .quick-check-film-card .film-stats {
+        margin-bottom: 0rem;
+        margin-top: auto;
+    }
+    .card .quick-check-film-card .film-poster {
+        margin-top: 0;
+    }
+    .card, .cards-wrapper, .indicator-card {
+        height: 450px;
+    }
+    .quick-check-container {
+        min-width: 280px;
+    }
+    .indicator-card {
+        width: 95%;
+    }
+}
 /* Mobile optimizations */
-@media (max-width: 600px) {
+/* @media (max-width: 600px) {
     .quick-check-trigger {
         bottom: 20px;
         right: 20px;
@@ -721,7 +745,7 @@
     .swipe-indicator span {
         font-size: 1.3em;
     }
-}
+} */
 
 
 .card .quick-check-film-card ul.categories-list {
