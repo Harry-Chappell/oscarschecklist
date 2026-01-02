@@ -95,9 +95,21 @@
 /* Progress rings */
 .quick-check-progress {
     display: flex;
-    gap: 40px;
-    margin-bottom: 30px;
+    gap: 20px;
     z-index: 1000002;
+}
+.quick-check-progress .circular-progress-bar {
+    width: 70px;
+    height: 70px;
+}
+
+.quick-check-progress span.progress, 
+.quick-check-progress span.total {
+    font-size: 14px;
+}
+
+.quick-check-progress .circular-progress-bar:after {
+    inset: 5px;
 }
 
 .progress-ring-container {

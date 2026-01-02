@@ -83,6 +83,43 @@ document.addEventListener('DOMContentLoaded', function() {
         return completed;
     }
     
+    // Function to replicate TOC progress into quick check progress
+    function replicateTOCProgress() {
+        const quickCheckProgress = modal.querySelector('.quick-check-progress');
+        if (!quickCheckProgress) {
+            console.warn('Quick Check: .quick-check-progress not found');
+            return;
+        }
+        
+        // Find the sidebar progress elements - try multiple selectors
+        let filmsProgress = document.querySelector('#films-progress');
+        let categoriesProgress = document.querySelector('#categories-progress');
+        
+        // Fallback to class-based selectors if IDs not found
+        if (!filmsProgress) {
+            filmsProgress = document.querySelector('.circular-progress-bar.films');
+        }
+        if (!categoriesProgress) {
+            categoriesProgress = document.querySelector('.circular-progress-bar.categories');
+        }
+        
+        if (!filmsProgress || !categoriesProgress) {
+            console.warn('Quick Check: Progress elements not found', {filmsProgress, categoriesProgress});
+            return;
+        }
+        
+        // Clone and replace content
+        const filmsClone = filmsProgress.cloneNode(true);
+        const categoriesClone = categoriesProgress.cloneNode(true);
+        
+        // Clear and populate quick-check-progress
+        quickCheckProgress.innerHTML = '';
+        quickCheckProgress.appendChild(filmsClone);
+        quickCheckProgress.appendChild(categoriesClone);
+        
+        console.log('Quick Check: TOC progress replicated successfully');
+    }
+    
     // Modal controls
     if (triggerButton) {
         triggerButton.addEventListener('click', function() {
@@ -90,6 +127,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.style.overflow = 'hidden';
             // Rebuild cards every time to reflect current watched state
             buildCards();
+            // Replicate TOC progress
+            replicateTOCProgress();
         });
     }
     
@@ -634,8 +673,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 matchingFilms.forEach(filmEl => {
                     if (!filmEl.classList.contains('watched')) {
                         filmEl.classList.add('watched');
+                        
+                        // Update the button inside this film element
+                        const button = filmEl.querySelector('button[data-film-id]');
+                        if (button) {
+                            button.classList.remove('mark-as-watched-button');
+                            button.classList.add('mark-as-unwatched-button');
+                            button.setAttribute('data-action', 'unwatched');
+                        }
                     }
                 });
+                
+                // Trigger updateTOC to refresh the table of contents
+                if (typeof window.updateTOC === 'function') {
+                    window.updateTOC();
+                    // Replicate the updated TOC progress after updateTOC completes
+                    setTimeout(() => replicateTOCProgress(), 100);
+                }
             }
             
             // Store card info for undo
