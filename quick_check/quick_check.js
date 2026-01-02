@@ -796,15 +796,28 @@ document.addEventListener('DOMContentLoaded', function() {
             data.watched = data.watched.filter(f => f['film-id'] !== parseInt(lastSwipe.filmId));
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
             
-            // Remove .watched class from matching film elements
+            // Remove .watched class from matching film elements and update buttons
+            // Only if they weren't watched before quick check started
             const matchingFilms = document.querySelectorAll(`li[data-film-id="${lastSwipe.filmId}"]`);
             matchingFilms.forEach(filmEl => {
-                const wasAlreadyWatched = filmEl.classList.contains('watched') && 
-                    !data.watched.some(f => f['film-id'] === parseInt(lastSwipe.filmId));
-                if (!wasAlreadyWatched) {
-                    filmEl.classList.remove('watched');
+                // Remove watched class
+                filmEl.classList.remove('watched');
+                
+                // Update the button inside this film element
+                const button = filmEl.querySelector('button[data-film-id]');
+                if (button) {
+                    button.classList.remove('mark-as-unwatched-button');
+                    button.classList.add('mark-as-watched-button');
+                    button.setAttribute('data-action', 'watched');
                 }
             });
+            
+            // Trigger updateTOC to refresh the table of contents
+            if (typeof window.updateTOC === 'function') {
+                window.updateTOC();
+                // Replicate the updated TOC progress after updateTOC completes
+                setTimeout(() => replicateTOCProgress(), 100);
+            }
         }
         
         resetInactivityTimer();
