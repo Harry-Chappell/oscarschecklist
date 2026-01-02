@@ -162,14 +162,14 @@
     margin: 0 auto;
     padding: 20px;
     position: relative;
-    min-height: 500px;
+    min-height: 550px;
     min-width: 350px;
 }
 
 .cards-wrapper {
     position: relative;
     width: 100%;
-    height: 500px;
+    height: 550px;
     perspective: 1000px;
 }
 
@@ -211,7 +211,7 @@
     transform: translateX(-50%);
     width: 90%;
     max-width: 350px;
-    height: 500px;
+    height: 550px;
     background: var(--theme-palette-color-7);
     border-radius: 20px;
     padding: 10px;
@@ -263,7 +263,7 @@
     position: absolute;
     width: 90%;
     max-width: 400px;
-    height: 500px;
+    height: 550px;
     background: transparent;
     border: 4px dashed var(--theme-palette-color-6);
     border-radius: 12px;
@@ -707,4 +707,20 @@
     .swipe-indicator span {
         font-size: 1.3em;
     }
+}
+
+
+.card .quick-check-film-card ul.categories-list {
+    list-style: none;
+    font-size: 7px;
+    columns: 3;
+    padding: 1em;
+}
+.card .quick-check-film-card ul.categories-list li {
+    line-height: 1;
+    margin-bottom: 1em;
+    text-wrap: balance;
+}
+.card .quick-check-film-card ul.categories-list li.category-winner {
+    color: var(--theme-palette-color-1);
 }

@@ -6,13 +6,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!container) return;
     
     const cardsWrapper = container.querySelector('.cards-wrapper');
-    const resultsDiv = container.querySelector('.results');
-    const resultsList = container.querySelector('.results-list');
     const resetButton = container.querySelector('.reset-button');
     
     let cards = [];
     let currentCardIndex = 0;
-    let results = [];
+    let inactivityTimer = null;
     let isDragging = false;
     let startX = 0;
     let startY = 0;
@@ -27,6 +25,42 @@ document.addEventListener('DOMContentLoaded', function() {
     let totalCategories = 0;
     let completedCategories = 0;
     let categoryElements = [];
+    
+    // SessionStorage management
+    const SESSION_KEY = 'quickCheckWatched';
+    
+    function getWatchedFromSession() {
+        const data = sessionStorage.getItem(SESSION_KEY);
+        return data ? JSON.parse(data) : { watched: [] };
+    }
+    
+    function saveWatchedToSession(filmData) {
+        const data = getWatchedFromSession();
+        // Check if film already exists
+        const exists = data.watched.some(f => f['film-id'] === filmData['film-id']);
+        if (!exists) {
+            data.watched.push(filmData);
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+        }
+        resetInactivityTimer();
+    }
+    
+    function outputAndClearSession() {
+        const data = getWatchedFromSession();
+        if (data.watched.length > 0) {
+            console.log('Quick Check Results:', JSON.stringify(data, null, 2));
+            sessionStorage.removeItem(SESSION_KEY);
+        }
+    }
+    
+    function resetInactivityTimer() {
+        if (inactivityTimer) {
+            clearTimeout(inactivityTimer);
+        }
+        inactivityTimer = setTimeout(() => {
+            outputAndClearSession();
+        }, 2000);
+    }
     
     // Function to calculate completed categories
     function calculateCompletedCategories() {
@@ -81,12 +115,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModal() {
         modal.style.display = 'none';
         document.body.style.overflow = '';
+        outputAndClearSession();
     }
     
     // Progress ring update
     function updateProgressRings() {
         // Calculate watched films progress (including already watched + newly swiped right)
-        const newlyWatched = results.filter(r => r.direction === 'right').length;
+        const sessionData = getWatchedFromSession();
+        const newlyWatched = sessionData.watched.length;
         const watchedCount = watchedFilms + newlyWatched;
         const watchedPercent = totalFilms > 0 ? (watchedCount / totalFilms) * 100 : 0;
         
@@ -307,6 +343,21 @@ document.addEventListener('DOMContentLoaded', function() {
             buttonsContainer.remove();
         }
         
+        // Replace details.film-categories-details with just the ul.categories-list
+        const categoriesDetails = contentWrapper.querySelector('.film-categories-details');
+        if (categoriesDetails) {
+            const categoriesList = categoriesDetails.querySelector('ul.categories-list');
+            if (categoriesList) {
+                // Clone the ul element
+                const clonedList = categoriesList.cloneNode(true);
+                // Replace the entire details element with just the ul
+                categoriesDetails.parentNode.replaceChild(clonedList, categoriesDetails);
+            } else {
+                // If no ul found, just remove the details element
+                categoriesDetails.remove();
+            }
+        }
+        
         // Store counter info as data attribute for external display
         card.setAttribute('data-counter', `${index + 1} / ${total}`);
         
@@ -460,6 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             isDragging = true;
             card.classList.add('swiping');
+            resetInactivityTimer();
             
             if (e.type === 'touchstart') {
                 startX = e.touches[0].clientX;
@@ -571,17 +623,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function swipeCard(card, direction, velocity = 200) {
         const cardNumber = card.getAttribute('data-card');
         const filmId = card.getAttribute('data-film-id');
+        const filmName = card.getAttribute('data-film-name') || '';
+        const filmSlug = card.getAttribute('data-film-slug') || '';
+        const filmYear = card.getAttribute('data-film-year') || '';
         const filmTitle = card.querySelector('h2') ? card.querySelector('h2').textContent : `Card ${cardNumber}`;
         const isWelcomeCard = card.classList.contains('welcome-card');
         
-        // Don't add welcome card to results or undo stack
+        // Don't add welcome card to undo stack or session
         if (!isWelcomeCard) {
-            results.push({ 
-                card: cardNumber, 
-                direction: direction,
-                filmId: filmId,
-                filmTitle: filmTitle
-            });
+            // If swiped right (watched), save to sessionStorage
+            if (direction === 'right' && filmId) {
+                const today = new Date().toISOString().split('T')[0];
+                saveWatchedToSession({
+                    'film-id': parseInt(filmId),
+                    'film-name': filmName,
+                    'film-year': parseInt(filmYear) || null,
+                    'film-url': filmSlug,
+                    'watched-date': today
+                });
+            }
             
             // If swiped right (watched), add .watched class to all matching film elements on the page
             if (direction === 'right' && filmId) {
@@ -624,9 +684,9 @@ document.addEventListener('DOMContentLoaded', function() {
             addCardListeners(nextCard);
             updateCounterDisplay();
         } else {
-            // Wait for animation to finish before showing results
+            // All cards swiped - output and clear session
             setTimeout(() => {
-                showResults();
+                outputAndClearSession();
             }, duration);
         }
         
@@ -642,7 +702,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Keyboard controls
     document.addEventListener('keydown', function(e) {
-        if (resultsDiv && !resultsDiv.classList.contains('hidden')) return;
         
         if (currentCardIndex >= 0 && currentCardIndex < cards.length) {
             const activeCard = cards[currentCardIndex];
@@ -673,32 +732,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Show results
-    function showResults() {
-        resultsList.innerHTML = '';
-        
-        results.forEach(result => {
-            const item = document.createElement('div');
-            item.className = 'result-item';
-            
-            let displayText = result.filmTitle;
-            if (result.filmId) {
-                item.setAttribute('data-film-id', result.filmId);
-            }
-            
-            const statusText = result.direction === 'right' ? 'Watched' : 'Not Watched Yet';
-            
-            item.innerHTML = `
-                <span class="card-number">${displayText}</span>
-                <span class="direction ${result.direction}">${statusText}</span>
-            `;
-            resultsList.appendChild(item);
-        });
-        
-        cardsWrapper.style.display = 'none';
-        resultsDiv.classList.remove('hidden');
-    }
-    
     // Undo functionality
     const undoButton = container.querySelector('.undo-button');
     
@@ -717,21 +750,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const lastSwipe = undoStack.pop();
         
-        // Remove last result
-        results.pop();
-        
-        // If it was marked as watched (swiped right), remove .watched class from matching film elements
+        // If it was marked as watched (swiped right), remove from sessionStorage and remove .watched class
         if (lastSwipe.direction === 'right' && lastSwipe.filmId) {
+            // Remove from sessionStorage
+            const data = getWatchedFromSession();
+            data.watched = data.watched.filter(f => f['film-id'] !== parseInt(lastSwipe.filmId));
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+            
+            // Remove .watched class from matching film elements
             const matchingFilms = document.querySelectorAll(`li[data-film-id="${lastSwipe.filmId}"]`);
             matchingFilms.forEach(filmEl => {
-                // Only remove if it wasn't already watched before this session
-                // Check if this film was in the alreadyWatched set
-                const wasAlreadyWatched = !results.some(r => r.filmId === lastSwipe.filmId);
+                const wasAlreadyWatched = filmEl.classList.contains('watched') && 
+                    !data.watched.some(f => f['film-id'] === parseInt(lastSwipe.filmId));
                 if (!wasAlreadyWatched) {
                     filmEl.classList.remove('watched');
                 }
             });
         }
+        
+        resetInactivityTimer();
         
         // Recreate the card
         const card = lastSwipe.card.cloneNode(true);
@@ -776,5 +813,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset button
     resetButton.addEventListener('click', function() {
         location.reload();
+    });
+    
+    // Output session when cursor leaves browser window
+    document.addEventListener('mouseleave', function(e) {
+        if (e.clientY <= 0 || e.clientX <= 0 || 
+            e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+            outputAndClearSession();
+        }
     });
 });
