@@ -236,6 +236,7 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    height: 100%;
 }
 
 .card .quick-check-film-card .film-poster {
@@ -243,6 +244,7 @@
     width: 100%;
     max-width: 200px;
     height: auto;
+    margin-top: auto;
 }
 
 .card .quick-check-film-card .film-poster img {
@@ -723,4 +725,8 @@
 }
 .card .quick-check-film-card ul.categories-list li.category-winner {
     color: var(--theme-palette-color-1);
+}
+.quick-check-film-card .film-stats {
+    margin-bottom: -1rem;
+    margin-top: auto;
 }

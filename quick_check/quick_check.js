@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let initialX = 0;
     let initialY = 0;
     let undoStack = [];
-    let isInitialized = false;
     let totalFilms = 0;
     let watchedFilms = 0;
     let totalCategories = 0;
@@ -89,9 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
         triggerButton.addEventListener('click', function() {
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
-            if (!isInitialized) {
-                initializeWhenReady();
-            }
+            // Rebuild cards every time to reflect current watched state
+            buildCards();
         });
     }
     
@@ -148,32 +146,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Wait for watched classes to be applied before building cards
-    function initializeWhenReady() {
-        if (isInitialized) return;
-        
-        // Check if watched classes have been applied
-        const hasWatchedClass = document.querySelector('li[data-film-id].watched');
-        const hasFilmElements = document.querySelectorAll('li[data-film-id]').length > 0;
-        
-        if (hasFilmElements) {
-            buildCards();
-            isInitialized = true;
-        }
-    }
-    
-    // Listen for the custom event dispatched when watched classes are applied
-    let qcTimerStart = performance.now();
-    document.addEventListener('watchedClassesApplied', function() {
-        initializeWhenReady();
-    });
-    
-    // Fallback: also try after a short delay if event doesn't fire
-    setTimeout(initializeWhenReady, 1000);
-    
     // Build cards from film data
     function buildCards() {
         try {
+            // Reset state for fresh build
+            cards = [];
+            currentCardIndex = 0;
+            undoStack = [];
+            
             // Get the all-films-section container
             const allFilmsSection = document.querySelector('.all-films-section');
             if (!allFilmsSection) {
@@ -233,6 +213,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Build fallback cards if film data unavailable
     function buildFallbackCards() {
+        // Reset state for fresh build
+        cards = [];
+        currentCardIndex = 0;
+        undoStack = [];
+        
         cardsWrapper.innerHTML = '';
         totalFilms = 5;
         
