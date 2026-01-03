@@ -1,36 +1,35 @@
-/* Floating trigger button */
+/* Quick Check trigger button - matches sidebar button styling */
 .quick-check-trigger {
-    position: fixed;
-    bottom: 80px;
-    right: 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 16px 28px;
-    border-radius: 50px;
-    font-size: 1.1em;
-    font-weight: 700;
-    cursor: pointer;
+    height: 100%;
+    border-radius: 0px;
+    width: 25%;
+    color: var(--theme-palette-color-3);
+    background-color: rgba(0, 0, 0, 0);
+    border: 1px solid rgba(0, 0, 0, 0);
+    font-size: 11px;
     display: flex;
+    align-items: end;
+    justify-content: center;
+    text-align: center;
+    padding: 10px 5px;
+    flex-flow: column;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    z-index: 999999;
+    justify-content: space-between;
+    fill: var(--theme-palette-color-3);
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .quick-check-trigger svg {
+    opacity: 0.8;
+    fill: inherit;
+    padding: 3px;
+    height: 25px;
     width: 24px;
-    height: 24px;
-}
-
-.quick-check-trigger:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
 }
 
 .quick-check-trigger:active {
-    transform: translateY(-2px);
+    background-color: var(--theme-palette-color-2);
 }
 
 /* Full-screen modal */

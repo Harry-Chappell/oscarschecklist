@@ -22,14 +22,6 @@ function quick_check_after_footer() {
     }
     
     ?>
-    <!-- Floating trigger button -->
-    <button class="quick-check-trigger" aria-label="Open Quick Check">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13 3L4 14h6l-2 7 9-11h-6l2-7z"/>
-        </svg>
-        Quick Check
-    </button>
-    
     <!-- Full-screen modal -->
     <div class="quick-check-modal" style="display: none;">
         <div class="quick-check-modal-overlay"></div>
