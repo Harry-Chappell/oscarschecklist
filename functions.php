@@ -347,6 +347,102 @@ add_action('wp_ajax_mark_as_watched', 'markAsWatched');
 // Hook for non-logged-in users (if needed)
 add_action('wp_ajax_nopriv_mark_as_watched', 'markAsWatched');
 
+// Batch version of markAsWatched for Quick Check feature
+function markAsWatchedBatch() {
+    $timer_start = microtime(true);
+    error_log('🚀 markAsWatchedBatch() START');
+    
+    if (!is_user_logged_in()) {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ❌ markAsWatchedBatch() - User not logged in');
+        wp_die();
+    }
+    
+    $watched_films_json = isset($_POST['watched_films']) ? $_POST['watched_films'] : '';
+    if (empty($watched_films_json)) {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ❌ markAsWatchedBatch() - No watched films data provided');
+        wp_die();
+    }
+    
+    $watched_films = json_decode(stripslashes($watched_films_json), true);
+    if (!is_array($watched_films) || empty($watched_films)) {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] ❌ markAsWatchedBatch() - Invalid watched films data');
+        wp_die();
+    }
+    
+    $user_id = get_current_user_id();
+    $json = load_user_meta_json($user_id);
+    $added_count = 0;
+    $films_to_update_stats = [];
+    
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 📦 Processing batch of ' . count($watched_films) . ' films for user ' . $user_id);
+    
+    foreach ($watched_films as $film_data) {
+        $film_id = isset($film_data['film-id']) ? (int)$film_data['film-id'] : 0;
+        
+        if (!$film_id) {
+            continue;
+        }
+        
+        // Check if already in watched list
+        $already = false;
+        foreach ($json['watched'] as $existing_film) {
+            if ($existing_film['film-id'] == $film_id) {
+                $already = true;
+                break;
+            }
+        }
+        
+        if (!$already) {
+            $entry = [
+                'film-id' => $film_id,
+                'film-name' => isset($film_data['film-name']) ? sanitize_text_field($film_data['film-name']) : '',
+                'film-year' => isset($film_data['film-year']) ? (int)$film_data['film-year'] : null,
+                'film-url' => isset($film_data['film-url']) ? sanitize_text_field($film_data['film-url']) : '',
+                'watched-date' => isset($film_data['watched-date']) ? sanitize_text_field($film_data['watched-date']) : date('Y-m-d'),
+            ];
+            
+            $json['watched'][] = $entry;
+            $added_count++;
+            $films_to_update_stats[] = $film_id;
+            
+            // Update watched_by_day_json for each film
+            update_watched_by_day_json($film_id, $timer_start);
+        }
+    }
+    
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] ➕ Added ' . $added_count . ' films to watched list');
+    
+    // Update stats and last-updated
+    $json['total-watched'] = count($json['watched']);
+    $json['last-updated'] = date('Y-m-d');
+    
+    // Save the updated user data in one go
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 💾 Calling save_user_meta_json() - total watched: ' . $json['total-watched']);
+    save_user_meta_json($user_id, $json, $timer_start);
+    
+    // Update film stats for all added films
+    if ($added_count > 0) {
+        $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+        error_log('[+' . $elapsed . 'ms] 📊 Updating film stats for ' . count($films_to_update_stats) . ' films');
+        foreach ($films_to_update_stats as $film_id) {
+            oscars_update_film_stats_json($film_id, 'watched', $timer_start);
+        }
+    }
+    
+    $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+    error_log('[+' . $elapsed . 'ms] 🏁 markAsWatchedBatch() COMPLETE - Added ' . $added_count . ' films');
+    
+    wp_die();
+}
+// Hook for logged-in users
+add_action('wp_ajax_mark_as_watched_batch', 'markAsWatchedBatch');
+
 function update_watched_by_day_json($film_id, $timer_start = null) {
     if ($timer_start === null) $timer_start = microtime(true);
     $elapsed = round((microtime(true) - $timer_start) * 1000, 2);

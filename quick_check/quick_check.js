@@ -48,6 +48,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = getWatchedFromSession();
         if (data.watched.length > 0) {
             console.log('Quick Check Results:', JSON.stringify(data, null, 2));
+            
+            // Send all watched films to the server in a single batch request
+            const formData = new FormData();
+            formData.append('action', 'mark_as_watched_batch');
+            formData.append('watched_films', JSON.stringify(data.watched));
+            
+            // Send to server
+            fetch('/wp-admin/admin-ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(() => {
+                console.log('Quick Check: Successfully saved ' + data.watched.length + ' watched films to user data');
+            })
+            .catch(error => {
+                console.error('Quick Check: Error saving watched films:', error);
+            });
+            
             sessionStorage.removeItem(SESSION_KEY);
         }
     }
