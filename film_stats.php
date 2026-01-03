@@ -1,6 +1,7 @@
 <?php
 
 require_once get_stylesheet_directory() . '/film_stats/all_films_data_button.php';
+require_once get_stylesheet_directory() . '/film_stats/backfill_watchlist_data_button.php';
 require_once get_stylesheet_directory() . '/film_stats/films_stats_button.php';
 require_once get_stylesheet_directory() . '/film_stats/top10_watched_films.php';
 require_once get_stylesheet_directory() . '/film_stats/oscars_compile_all_user_stats.php';
