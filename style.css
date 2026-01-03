@@ -3229,13 +3229,13 @@ ul.film-categories li:hover::after {
     }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 690px) {
     ul.all-films-list > li.all-film-card {
         width: calc((100% - (10px * 2)) / 3);
     }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 400px) {
     ul.all-films-list > li.all-film-card {
         width: calc((100% - 10px) / 2);
     }
@@ -3289,5 +3289,11 @@ details.film-categories-details li.category-nominee a {
         background: none !important;
         color: var(--theme-palette-color-4) !important;
         cursor: default !important;
+    }
+}
+
+@media (max-width: 450px) {
+    .wins-number, .noms-number {
+        font-size: 1.5em;
     }
 }

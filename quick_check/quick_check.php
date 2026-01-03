@@ -57,23 +57,24 @@ function quick_check_after_footer() {
             </div>
             
             <div class="quick-check-container" data-source="films">
-        <div class="cards-wrapper">
-            <!-- Cards will be dynamically generated from film data or fallback to default cards -->
-        </div>
-        
-        <div class="quick-check-controls">
-            <button class="undo-button" style="opacity: 0.2;">
-                Undo
-            </button>
-            <div class="quick-check-counter-display"></div>
-        </div>
-        
-        <div class="results hidden">
-            <h2>Results</h2>
-            <div class="results-list"></div>
-            <button class="reset-button">Start Over</button>
-        </div>
-    </div>
+                
+                <div class="quick-check-controls">
+                    <button class="undo-button" style="opacity: 0.2;">
+                        Undo
+                    </button>
+                    <div class="quick-check-counter-display"></div>
+                </div>
+                
+                <div class="cards-wrapper">
+                    <!-- Cards will be dynamically generated from film data or fallback to default cards -->
+                </div>
+                
+                <div class="results hidden">
+                    <h2>Results</h2>
+                    <div class="results-list"></div>
+                    <button class="reset-button">Start Over</button>
+                </div>
+            </div>
         </div>
     </div>
     <?php
