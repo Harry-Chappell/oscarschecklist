@@ -1325,6 +1325,11 @@ aside#sidebar > * > div:first-child button svg {
     padding: 3px;
     height: 25px;
 }
+aside#sidebar > * > div:first-child button svg rect,
+aside#sidebar > * > div:first-child button svg path {
+    fill: inherit;
+    /* transition: 0.2s; */
+}
 aside#sidebar > * > div:first-child button:active {
     /* scale: 0.95; */
     background-color: var(--theme-palette-color-2);

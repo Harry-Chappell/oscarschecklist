@@ -887,6 +887,44 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUndoButton();
     }
     
+    // Action buttons (tick and cross)
+    const crossButton = container.querySelector('.cross-button');
+    const tickButton = container.querySelector('.tick-button');
+    
+    if (crossButton) {
+        crossButton.addEventListener('click', function() {
+            if (currentCardIndex >= 0 && currentCardIndex < cards.length) {
+                const activeCard = cards[currentCardIndex];
+                // Flash left indicator
+                const leftIndicator = activeCard.querySelector('.swipe-indicator-left');
+                if (leftIndicator) {
+                    leftIndicator.style.opacity = 0.8;
+                    setTimeout(() => {
+                        leftIndicator.style.opacity = 0;
+                    }, 200);
+                }
+                swipeCard(activeCard, 'left');
+            }
+        });
+    }
+    
+    if (tickButton) {
+        tickButton.addEventListener('click', function() {
+            if (currentCardIndex >= 0 && currentCardIndex < cards.length) {
+                const activeCard = cards[currentCardIndex];
+                // Flash right indicator
+                const rightIndicator = activeCard.querySelector('.swipe-indicator-right');
+                if (rightIndicator) {
+                    rightIndicator.style.opacity = 0.8;
+                    setTimeout(() => {
+                        rightIndicator.style.opacity = 0;
+                    }, 200);
+                }
+                swipeCard(activeCard, 'right');
+            }
+        });
+    }
+    
     // Reset button
     resetButton.addEventListener('click', function() {
         location.reload();
