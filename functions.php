@@ -1906,3 +1906,5 @@ function oscars_update_category() {
     wp_send_json_success(['data' => $data]);
 }
 
+
+
