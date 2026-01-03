@@ -723,9 +723,10 @@ document.addEventListener('DOMContentLoaded', function() {
             addCardListeners(nextCard);
             updateCounterDisplay();
         } else {
-            // All cards swiped - output and clear session
+            // All cards swiped - output and clear session, then close modal
             setTimeout(() => {
                 outputAndClearSession();
+                closeModal();
             }, duration);
         }
         
