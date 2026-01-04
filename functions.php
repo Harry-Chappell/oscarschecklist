@@ -1198,11 +1198,8 @@ function custom_toggle_buttons_shortcode() {
     $predicted_text = 'Hide Predicted';
 
     // Generate the buttons' HTML with <span> to hold the text
-    // Quick Check button (admin only)
     $output = '';
-    if (current_user_can('administrator')) {
-        $output .= '<button class="quick-check-trigger">' . $quick_check_icon . '<span>Quick Check</span></button>';
-    }
+    $output .= '<button class="quick-check-trigger">' . $quick_check_icon . '<span>Quick Check</span></button>';
     $output .= '<button id="toggle-unique-films" class="toggle-unique-films-button">' . $show_unique_icon . '<span>' . $show_unique_text . '</span></button>';
     $output .= '<button id="toggle-hide-watched" class="toggle-hide-watched-button">' . $hide_watched_icon . '<span>' . $hide_watched_text . '</span></button>';
     $output .= '<button id="toggle-winners-only" class="toggle-winners-only-button">' . $winners_only_icon . '<span>' . $winners_only_text . '</span></button>';
