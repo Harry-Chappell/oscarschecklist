@@ -818,8 +818,38 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lastSwipe.direction === 'right' && lastSwipe.filmId) {
             // Remove from sessionStorage
             const data = getWatchedFromSession();
+            const filmInSession = data.watched.find(f => f['film-id'] === parseInt(lastSwipe.filmId));
             data.watched = data.watched.filter(f => f['film-id'] !== parseInt(lastSwipe.filmId));
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+            
+            // If film is not in session storage (meaning it was already saved to user data),
+            // send immediate AJAX request to remove it from user's data file
+            if (!filmInSession) {
+                const formData = new FormData();
+                formData.append('action', 'mark_as_watched');
+                formData.append('watched_post_id', lastSwipe.filmId);
+                formData.append('watched_action', 'unwatched');
+                formData.append('film_name', lastSwipe.filmName || '');
+                formData.append('film_slug', lastSwipe.filmSlug || '');
+                formData.append('film_year', lastSwipe.filmYear || '');
+                
+                fetch('/wp-admin/admin-ajax.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(() => {
+                    console.log('Quick Check: Successfully removed film from user data via undo');
+                })
+                .catch(error => {
+                    console.error('Quick Check: Error removing film from user data:', error);
+                });
+            }
             
             // Remove .watched class from matching film elements and update buttons
             // Only if they weren't watched before quick check started
