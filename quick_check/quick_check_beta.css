@@ -103,6 +103,7 @@
     display: flex;
     gap: 20px;
     z-index: 1000002;
+    justify-content: center;
 }
 .quick-check-progress .circular-progress-bar {
     width: 70px;
@@ -180,15 +181,21 @@
     margin: 0 auto;
     padding: 20px;
     position: relative;
-    min-height: 550px;
+    min-height: 500px;
     min-width: 350px;
 }
 
 .cards-wrapper {
     position: relative;
     width: 100%;
-    height: 550px;
+    height: 500px;
     perspective: 1000px;
+}
+
+@media (min-width: 1000px) {
+    .cards-wrapper {
+        height: 270px;
+    }
 }
 
 .quick-check-controls {
@@ -234,8 +241,10 @@
     height: 40px;
     padding: 0 20px;
     border-radius: 25px;
-    border: none;
+    border: 1px solid var(--theme-palette-color-6);
+    background: var(--theme-palette-color-7);
     cursor: pointer;
+    color: var(--theme-palette-color-4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -247,11 +256,6 @@
     white-space: nowrap;
 }
 
-.action-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
 .action-button:active {
     transform: translateY(0);
 }
@@ -261,22 +265,24 @@
     margin-top: 3px;
 }
 
-.cross-button {
+.cross-button:hover {
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+.cross-button:active {
     background-color: #ff4444;
     color: var(--theme-palette-color-8);
 }
 
-.cross-button:hover {
-    background-color: #ff0000;
-}
-
-.tick-button {
-    background-color: #00c853;
-    color: var(--theme-palette-color-8);
-}
-
 .tick-button:hover {
+    color: #00c853;
+    border-color: #00c853;
+}
+
+.tick-button:active {
     background-color: #00a843;
+    color: var(--theme-palette-color-8);
 }
 
 .undo-button {
@@ -300,7 +306,7 @@
     transform: translateX(-50%);
     width: 90%;
     max-width: 350px;
-    height: 550px;
+    height: 100%;
     background: var(--theme-palette-color-7);
     border: 1px solid var(--theme-palette-color-6);
     border-radius: 20px;
@@ -323,7 +329,7 @@
     width: 100%;
     max-width: 280px;
     display: flex;
-    flex-direction: column;
+    flex-flow: column wrap;
     align-items: center;
     gap: 10px;
     height: 100%;
@@ -337,11 +343,15 @@
     margin-top: auto;
 }
 
+
+
 .card .quick-check-film-card .film-poster img {
     width: 100%;
     height: auto;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    /* border-radius: 10px; */
+    /* box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); */
+    max-height: 250px;
+    object-fit: contain;
 }
 
 .card .quick-check-film-card .film-name {
@@ -356,7 +366,7 @@
     position: absolute;
     width: 90%;
     max-width: 400px;
-    height: 550px;
+    height: 500px;
     background: transparent;
     border: 4px dashed var(--theme-palette-color-6);
     border-radius: 12px;
@@ -723,7 +733,7 @@
         margin-top: 0;
     }
     .card, .cards-wrapper, .indicator-card {
-        height: 450px;
+        height: 400px;
     }
     .quick-check-container {
         min-width: 280px;
@@ -832,6 +842,7 @@
     columns: 3;
     padding: 1em;
 }
+
 .card .quick-check-film-card ul.categories-list li {
     line-height: 1;
     margin-bottom: 1em;
@@ -843,4 +854,58 @@
 .quick-check-film-card .film-stats {
     margin-bottom: -1rem;
     margin-top: auto;
+}
+
+@media (min-width: 1000px) {
+    .quick-check-container {
+        min-width: 620px;
+    }
+    .card .quick-check-film-card ul.categories-list {
+        font-size: 9px;
+        columns: 2;
+        padding: 0;
+        margin: auto 0 0;
+        max-width: 290px;
+    }
+    
+    .card {
+        max-width: 520px;
+    }
+    
+    .card .quick-check-film-card {
+        align-items: flex-start;
+        gap: 0 20px;
+        min-width: 500px;
+    }
+    
+    .card .quick-check-film-card .film-poster {
+        flex-shrink: 0;
+        width: auto;
+        max-width: 250px;
+        height: 100%;
+        margin-top: 0;
+    }
+    
+    .card .quick-check-film-card .film-poster img {
+        max-height: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .card .quick-check-film-card > *:not(.film-poster) {
+        text-align: left;
+    }
+    
+    .card .quick-check-film-card .film-name {
+        text-align: left;
+        max-width: 300px;
+    }
+    
+    .card .quick-check-film-card .nominations-wins-text {
+        text-align: left;
+    }
+
+    .card .quick-check-film-card ul.categories-list li {
+        margin-bottom: 0.7em;
+    }
 }
