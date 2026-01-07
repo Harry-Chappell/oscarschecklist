@@ -665,18 +665,13 @@ function get_friends_list_html() {
             $user_login = $friend_user->user_login;
             $user_email = $friend_user->user_email;
             
-            // Calculate lengths
-            $id_length = strlen($friend_id);
-            $login_length = strlen($user_login);
-            $first_name_length = strlen($first_name);
-            $last_name_length = strlen($last_name);
-            $email_length = strlen($user_email);
+            // Use hash-based color generation for better distribution
+            // Combine user data into a string and create a numeric hash
+            $hash_string = $friend_id . $user_login . $first_name . $last_name . $user_email;
+            $hash = crc32($hash_string);
             
-            // Calculate product of lengths
-            $randomcolornum = $id_length * $login_length * $first_name_length * $last_name_length * $email_length;
-            
-            // Get the last 3 digits of the calculated number
-            $randomcolornum = substr($randomcolornum, -3);
+            // Convert to positive number and get last 3 digits (0-999 range)
+            $randomcolornum = abs($hash) % 1000;
             
             $initials = strtoupper(substr($first_name, 0, 1) . substr($last_name, 0, 1));
 

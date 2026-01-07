@@ -137,17 +137,13 @@ function show_scoreboard_nominations_shortcode($atts) {
 
                                     // Calculate lengths
                                     $id_length = strlen($friend_id);
-                                    $login_length = strlen($friend_username);
-                                    $first_name_length = strlen($friend_first_name);
-                                    $last_name_length = strlen($friend_last_name);
-                                    $email_length = strlen($friend_email);
-
-                                    if ($last_name_length == 0) {
-                                        $last_name_length = 1;
-                                    }
-                                    // Calculate product of lengths and get last 3 digits
-                                    $randomcolornum = $id_length * $login_length * $first_name_length * $last_name_length * $email_length;
-                                    $randomcolornum = substr($randomcolornum, -3);
+                                    // Use hash-based color generation for better distribution
+                                    // Combine user data into a string and create a numeric hash
+                                    $hash_string = $friend_id . $friend_username . $friend_first_name . $friend_last_name . $friend_email;
+                                    $hash = crc32($hash_string);
+                                    
+                                    // Convert to positive number and get last 3 digits (0-999 range)
+                                    $randomcolornum = abs($hash) % 1000;
 
                                     // Get initials
                                     $initials = strtoupper(substr($friend_first_name, 0, 1) . substr($friend_last_name, 0, 1));
