@@ -737,8 +737,8 @@ add_shortcode( 'getfriendslist', 'get_friends_list' );
 
 function oscars_year_dropdown_shortcode() {
     $output = '<select id="oscarsYearDropdown">';
-    $output .= '<option value="" selected disabled>Select Year</option>'; // Add this line
-    for ($year = 2024; $year >= 1929; $year--) {
+    $output .= '<option value="" selected disabled>Select Year</option>';
+    for ($year = date('Y'); $year >= 1929; $year--) {
         $output .= '<option value="' . $year . '">' . $year . '</option>';
     }
     $output .= '</select>';
