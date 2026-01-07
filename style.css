@@ -135,7 +135,7 @@ ul.nominations-list button svg {
 
 ul.nominations-list button svg path {
     fill: var(--theme-palette-color-5);
-	opacity: 0.2;
+	/* opacity: 0.2; */
 }
 ul.nominations-list button.mark-as-unfav-button svg path {
     fill: #732b2b;

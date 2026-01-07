@@ -656,7 +656,8 @@ function get_friends_list_html() {
     if ($friends) {
         $output .= '<div id="friends-list"><ul>';
 
-        $output .= '<li class="friend-item active" onclick="updateTOC(null)" title="' . wp_get_current_user()->display_name . '" style="--user-id:' . $current_user_id . '"><img src="' . get_avatar_url( get_current_user_id(), ['size' => 32] ) . '"><p>You</p></li>';
+        $current_user = wp_get_current_user();
+        $output .= '<li class="friend-item active" onclick="updateTOC(null)" title="' . $current_user->display_name . '" data-first-name="' . esc_attr($current_user->user_firstname) . '" style="--user-id:' . $current_user_id . '"><img src="' . get_avatar_url( get_current_user_id(), ['size' => 32] ) . '"><p>You</p></li>';
         foreach ( $friends as $friend_id ) {
             $friend_user = get_userdata( $friend_id );
             $avatar_url = get_avatar_url( $friend_id, ['size' => 32] );
@@ -675,7 +676,7 @@ function get_friends_list_html() {
             
             $initials = strtoupper(substr($first_name, 0, 1) . substr($last_name, 0, 1));
 
-            $output .= '<li class="friend-item" onclick="updateTOC(' . $friend_id . ')" title="' . $friend_user->display_name . '" style="--randomcolornum:' . $randomcolornum . '">';
+            $output .= '<li class="friend-item" onclick="updateTOC(' . $friend_id . ')" title="' . $friend_user->display_name . '" data-first-name="' . esc_attr($first_name) . '" style="--randomcolornum:' . $randomcolornum . '">';
             $output .= '<div class="friend-initials" title="' . $friend_user->display_name . '">' . $initials . '</div>';
             $output .= '<img src="' . $avatar_url . '" alt="' . $friend_user->display_name . '" title="' . $friend_user->display_name . '" class="friend-avatar">';
             $output .= '</li>';

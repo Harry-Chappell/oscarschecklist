@@ -329,6 +329,24 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateTOC(friendId = null) {
             // Rest of your updateTOC logic here...
             
+            // Update the progress heading based on whose progress is being viewed
+            const progressHeading = document.querySelector('.stk-block-heading__text');
+            if (progressHeading) {
+                if (friendId === null) {
+                    // Viewing own progress
+                    progressHeading.textContent = 'Your Progress';
+                } else {
+                    // Viewing friend's progress - get friend's first name
+                    const friendItem = document.querySelector(`#friends-list .friend-item[onclick*="updateTOC(${friendId})"]`);
+                    if (friendItem) {
+                        const firstName = friendItem.getAttribute('data-first-name');
+                        if (firstName) {
+                            progressHeading.textContent = `${firstName}'s Progress`;
+                        }
+                    }
+                }
+            }
+            
             const toc = document.getElementById("toc");
             if (!toc) {
                 // TOC doesn't exist on this page, skip update
