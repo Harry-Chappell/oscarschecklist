@@ -26,7 +26,8 @@ function show_scoreboard_scores_shortcode($atts) {
         foreach ($friend_ids as $friend_id) {
             $friend_data = get_userdata($friend_id);
             if ($friend_data) {
-                $friend_username = $friend_data->display_name;
+                $friend_username = $friend_data->user_login;  // Use user_login for consistency
+                $friend_display_name = $friend_data->display_name;
                 $friend_first_name = get_user_meta($friend_id, 'first_name', true);
                 $friend_last_name = get_user_meta($friend_id, 'last_name', true);
                 $friend_email = $friend_data->user_email;
@@ -47,7 +48,7 @@ function show_scoreboard_scores_shortcode($atts) {
     
                 $friends_predict[] = [
                     'id' => $friend_id,
-                    'username' => $friend_username,
+                    'username' => $friend_display_name,  // Display name for UI
                     'first_name' => $friend_first_name,
                     'last_name' => $friend_last_name,
                     'email' => $friend_email,

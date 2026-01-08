@@ -3306,3 +3306,5 @@ details.film-categories-details li.category-nominee a {
 .category-potentials button.mark-as-fav-button, .category-potentials button.mark-as-predict-button {
     display: none;
 }
+
+body:has(* .category-potentials) span.noms-count { display: none; }
