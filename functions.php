@@ -28,7 +28,6 @@ function wp_all_import_post_saved($id) {
 
 
 
-
 // Disable core update emails
 add_filter( 'auto_core_update_send_email', '__return_false' );
 

@@ -304,17 +304,37 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add "active" class to the clicked item
             item.classList.add('active');
     
-            // Update progress heading only if it exists on the page
-            if (progressHeading) {
-                // Check if the clicked item is the first item or has the title "you"
-                if (index === 0 || item.getAttribute('title').toLowerCase() === "you") {
-                    progressHeading.textContent = "Your Progress";
-                } else {
-                    // Get the display name from the title attribute
-                    const displayName = item.getAttribute('title');
-                    // Update the heading text
-                    progressHeading.textContent = displayName + "'s Progress";
+            // Extract friend ID from onclick attribute
+            const onclick = item.getAttribute('onclick');
+            let friendId = null;
+            if (onclick) {
+                const match = onclick.match(/updateTOC\((\d+)\)/);
+                if (match && match[1]) {
+                    friendId = parseInt(match[1]);
                 }
+            }
+    
+            // Update progress heading - use the correct selector
+            const heading = document.querySelector('.stk-block-heading__text');
+            if (heading) {
+                if (index === 0 || item.getAttribute('title').toLowerCase() === "you" || friendId === null) {
+                    heading.textContent = "Your Progress";
+                } else {
+                    // Get the first name from data-first-name attribute
+                    const firstName = item.getAttribute('data-first-name');
+                    if (firstName) {
+                        heading.textContent = `${firstName}'s Progress`;
+                    } else {
+                        // Fallback to display name
+                        const displayName = item.getAttribute('title');
+                        heading.textContent = `${displayName}'s Progress`;
+                    }
+                }
+            }
+            
+            // Call updateTOC with the friend ID to update progress statistics
+            if (typeof updateTOC === 'function') {
+                updateTOC(friendId);
             }
         }
     
