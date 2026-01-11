@@ -569,10 +569,16 @@ aside#sidebar {
 aside#sidebar > * {
     /* max-height: calc(100vh - (var(--sidebar-offset, 50px) + var(--admin-bar, 0px) + var(--theme-frame-size, 0px) + var(--header-sticky-height, 0px)* var(--sticky-shrink, 100) / 100)); */
     padding: 0 6px 25px;
-    overflow: scroll;
+    overflow: visible;
     max-height: calc(100vh - 150px);
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
+}
+
+@media (min-width: 1000px) {
+    aside#sidebar > * {
+        overflow: scroll;
+    }    
 }
 
 html[data-color-mode="dark"] aside#sidebar {
@@ -864,7 +870,7 @@ span.total:before {
         padding: 0px;
         /* border: 1px solid; */
         max-height: 70px;
-        overflow: hidden;
+        /* overflow: hidden; */
         border-radius: 15px;
     }
     aside#sidebar > * {
@@ -1278,7 +1284,7 @@ aside#sidebar > * > div:first-child {
     height: 70px;
     margin-bottom: 10px;
     border-radius: 5px;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 /* @media (width < 1000px) {
     aside#sidebar.open > * > div:first-child {
@@ -1361,7 +1367,7 @@ aside#sidebar.open > * > div:first-child button#toggle-progress svg {
     }
     aside#sidebar > * > div:first-child > p {
         border-radius: 15px;
-        overflow: hidden;
+        /* overflow: hidden; */
     }
 }
 @media (prefers-color-scheme: dark) {

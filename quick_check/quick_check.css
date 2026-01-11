@@ -18,6 +18,8 @@
     fill: var(--theme-palette-color-3);
     cursor: pointer;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: visible;
 }
 
 .quick-check-trigger svg {

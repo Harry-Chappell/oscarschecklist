@@ -968,3 +968,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// New user tooltip for Quick Check
+document.addEventListener('DOMContentLoaded', function() {
+    const TOOLTIP_SESSION_KEY = 'quickCheckTooltipDismissed';
+    const triggerElement = document.querySelector('.quick-check-trigger');
+    
+    // Check if tooltip was already dismissed in this session
+    if (sessionStorage.getItem(TOOLTIP_SESSION_KEY)) {
+        return;
+    }
+    
+    // Check if trigger exists and there are no watched items
+    if (!triggerElement) {
+        return;
+    }
+    
+    const watchedItems = document.querySelectorAll('li.watched');
+    if (watchedItems.length > 0) {
+        return;
+    }
+    
+    // Create tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'quick-check-tooltip';
+    tooltip.innerHTML = `
+        <span class="quick-check-tooltip-text">New here? Use Quick Check to swipe through fast!</span>
+    `;
+    
+    // Insert tooltip inside trigger button
+    triggerElement.appendChild(tooltip);
+    
+    // Function to dismiss tooltip
+    function dismissTooltip() {
+        sessionStorage.setItem(TOOLTIP_SESSION_KEY, 'true');
+        tooltip.style.opacity = '0';
+        setTimeout(() => {
+            if (tooltip.parentNode) {
+                tooltip.parentNode.removeChild(tooltip);
+            }
+        }, 300);
+    }
+    
+    // Dismiss when user clicks on trigger
+    triggerElement.addEventListener('click', dismissTooltip, { once: true });
+});
