@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
     
             // Update progress heading - use the correct selector
-            const heading = document.querySelector('.stk-block-heading__text');
+            const heading = document.querySelector('#your-progress-title h2');
             if (heading) {
                 if (index === 0 || item.getAttribute('title').toLowerCase() === "you" || friendId === null) {
                     heading.textContent = "Your Progress";
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Rest of your updateTOC logic here...
             
             // Update the progress heading based on whose progress is being viewed
-            const progressHeading = document.querySelector('.stk-block-heading__text');
+            const progressHeading = document.querySelector('#your-progress-title h2');
             if (progressHeading) {
                 if (friendId === null) {
                     // Viewing own progress
