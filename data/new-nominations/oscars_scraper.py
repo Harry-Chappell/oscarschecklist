@@ -1,9 +1,13 @@
 import re
+import os
 import pandas as pd
 from bs4 import BeautifulSoup
 
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Load the HTML content
-with open('page.html', 'r', encoding='utf-8') as file:
+with open(os.path.join(script_dir, 'page.html'), 'r', encoding='utf-8') as file:
     soup = BeautifulSoup(file, 'html.parser')
 
 # Extract nominations data
@@ -81,5 +85,5 @@ for field_item in soup.find_all('div', class_='field__item'):
 df = pd.DataFrame(nominations)
 
 # Save to CSV
-df.to_csv('nominations.csv', index=False)
+df.to_csv(os.path.join(script_dir, 'nominations.csv'), index=False)
 print("Nominations data has been processed and saved to 'nominations.csv'.")
