@@ -2,11 +2,15 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+import os
 from datetime import datetime
 
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Input and output file names
-input_file = "urls.txt"
-output_file = "2025-nominee-data.csv"
+input_file = os.path.join(script_dir, "urls.txt")
+output_file = os.path.join(script_dir, "nominee-data.csv")
 
 # Column headers for the CSV
 headers = ["Name", "Slug", "Photo URL", "Wikipedia URL", "Birthday"]
@@ -73,17 +77,28 @@ def extract_birthday(soup):
 
 def scrape_wikipedia_page(url):
     """Scrape data from a single Wikipedia biography page."""
-    response = requests.get(url)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
     
     data = {}
     
     # Name (h1 tag)
-    name = soup.find('h1', id='firstHeading')
-    data['Name'] = extract_text(name)
+    name_element = soup.find('h1', id='firstHeading')
+    if name_element:
+        # Get text and remove content in parentheses/brackets
+        name_text = name_element.get_text(strip=True)
+        name_text = re.sub(r'\(.*?\)', '', name_text)
+        name_text = re.sub(r'\[.*?\]', '', name_text)
+        data['Name'] = name_text.strip()
+    else:
+        data['Name'] = ""
     
     # Slug
-    data['Slug'] = url.split("/wiki/")[-1]
+    slug = url.split("/wiki/")[-1]
+    data['Slug'] = slug.replace('_', '-')
     
     # Photo URL
     photo = soup.select_one('.infobox-image img')
@@ -102,6 +117,8 @@ def main():
     with open(input_file, 'r') as file:
         urls = [line.strip() for line in file.readlines()]
     
+    failed_urls = []
+    
     # Open the CSV file for writing
     with open(output_file, 'w', newline='', encoding='utf-8') as file:
         writer = csv.DictWriter(file, fieldnames=headers)
@@ -113,8 +130,20 @@ def main():
             try:
                 person_data = scrape_wikipedia_page(url)
                 writer.writerow(person_data)
+                
+                # Check if scraping failed (no Name extracted)
+                if not person_data.get('Name'):
+                    failed_urls.append(url)
+                    print(f"  WARNING: No data found for {url}")
             except Exception as e:
-                print(f"Failed to scrape {url}: {e}")
+                print(f"  ERROR: Failed to scrape {url}: {e}")
+                failed_urls.append(url)
+    
+    # Report results
+    if failed_urls:
+        print(f"\n{len(failed_urls)} URLs failed to scrape properly")
+    else:
+        print("\nAll URLs scraped successfully!")
 
 if __name__ == "__main__":
     main()
