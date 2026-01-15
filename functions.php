@@ -555,17 +555,17 @@ add_shortcode('show_nominations_by_cat', 'show_nominations_by_cat_shortcode');
 
 
 
-require_once get_stylesheet_directory() . '/nominations_for_scoreboard.php';
+// require_once get_stylesheet_directory() . '/nominations_for_scoreboard.php';
 
-add_shortcode('show_scoreboard_nominations', 'show_scoreboard_nominations_shortcode');
-
-
+// add_shortcode('show_scoreboard_nominations', 'show_scoreboard_nominations_shortcode');
 
 
 
-require_once get_stylesheet_directory() . '/scores_for_scoreboard.php';
 
-add_shortcode('show_scoreboard_scores', 'show_scoreboard_scores_shortcode');
+
+// require_once get_stylesheet_directory() . '/scores_for_scoreboard.php';
+
+// add_shortcode('show_scoreboard_scores', 'show_scoreboard_scores_shortcode');
 
 
 
@@ -1530,15 +1530,15 @@ add_filter('template_include', 'load_custom_search_template');
 
 
 
-require_once get_stylesheet_directory() . '/scoreboard_admin.php';
+// require_once get_stylesheet_directory() . '/scoreboard_admin.php';
 
 
-function enqueue_page_scoreboard_styles() {
-    if ((basename(get_page_template()) == 'page-scoreboard.php')) {
-        wp_enqueue_style('page-scoreboard-style', get_stylesheet_directory_uri() . '/page-scoreboard.css', array(), null);
-    }
-}
-add_action('wp_enqueue_scripts', 'enqueue_page_scoreboard_styles');
+// function enqueue_page_scoreboard_styles() {
+//     if ((basename(get_page_template()) == 'page-scoreboard.php')) {
+//         wp_enqueue_style('page-scoreboard-style', get_stylesheet_directory_uri() . '/page-scoreboard.css', array(), null);
+//     }
+// }
+// add_action('wp_enqueue_scripts', 'enqueue_page_scoreboard_styles');
 
 
 
