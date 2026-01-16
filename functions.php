@@ -2,6 +2,10 @@
 if (! defined('WP_DEBUG')) {
 	die( 'Direct access forbidden.' );
 }
+
+// Load scoreboard functions
+require_once(__DIR__ . '/scoreboard/functions.php');
+
 add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style( 'my-style', get_stylesheet_directory_uri() . '/style.css', array(), date('ymdhis'), 'all' ); // Inside a child theme
     wp_enqueue_script( 'my-scripts', get_stylesheet_directory_uri() . '/scripts.js', array(), date('ymdhis'), true ); // Inside a child theme, load in footer

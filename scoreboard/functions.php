@@ -48,3 +48,108 @@ add_action('wp_enqueue_scripts', 'scoreboard_enqueue_assets');
 
 
 // Add your custom scoreboard functions below this line
+
+/**
+ * Save submission to JSON file
+ */
+function scoreboard_save_submission() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $message = isset($_POST['message']) ? sanitize_text_field($_POST['message']) : '';
+    
+    if (empty($message)) {
+        wp_send_json_error('Message is required');
+    }
+    
+    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    
+    // Read existing data
+    $data = ['interval' => 5, 'submissions' => []];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    // Add new submission
+    $data['submissions'][] = [
+        'message' => $message,
+        'timestamp' => time(),
+        'formatted_time' => current_time('Y-m-d H:i:s')
+    ];
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_save_submission', 'scoreboard_save_submission');
+add_action('wp_ajax_nopriv_scoreboard_save_submission', 'scoreboard_save_submission');
+
+/**
+ * Update reload interval
+ */
+function scoreboard_update_interval() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $interval = isset($_POST['interval']) ? intval($_POST['interval']) : 5;
+    
+    if ($interval < 1) {
+        wp_send_json_error('Interval must be at least 1 second');
+    }
+    
+    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    
+    // Read existing data
+    $data = ['interval' => 5, 'submissions' => []];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    // Update interval
+    $data['interval'] = $interval;
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_update_interval', 'scoreboard_update_interval');
+add_action('wp_ajax_nopriv_scoreboard_update_interval', 'scoreboard_update_interval');
+
+/**
+ * Get all submissions from JSON file
+ */
+function scoreboard_get_submissions() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    
+    $data = ['interval' => 5, 'submissions' => []];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_get_submissions', 'scoreboard_get_submissions');
+add_action('wp_ajax_nopriv_scoreboard_get_submissions', 'scoreboard_get_submissions');
