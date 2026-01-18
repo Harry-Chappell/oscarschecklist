@@ -58,19 +58,13 @@
     }
     
     /**
-     * Update countdown display and progress bar
+     * Update countdown display
      */
     function updateCountdown() {
         const countdownEl = document.getElementById('countdown');
-        const progressBar = document.getElementById('progress-bar');
         
         if (countdownEl) {
             countdownEl.textContent = countdown;
-        }
-        
-        if (progressBar) {
-            const percentage = ((currentInterval - countdown) / currentInterval) * 100;
-            progressBar.style.width = percentage + '%';
         }
     }
     

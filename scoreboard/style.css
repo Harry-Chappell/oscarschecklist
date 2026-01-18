@@ -29,14 +29,17 @@ div#main-scoreboard-container > footer {
     height: 50px;
 }
 div#main-scoreboard-container > section {
-    width: 50%;
+    width: calc(100% / 3);
     max-height: calc(100vh - var(--admin-bar) - 170px);
     display: flex;
     height: 100vh;
     overflow: scroll;
     position: relative;
 }
-section.left {
+div#main-scoreboard-container > section.full-width {
+    width: 100%;
+}
+section.border-r {
     border-right: 1px solid var(--theme-palette-color-6);
 }
 h1, h2, h3, h4, h5, h6 {
@@ -45,8 +48,26 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Form Styles */
-section.left {
+section.p-20 {
     padding: 20px;
+}
+
+section h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+section h3:not(:first-child) {
+    margin-top: 30px;
+}
+
+section.admin-controls {
+    flex-direction: column;
+}
+
+section.admin-preview {
+    background: var(--theme-palette-color-8);
 }
 
 #interval-control {
@@ -126,6 +147,10 @@ section.right {
     padding: 0;
     margin: 0;
     width: 100%;
+    position: absolute;
+    inset: auto 10px 10px auto;
+    width: calc(100vw - 20px);
+    max-width: 300px;
 }
 
 #submissions-list li {
@@ -148,21 +173,3 @@ section.right {
     font-size: 14px;
 }
 
-/* Progress Bar */
-#progress-bar-container {
-    width: 100%;
-    height: 20px;
-    background: var(--theme-palette-color-8);
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid var(--theme-palette-color-6);
-    margin-left: 15px;
-}
-
-#progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--theme-palette-color-1), var(--theme-palette-color-2));
-    transition: width 0.3s ease;
-    border-radius: 10px;
-}

@@ -14,10 +14,13 @@ if (!defined('ABSPATH')) {
  * Enqueue scoreboard styles and scripts
  */
 function scoreboard_enqueue_assets() {
-    // Check if we're on the scoreboard page - multiple conditions for reliability
+    // Check if we're on the scoreboard page or admin page - multiple conditions for reliability
     $is_scoreboard_page = is_page_template('page-scoreboard.php') || 
+                          is_page_template('page-scoreboard-admin.php') ||
                           is_page('scoreboard') || 
-                          (is_page() && get_post_field('post_name') === 'scoreboard');
+                          is_page('scoreboard-admin') ||
+                          (is_page() && get_post_field('post_name') === 'scoreboard') ||
+                          (is_page() && get_post_field('post_name') === 'scoreboard-admin');
     
     if ($is_scoreboard_page) {
         // Enqueue stylesheet
