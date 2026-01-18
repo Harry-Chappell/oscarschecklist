@@ -11,8 +11,8 @@
     let lastSubmissionCount = 0;
     let pollingInterval = null;
     let countdownInterval = null;
-    let currentInterval = 5;
-    let countdown = 5;
+    let currentInterval = 10; // Default to 10 seconds
+    let countdown = 10;
     
     /**
      * Initialize scoreboard functionality
@@ -45,6 +45,7 @@
         
         countdown = currentInterval;
         updateCountdown();
+        restartProgressBar();
         
         countdownInterval = setInterval(() => {
             countdown--;
@@ -53,8 +54,22 @@
             if (countdown <= 0) {
                 loadData();
                 countdown = currentInterval;
+                restartProgressBar();
             }
         }, 1000);
+    }
+    
+    /**
+     * Restart progress bar animation with current interval
+     */
+    function restartProgressBar() {
+        const progressBar = document.getElementById('progress-bar');
+        if (!progressBar) return;
+        
+        // Remove and re-add the element to restart animation
+        progressBar.style.animation = 'none';
+        progressBar.offsetHeight; // Trigger reflow
+        progressBar.style.animation = `progress-animation ${currentInterval}s linear`;
     }
     
     /**
@@ -166,10 +181,13 @@
                 renderSubmissions(serverData.submissions || []);
                 
                 // Update interval if changed
-                const serverInterval = serverData.interval || 5;
+                const serverInterval = serverData.interval || 10; // Default to 10 seconds
                 if (serverInterval !== currentInterval) {
                     currentInterval = serverInterval;
-                    document.getElementById('interval-input').value = currentInterval;
+                    const intervalInput = document.getElementById('interval-input');
+                    if (intervalInput) {
+                        intervalInput.value = currentInterval;
+                    }
                     // Restart countdown with new interval
                     startCountdown();
                 }

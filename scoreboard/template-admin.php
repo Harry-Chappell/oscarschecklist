@@ -16,4 +16,9 @@
             <button type="submit">Submit</button>
         </form>
     </section>
+    <footer>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+    </footer>
 </div>

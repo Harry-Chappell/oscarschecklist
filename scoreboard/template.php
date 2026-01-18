@@ -13,6 +13,9 @@
         <ul id="categories-list"></ul>
     </section>
     <footer>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
         <ul id="submissions-list"></ul>
     </footer>
 </div>
