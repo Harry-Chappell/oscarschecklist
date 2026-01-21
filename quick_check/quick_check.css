@@ -767,3 +767,155 @@
     margin-bottom: -1rem;
     margin-top: auto;
 }
+
+/* Filter Button */
+.quick-check-filter-button {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    margin-left: 10px;
+}
+
+.quick-check-filter-button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+.quick-check-filter-button svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Filter Modal */
+.quick-check-filter-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000003;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.quick-check-filter-modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.quick-check-filter-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.quick-check-filter-modal-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+    color: #333;
+}
+
+.quick-check-filter-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 50%;
+}
+
+.quick-check-filter-close:hover {
+    background: #f0f0f0;
+}
+
+.quick-check-filter-close svg {
+    width: 24px;
+    height: 24px;
+    fill: #666;
+}
+
+.quick-check-filter-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.quick-check-filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.quick-check-filter-actions button {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.quick-check-filter-actions button:hover {
+    background: #f5f5f5;
+    border-color: #999;
+}
+
+.quick-check-filter-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quick-check-filter-category-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.quick-check-filter-category-item:hover {
+    background: #f0f0f0;
+}
+
+.quick-check-filter-category-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.quick-check-filter-category-item label {
+    cursor: pointer;
+    flex: 1;
+    font-size: 1em;
+    color: #333;
+}

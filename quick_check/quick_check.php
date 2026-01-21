@@ -23,6 +23,11 @@ function quick_check_after_footer() {
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                 </svg>
             </button>
+            <button class="quick-check-filter-button" aria-label="Filter categories">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+                    <path d="M3.9 54.9C10.5 40.9 24.5 32 40 32l432 0c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9 320 448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6l0-79.1L9.1 97.3C-.7 85.4-2.8 68.8 3.9 54.9z"/>
+                </svg>
+            </button>
             
             <div class="quick-check-container" data-source="films">
                 
@@ -46,6 +51,29 @@ function quick_check_after_footer() {
                         <div class="progress-ring-text">
                             <span class="progress-value" id="category-count">0</span>
                             <span class="progress-label">Categories</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filter Modal -->
+                <div class="quick-check-filter-modal" style="display: none;">
+                    <div class="quick-check-filter-modal-content">
+                        <div class="quick-check-filter-modal-header">
+                            <h3>Filter by Categories</h3>
+                            <button class="quick-check-filter-close" aria-label="Close filter">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="quick-check-filter-modal-body">
+                            <div class="quick-check-filter-actions">
+                                <button class="select-all-categories">Select All</button>
+                                <button class="deselect-all-categories">Deselect All</button>
+                            </div>
+                            <div class="quick-check-filter-categories">
+                                <!-- Categories will be populated by JavaScript -->
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -149,6 +149,20 @@ document.addEventListener('DOMContentLoaded', function() {
         triggerButton.addEventListener('click', function() {
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
+            // Initialize all categories as selected
+            if (allCategories.length === 0) {
+                const categoryTitles = document.querySelectorAll('.category-title h2');
+                categoryTitles.forEach(titleEl => {
+                    const categorySlug = titleEl.closest('.awards-category')?.getAttribute('data-category-slug');
+                    if (categorySlug) {
+                        selectedCategories.add(categorySlug);
+                        allCategories.push({ 
+                            name: titleEl.textContent.trim(), 
+                            slug: categorySlug 
+                        });
+                    }
+                });
+            }
             // Rebuild cards every time to reflect current watched state
             buildCards();
             // Replicate TOC progress
@@ -177,6 +191,130 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.style.display = 'none';
         document.body.style.overflow = '';
         outputAndClearSession();
+    }
+    
+    // Filter functionality
+    let selectedCategories = new Set();
+    let allCategories = [];
+    
+    const filterButton = document.querySelector('.quick-check-filter-button');
+    const filterModal = document.querySelector('.quick-check-filter-modal');
+    const filterCloseButton = document.querySelector('.quick-check-filter-close');
+    const filterCategoriesContainer = document.querySelector('.quick-check-filter-categories');
+    const selectAllButton = document.querySelector('.select-all-categories');
+    const deselectAllButton = document.querySelector('.deselect-all-categories');
+    
+    function populateFilterCategories() {
+        if (!filterCategoriesContainer) return;
+        
+        // Get all category titles from the page
+        const categoryTitles = document.querySelectorAll('.category-title h2');
+        allCategories = [];
+        selectedCategories.clear();
+        
+        categoryTitles.forEach(titleEl => {
+            const categoryName = titleEl.textContent.trim();
+            const categorySlug = titleEl.closest('.awards-category')?.getAttribute('data-category-slug');
+            
+            if (categoryName && categorySlug) {
+                allCategories.push({ name: categoryName, slug: categorySlug });
+                selectedCategories.add(categorySlug);
+            }
+        });
+        
+        // Populate the filter modal with checkboxes
+        filterCategoriesContainer.innerHTML = '';
+        allCategories.forEach(category => {
+            const item = document.createElement('div');
+            item.className = 'quick-check-filter-category-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `filter-category-${category.slug}`;
+            checkbox.value = category.slug;
+            checkbox.checked = true;
+            
+            const label = document.createElement('label');
+            label.htmlFor = `filter-category-${category.slug}`;
+            label.textContent = category.name;
+            
+            item.appendChild(checkbox);
+            item.appendChild(label);
+            
+            // Click anywhere on the item to toggle
+            item.addEventListener('click', (e) => {
+                if (e.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                }
+                handleCategoryToggle(category.slug, checkbox.checked);
+            });
+            
+            checkbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                handleCategoryToggle(category.slug, checkbox.checked);
+            });
+            
+            filterCategoriesContainer.appendChild(item);
+        });
+    }
+    
+    function handleCategoryToggle(categorySlug, isChecked) {
+        if (isChecked) {
+            selectedCategories.add(categorySlug);
+        } else {
+            selectedCategories.delete(categorySlug);
+        }
+        applyFilters();
+    }
+    
+    function applyFilters() {
+        // Rebuild cards based on selected categories
+        buildCards();
+    }
+    
+    if (filterButton) {
+        filterButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            populateFilterCategories();
+            filterModal.style.display = 'flex';
+        });
+    }
+    
+    if (filterCloseButton) {
+        filterCloseButton.addEventListener('click', () => {
+            filterModal.style.display = 'none';
+        });
+    }
+    
+    // Close filter modal on background click
+    if (filterModal) {
+        filterModal.addEventListener('click', (e) => {
+            if (e.target === filterModal) {
+                filterModal.style.display = 'none';
+            }
+        });
+    }
+    
+    if (selectAllButton) {
+        selectAllButton.addEventListener('click', () => {
+            const checkboxes = filterCategoriesContainer.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                selectedCategories.add(checkbox.value);
+            });
+            applyFilters();
+        });
+    }
+    
+    if (deselectAllButton) {
+        deselectAllButton.addEventListener('click', () => {
+            const checkboxes = filterCategoriesContainer.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                selectedCategories.delete(checkbox.value);
+            });
+            applyFilters();
+        });
     }
     
     // Progress ring update
@@ -227,7 +365,34 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get all film <li> elements from .all-films-section
             const allFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]');
-            const unwatchedFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]:not(.watched)');
+            let unwatchedFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]:not(.watched)');
+            
+            // Filter by selected categories if any filters are applied
+            if (selectedCategories.size > 0 && selectedCategories.size < allCategories.length) {
+                // Get film IDs that appear in selected categories
+                const filmsInSelectedCategories = new Set();
+                
+                selectedCategories.forEach(categorySlug => {
+                    const categorySection = document.querySelector(`.awards-category[data-category-slug="${categorySlug}"]`);
+                    if (categorySection) {
+                        const filmsInCategory = categorySection.querySelectorAll('li[data-film-id]');
+                        filmsInCategory.forEach(filmEl => {
+                            const filmId = filmEl.getAttribute('data-film-id');
+                            if (filmId) {
+                                filmsInSelectedCategories.add(filmId);
+                            }
+                        });
+                    }
+                });
+                
+                // Filter unwatched films to only those in selected categories
+                unwatchedFilmElements = Array.from(unwatchedFilmElements).filter(filmEl => {
+                    const filmId = filmEl.getAttribute('data-film-id');
+                    return filmsInSelectedCategories.has(filmId);
+                });
+            } else {
+                unwatchedFilmElements = Array.from(unwatchedFilmElements);
+            }
             
             if (unwatchedFilmElements.length === 0) {
                 console.warn('Quick Check: No unwatched films found');
@@ -250,7 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cardsWrapper.innerHTML = '';
             
             // Clone and add unwatched film <li> elements as cards (reversed so first is on top)
-            Array.from(unwatchedFilmElements).reverse().forEach((filmEl, index) => {
+            unwatchedFilmElements.reverse().forEach((filmEl, index) => {
                 // Invert the counter so it counts up (0/7, 1/7, 2/7...)
                 const invertedIndex = unwatchedFilmElements.length - 2 - index;
                 const clonedCard = createCardFromFilmElement(filmEl, invertedIndex, unwatchedFilmElements.length);

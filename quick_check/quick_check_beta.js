@@ -136,10 +136,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const filmsClone = filmsProgress.cloneNode(true);
         const categoriesClone = categoriesProgress.cloneNode(true);
         
+        // Save the filter button before clearing
+        const filterButton = quickCheckProgress.querySelector('.quick-check-filter-button');
+        
         // Clear and populate quick-check-progress
         quickCheckProgress.innerHTML = '';
         quickCheckProgress.appendChild(filmsClone);
         quickCheckProgress.appendChild(categoriesClone);
+        
+        // Re-append the filter button if it existed
+        if (filterButton) {
+            quickCheckProgress.appendChild(filterButton);
+        }
         
         console.log('Quick Check: TOC progress replicated successfully');
     }
@@ -149,6 +157,25 @@ document.addEventListener('DOMContentLoaded', function() {
         triggerButton.addEventListener('click', function() {
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
+            // Initialize all categories as selected on first open
+            if (allCategories.length === 0) {
+                const categoryElements = document.querySelectorAll('.awards-category[data-category-slug]');
+                console.log('Quick Check: Initializing with', categoryElements.length, 'categories');
+                
+                categoryElements.forEach(categoryEl => {
+                    const categorySlug = categoryEl.getAttribute('data-category-slug');
+                    const titleEl = categoryEl.querySelector('.category-title h2');
+                    const categoryName = titleEl ? titleEl.textContent.trim() : '';
+                    
+                    if (categoryName && categorySlug && categorySlug !== 'winner') {
+                        selectedCategories.add(categorySlug);
+                        allCategories.push({ 
+                            name: categoryName, 
+                            slug: categorySlug 
+                        });
+                    }
+                });
+            }
             // Rebuild cards every time to reflect current watched state
             buildCards();
             // Replicate TOC progress
@@ -177,6 +204,166 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.style.display = 'none';
         document.body.style.overflow = '';
         outputAndClearSession();
+    }
+    
+    // Filter functionality
+    let selectedCategories = new Set();
+    let allCategories = [];
+    
+    const filterButton = document.querySelector('.quick-check-filter-button');
+    const filterModal = document.querySelector('.quick-check-filter-modal');
+    const filterCloseButton = document.querySelector('.quick-check-filter-close');
+    const filterCategoriesContainer = document.querySelector('.quick-check-filter-categories');
+    const selectAllButton = document.querySelector('.select-all-categories');
+    const deselectAllButton = document.querySelector('.deselect-all-categories');
+    
+    console.log('Quick Check Filter: Elements found', {
+        filterButton: !!filterButton,
+        filterModal: !!filterModal,
+        filterCloseButton: !!filterCloseButton,
+        filterCategoriesContainer: !!filterCategoriesContainer
+    });
+    
+    function populateFilterCategories() {
+        if (!filterCategoriesContainer) {
+            console.warn('Quick Check: Filter categories container not found');
+            return;
+        }
+        
+        // Get all category sections from the main page (not inside the modal)
+        const categoryElements = document.querySelectorAll('.awards-category[data-category-slug]');
+        console.log('Quick Check: Found', categoryElements.length, 'categories');
+        
+        allCategories = [];
+        // Don't clear selectedCategories here, keep existing selections
+        
+        categoryElements.forEach(categoryEl => {
+            const categorySlug = categoryEl.getAttribute('data-category-slug');
+            const titleEl = categoryEl.querySelector('.category-title h2');
+            const categoryName = titleEl ? titleEl.textContent.trim() : '';
+            
+            if (categoryName && categorySlug && categorySlug !== 'winner') {
+                allCategories.push({ name: categoryName, slug: categorySlug });
+                // Only add to selected on FIRST initialization (when empty)
+                if (selectedCategories.size === 0) {
+                    selectedCategories.add(categorySlug);
+                }
+            }
+        });
+        
+        console.log('Quick Check: Processed', allCategories.length, 'categories');
+        
+        if (allCategories.length === 0) {
+            console.error('Quick Check: No categories found! Check if .awards-category elements exist on the page');
+            filterCategoriesContainer.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">No categories found on this page.</p>';
+            return;
+        }
+        
+        // Populate the filter modal with checkboxes
+        filterCategoriesContainer.innerHTML = '';
+        console.log('Quick Check: Populating filter with', allCategories.length, 'categories');
+        allCategories.forEach(category => {
+            const item = document.createElement('div');
+            item.className = 'quick-check-filter-category-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `filter-category-${category.slug}`;
+            checkbox.value = category.slug;
+            checkbox.checked = selectedCategories.has(category.slug);
+            
+            const label = document.createElement('label');
+            label.htmlFor = `filter-category-${category.slug}`;
+            label.textContent = category.name;
+            
+            item.appendChild(checkbox);
+            item.appendChild(label);
+            
+            // Click anywhere on the item to toggle
+            item.addEventListener('click', (e) => {
+                if (e.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                }
+                handleCategoryToggle(category.slug, checkbox.checked);
+            });
+            
+            checkbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                handleCategoryToggle(category.slug, checkbox.checked);
+            });
+            
+            filterCategoriesContainer.appendChild(item);
+        });
+    }
+    
+    function handleCategoryToggle(categorySlug, isChecked) {
+        if (isChecked) {
+            selectedCategories.add(categorySlug);
+        } else {
+            selectedCategories.delete(categorySlug);
+        }
+        // Don't apply filters here - wait until modal is closed
+    }
+    
+    function applyFilters() {
+        // Rebuild cards based on selected categories
+        buildCards();
+    }
+    
+    if (filterButton) {
+        console.log('Quick Check: Filter button found, attaching click handler');
+        filterButton.addEventListener('click', (e) => {
+            console.log('Quick Check: Filter button clicked');
+            e.stopPropagation();
+            populateFilterCategories();
+            if (filterModal) {
+                filterModal.style.display = 'flex';
+                console.log('Quick Check: Filter modal opened');
+            } else {
+                console.error('Quick Check: Filter modal not found!');
+            }
+        });
+    } else {
+        console.error('Quick Check: Filter button not found in DOM');
+    }
+    
+    if (filterCloseButton) {
+        filterCloseButton.addEventListener('click', () => {
+            filterModal.style.display = 'none';
+            applyFilters();
+        });
+    }
+    
+    // Close filter modal on background click
+    if (filterModal) {
+        filterModal.addEventListener('click', (e) => {
+            if (e.target === filterModal) {
+                filterModal.style.display = 'none';
+                applyFilters();
+            }
+        });
+    }
+    
+    if (selectAllButton) {
+        selectAllButton.addEventListener('click', () => {
+            const checkboxes = filterCategoriesContainer.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                selectedCategories.add(checkbox.value);
+            });
+            // Don't apply filters here - wait until modal is closed
+        });
+    }
+    
+    if (deselectAllButton) {
+        deselectAllButton.addEventListener('click', () => {
+            const checkboxes = filterCategoriesContainer.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedCategories.clear();
+            // Don't apply filters here - wait until modal is closed
+        });
     }
     
     // Progress ring update
@@ -227,11 +414,40 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get all film <li> elements from .all-films-section
             const allFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]');
-            const unwatchedFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]:not(.watched)');
+            let unwatchedFilmElements = allFilmsSection.querySelectorAll('li[data-film-id]:not(.watched)');
+            
+            // Filter by selected categories if any filters are applied
+            if (selectedCategories.size > 0 && selectedCategories.size < allCategories.length) {
+                // Get film IDs that appear in selected categories
+                const filmsInSelectedCategories = new Set();
+                
+                selectedCategories.forEach(categorySlug => {
+                    const categorySection = document.querySelector(`.awards-category[data-category-slug="${categorySlug}"]`);
+                    if (categorySection) {
+                        const filmsInCategory = categorySection.querySelectorAll('li[data-film-id]');
+                        filmsInCategory.forEach(filmEl => {
+                            const filmId = filmEl.getAttribute('data-film-id');
+                            if (filmId) {
+                                filmsInSelectedCategories.add(filmId);
+                            }
+                        });
+                    }
+                });
+                
+                // Filter unwatched films to only those in selected categories
+                unwatchedFilmElements = Array.from(unwatchedFilmElements).filter(filmEl => {
+                    const filmId = filmEl.getAttribute('data-film-id');
+                    return filmsInSelectedCategories.has(filmId);
+                });
+            } else {
+                unwatchedFilmElements = Array.from(unwatchedFilmElements);
+            }
             
             if (unwatchedFilmElements.length === 0) {
                 console.warn('Quick Check: No unwatched films found');
-                buildFallbackCards();
+                // Check if filters are active
+                const hasActiveFilters = selectedCategories.size > 0 && selectedCategories.size < allCategories.length;
+                buildNoFilmsCard(hasActiveFilters);
                 return;
             }
             
@@ -250,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cardsWrapper.innerHTML = '';
             
             // Clone and add unwatched film <li> elements as cards (reversed so first is on top)
-            Array.from(unwatchedFilmElements).reverse().forEach((filmEl, index) => {
+            unwatchedFilmElements.reverse().forEach((filmEl, index) => {
                 // Invert the counter so it counts up (0/7, 1/7, 2/7...)
                 const invertedIndex = unwatchedFilmElements.length - 2 - index;
                 const clonedCard = createCardFromFilmElement(filmEl, invertedIndex, unwatchedFilmElements.length);
@@ -270,31 +486,49 @@ document.addEventListener('DOMContentLoaded', function() {
             updateProgressRings();
         } catch (error) {
             console.error('Quick Check: Error building cards', error);
-            buildFallbackCards();
+            buildNoFilmsCard(false);
         }
     }
     
-    // Build fallback cards if film data unavailable
-    function buildFallbackCards() {
+    // Build a single card showing a message when no films are available
+    function buildNoFilmsCard(isFiltered) {
         // Reset state for fresh build
         cards = [];
         currentCardIndex = 0;
         undoStack = [];
         
         cardsWrapper.innerHTML = '';
-        totalFilms = 5;
         
-        for (let i = 5; i >= 1; i--) {
-            const card = createFallbackCard(i, 5);
-            cardsWrapper.appendChild(card);
-        }
+        const card = document.createElement('div');
+        card.className = 'card no-films-card';
+        card.setAttribute('data-card', '1');
         
-        cards = Array.from(cardsWrapper.querySelectorAll('.card'));
-        currentCardIndex = cards.length - 1;
+        const message = isFiltered 
+            ? 'There are no unwatched films in your filter.'
+            : 'No films available.';
         
-        createIndicatorCards();
+        card.innerHTML = `
+            <div class="no-films-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64" height="64" style="opacity: 0.3; margin-bottom: 20px;">
+                    <path fill="currentColor" d="M3.9 54.9C10.5 40.9 24.5 32 40 32l432 0c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9 320 448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6l0-79.1L9.1 97.3C-.7 85.4-2.8 68.8 3.9 54.9z"/>
+                </svg>
+                <p>${message}</p>
+                ${isFiltered ? '<p style="font-size: 0.9em; opacity: 0.7; margin-top: 10px;">Try adjusting your category filters.</p>' : ''}
+            </div>
+        `;
+        
+        cardsWrapper.appendChild(card);
+        cards = [card];
+        currentCardIndex = 0;
+        
+        // Don't create indicator cards for no-films state
         init();
         updateProgressRings();
+    }
+    
+    // Build fallback cards if film data unavailable (kept for backward compatibility)
+    function buildFallbackCards() {
+        buildNoFilmsCard(false);
     }
     
     // Create indicator cards on left and right
