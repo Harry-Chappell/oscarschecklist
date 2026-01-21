@@ -53,9 +53,9 @@ add_action('wp_enqueue_scripts', 'scoreboard_enqueue_assets');
 // Add your custom scoreboard functions below this line
 
 /**
- * Save submission to JSON file
+ * Save notice to JSON file
  */
-function scoreboard_save_submission() {
+function scoreboard_save_notice() {
     // Verify nonce if provided
     if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
         wp_send_json_error('Invalid nonce');
@@ -70,7 +70,7 @@ function scoreboard_save_submission() {
     $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
     
     // Read existing data
-    $data = ['interval' => 5, 'submissions' => []];
+    $data = ['interval' => 5, 'notices' => []];
     if (file_exists($file_path)) {
         $content = file_get_contents($file_path);
         $decoded = json_decode($content, true);
@@ -79,8 +79,8 @@ function scoreboard_save_submission() {
         }
     }
     
-    // Add new submission
-    $data['submissions'][] = [
+    // Add new notice
+    $data['notices'][] = [
         'message' => $message,
         'timestamp' => time(),
         'formatted_time' => current_time('Y-m-d H:i:s')
@@ -91,8 +91,8 @@ function scoreboard_save_submission() {
     
     wp_send_json_success($data);
 }
-add_action('wp_ajax_scoreboard_save_submission', 'scoreboard_save_submission');
-add_action('wp_ajax_nopriv_scoreboard_save_submission', 'scoreboard_save_submission');
+add_action('wp_ajax_scoreboard_save_notice', 'scoreboard_save_notice');
+add_action('wp_ajax_nopriv_scoreboard_save_notice', 'scoreboard_save_notice');
 
 /**
  * Update reload interval
@@ -112,7 +112,7 @@ function scoreboard_update_interval() {
     $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
     
     // Read existing data
-    $data = ['interval' => 5, 'submissions' => []];
+    $data = ['interval' => 5, 'notices' => []];
     if (file_exists($file_path)) {
         $content = file_get_contents($file_path);
         $decoded = json_decode($content, true);
@@ -133,9 +133,9 @@ add_action('wp_ajax_scoreboard_update_interval', 'scoreboard_update_interval');
 add_action('wp_ajax_nopriv_scoreboard_update_interval', 'scoreboard_update_interval');
 
 /**
- * Get all submissions from JSON file
+ * Get all notices from JSON file
  */
-function scoreboard_get_submissions() {
+function scoreboard_get_notices() {
     // Verify nonce if provided
     if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
         wp_send_json_error('Invalid nonce');
@@ -143,7 +143,7 @@ function scoreboard_get_submissions() {
     
     $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
     
-    $data = ['interval' => 5, 'submissions' => []];
+    $data = ['interval' => 5, 'notices' => []];
     if (file_exists($file_path)) {
         $content = file_get_contents($file_path);
         $decoded = json_decode($content, true);
@@ -154,5 +154,71 @@ function scoreboard_get_submissions() {
     
     wp_send_json_success($data);
 }
-add_action('wp_ajax_scoreboard_get_submissions', 'scoreboard_get_submissions');
-add_action('wp_ajax_nopriv_scoreboard_get_submissions', 'scoreboard_get_submissions');
+add_action('wp_ajax_scoreboard_get_notices', 'scoreboard_get_notices');
+add_action('wp_ajax_nopriv_scoreboard_get_notices', 'scoreboard_get_notices');
+
+/**
+ * Delete a specific notice by timestamp
+ */
+function scoreboard_delete_notice() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $timestamp = isset($_POST['timestamp']) ? intval($_POST['timestamp']) : 0;
+    
+    if (!$timestamp) {
+        wp_send_json_error('Timestamp is required');
+    }
+    
+    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    
+    $data = ['interval' => 5, 'notices' => []];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    // Filter out the notice with matching timestamp
+    $data['notices'] = array_values(array_filter($data['notices'], function($notice) use ($timestamp) {
+        return $notice['timestamp'] !== $timestamp;
+    }));
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_delete_notice', 'scoreboard_delete_notice');
+
+/**
+ * Clear all notices
+ */
+function scoreboard_clear_all_notices() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    
+    $data = ['interval' => 5, 'notices' => []];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+            $data['notices'] = []; // Clear all notices
+        }
+    }
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_clear_all_notices', 'scoreboard_clear_all_notices');

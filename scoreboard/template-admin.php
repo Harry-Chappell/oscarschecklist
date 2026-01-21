@@ -10,11 +10,19 @@
             <div id="countdown-display">Next reload in: <span id="countdown">5</span>s</div>
         </div>
         
-        <h3>Submit Message</h3>
-        <form id="submission-form">
-            <input type="text" id="submission-input" placeholder="Type your message..." required />
-            <button type="submit">Submit</button>
+        <h3>Post Notice</h3>
+        <form id="notice-form">
+            <input type="text" id="notice-input" placeholder="Type your notice..." required />
+            <button type="submit">Post</button>
         </form>
+        
+        <details id="admin-notices-section">
+            <summary>Manage Current Notices (<span id="notice-count">0</span>)</summary>
+            <div id="admin-notices-container">
+                <button id="clear-all-notices" class="danger-btn">Clear All Notices</button>
+                <ul id="admin-notices-list"></ul>
+            </div>
+        </details>
     </section>
     <footer>
         <div id="progress-bar-container">

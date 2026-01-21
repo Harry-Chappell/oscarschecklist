@@ -104,13 +104,13 @@ section.admin-preview {
     color: var(--theme-palette-color-1);
 }
 
-#submission-form {
+#notice-form {
     display: flex;
     gap: 10px;
     width: 100%;
 }
 
-#submission-input {
+#notice-input {
     flex: 1;
     padding: 10px 15px;
     border: 1px solid var(--theme-palette-color-6);
@@ -118,7 +118,7 @@ section.admin-preview {
     font-size: 16px;
 }
 
-#submission-form button {
+#notice-form button {
     padding: 10px 20px;
     background: var(--theme-palette-color-1);
     color: white;
@@ -128,21 +128,91 @@ section.admin-preview {
     font-size: 16px;
 }
 
-#submission-form button:hover {
+#notice-form button:hover {
     opacity: 0.9;
 }
 
-#submission-form button:disabled {
+#notice-form button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-/* Submissions List Styles */
+/* Admin Notices Management Section */
+#admin-notices-section {
+    margin-top: 30px;
+}
+
+#admin-notices-section summary {
+    cursor: pointer;
+    padding: 12px 15px;
+    background: var(--theme-palette-color-8);
+    border: 1px solid var(--theme-palette-color-6);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+#admin-notices-section summary:hover {
+    background: var(--theme-palette-color-7);
+}
+
+#admin-notices-section[open] summary {
+    border-radius: 4px 4px 0 0;
+    border-bottom: none;
+}
+
+#admin-notices-container {
+    padding: 15px;
+    border: 1px solid var(--theme-palette-color-6);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background: var(--theme-palette-color-8);
+}
+
+#clear-all-notices {
+    width: 100%;
+    padding: 10px 15px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 15px;
+    transition: opacity 0.2s;
+}
+
+#clear-all-notices:hover {
+    opacity: 0.9;
+}
+
+#admin-notices-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#admin-notices-list .empty-state {
+    padding: 20px;
+    text-align: center;
+    color: var(--theme-palette-color-6);
+    font-size: 14px;
+    font-style: italic;
+}
+
+#admin-notices-list li {
+    margin-bottom: 10px;
+}
+
+/* Notices List Styles */
 section.right {
     padding: 20px;
 }
 
-#submissions-list {
+#notices-list {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -153,24 +223,72 @@ section.right {
     max-width: 300px;
 }
 
-#submissions-list li {
-    padding: 15px;
+#notices-list li {
+    padding: 0;
     margin-bottom: 10px;
-    background: var(--theme-palette-color-7);
-    border-radius: 4px;
-    border-left: 3px solid var(--theme-palette-color-1);
+    background: var(--theme-palette-color-1);
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
 }
 
-#submissions-list li .timestamp {
-    display: block;
+#notices-list li .notice-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 3px 10px 0;
+    background: var(--theme-palette-color-2);
+    line-height: 1;
+}
+
+#notices-list li .notice-label {
     font-size: 12px;
-    color: var(--theme-palette-color-6);
-    margin-bottom: 5px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-#submissions-list li .message {
+#notices-list li .timestamp {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-left: auto;
+}
+
+#notices-list li .notice-body {
+    padding: 10px 15px;
+}
+
+#notices-list li .message {
     display: block;
-    font-size: 14px;
+    font-size: 18px;
+    line-height: 1.1;
+    color: black;
+    font-weight: 900;
+}
+
+#notices-list li .close-btn {
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    bottom: 2px;
+}
+
+#notices-list li .close-btn svg {
+    height: 13px;
+}
+
+#notices-list li .close-btn:hover {
+    color: black;
 }
 
 /* Progress Bar Styles */

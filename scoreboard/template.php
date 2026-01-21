@@ -16,6 +16,6 @@
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
         </div>
-        <ul id="submissions-list"></ul>
+        <ul id="notices-list"></ul>
     </footer>
 </div>
