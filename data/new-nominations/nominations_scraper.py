@@ -53,6 +53,10 @@ for field_item in soup.find_all('div', class_='field__item'):
             nominee_div = nominee_item.find('div', class_='field--name-field-award-entities')
             nominee = nominee_div.text.strip() if nominee_div else ""
 
+            # For International Feature Film, swap film and nominee
+            if category == "International Feature Film":
+                film, nominee = nominee, film
+
             # Clean text
             nominee_cleaned = clean_text(nominee)
 
