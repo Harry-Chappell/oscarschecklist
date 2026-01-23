@@ -165,7 +165,7 @@ def main():
     
     # Open the CSV file for writing
     with open(output_file, 'w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=headers)
+        writer = csv.DictWriter(file, fieldnames=headers, quoting=csv.QUOTE_NONNUMERIC)
         writer.writeheader()
         
         # Scrape each URL and write to CSV

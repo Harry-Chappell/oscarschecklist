@@ -1,121 +1,126 @@
 ID,Category,Nominees,Film
-actor-in-a-leading-role-2025-1,Actor in a Leading Role,Adrien Brody,The Brutalist
-actor-in-a-leading-role-2025-2,Actor in a Leading Role,Timothée Chalamet,A Complete Unknown
-actor-in-a-leading-role-2025-3,Actor in a Leading Role,Colman Domingo,Sing Sing
-actor-in-a-leading-role-2025-4,Actor in a Leading Role,Ralph Fiennes,Conclave
-actor-in-a-leading-role-2025-5,Actor in a Leading Role,Sebastian Stan,The Apprentice
-actor-in-a-supporting-role-2025-1,Actor in a Supporting Role,Kieran Culkin,A Real Pain
-actor-in-a-supporting-role-2025-2,Actor in a Supporting Role,Yura Borisov,Anora
-actor-in-a-supporting-role-2025-3,Actor in a Supporting Role,Edward Norton,A Complete Unknown
-actor-in-a-supporting-role-2025-4,Actor in a Supporting Role,Guy Pearce,The Brutalist
-actor-in-a-supporting-role-2025-5,Actor in a Supporting Role,Jeremy Strong,The Apprentice
-actress-in-a-leading-role-2025-1,Actress in a Leading Role,Mikey Madison,Anora
-actress-in-a-leading-role-2025-2,Actress in a Leading Role,Cynthia Erivo,Wicked
-actress-in-a-leading-role-2025-3,Actress in a Leading Role,Karla Sofía Gascón,Emilia Pérez
-actress-in-a-leading-role-2025-4,Actress in a Leading Role,Demi Moore,The Substance
-actress-in-a-leading-role-2025-5,Actress in a Leading Role,Fernanda Torres,I'm Still Here
-actress-in-a-supporting-role-2025-1,Actress in a Supporting Role,Zoe Saldaña,Emilia Pérez
-actress-in-a-supporting-role-2025-2,Actress in a Supporting Role,Monica Barbaro,A Complete Unknown
-actress-in-a-supporting-role-2025-3,Actress in a Supporting Role,Ariana Grande,Wicked
-actress-in-a-supporting-role-2025-4,Actress in a Supporting Role,Felicity Jones,The Brutalist
-actress-in-a-supporting-role-2025-5,Actress in a Supporting Role,Isabella Rossellini,Conclave
-animated-feature-film-2025-1,Animated Feature Film,"Gints Zilbalodis, Matīss Kaža, Ron Dyens,Gregory Zalcman",Flow
-animated-feature-film-2025-2,Animated Feature Film,"Kelsey Mann,Mark Nielsen",Inside Out 2
-animated-feature-film-2025-3,Animated Feature Film,"Adam Elliot,Liz Kearney",Memoir of a Snail
-animated-feature-film-2025-4,Animated Feature Film,"Nick Park, Merlin Crossingham,Richard Beek",Wallace & Gromit: Vengeance Most Fowl
-animated-feature-film-2025-5,Animated Feature Film,"Chris Sanders,Jeff Hermann",The Wild Robot
-animated-short-film-2025-1,Animated Short Film,"Shirin Sohani,Hossein Molayemi",In the Shadow of the Cypress
-animated-short-film-2025-2,Animated Short Film,"Nicolas Keppens,Brecht Van Elslande",Beautiful Men
-animated-short-film-2025-3,Animated Short Film,"Daisuke Nishio,Takashi Washio",Magic Candies
-animated-short-film-2025-4,Animated Short Film,"Nina Gantz,Stienette Bosklopper",Wander to Wonder
-animated-short-film-2025-5,Animated Short Film,"Loïc Espuche,Juliette Marquet",Yuck!
-cinematography-2025-1,Cinematography,Lol Crawley,The Brutalist
-cinematography-2025-2,Cinematography,Greig Fraser,Dune: Part Two
-cinematography-2025-3,Cinematography,Paul Guilhaume,Emilia Pérez
-cinematography-2025-4,Cinematography,Ed Lachman,Maria
-cinematography-2025-5,Cinematography,Jarin Blaschke,Nosferatu
-costume-design-2025-1,Costume Design,Paul Tazewell,Wicked
-costume-design-2025-2,Costume Design,Arianne Phillips,A Complete Unknown
-costume-design-2025-3,Costume Design,Lisy Christl,Conclave
-costume-design-2025-4,Costume Design,"Janty Yates,Dave Crossman",Gladiator II
-costume-design-2025-5,Costume Design,Linda Muir,Nosferatu
-directing-2025-1,Directing,Sean Baker,Anora
-directing-2025-2,Directing,Brady Corbet,The Brutalist
-directing-2025-3,Directing,James Mangold,A Complete Unknown
-directing-2025-4,Directing,Jacques Audiard,Emilia Pérez
-directing-2025-5,Directing,Coralie Fargeat,The Substance
-documentary-feature-film-2025-1,Documentary Feature Film,"Basel Adra, Rachel Szor, Hamdan Ballal,Yuval Abraham",No Other Land
-documentary-feature-film-2025-2,Documentary Feature Film,"Shiori Ito, Eric Nyari,Hanna Aqvilin",Black Box Diaries
-documentary-feature-film-2025-3,Documentary Feature Film,"Brendan Bellomo, Slava Leontyev, Aniela Sidorska,Paula DuPre' Pesmen",Porcelain War
-documentary-feature-film-2025-4,Documentary Feature Film,"Johan Grimonprez, Daan Milius,Rémi Grellety",Soundtrack to a Coup d'Etat
-documentary-feature-film-2025-5,Documentary Feature Film,"Julian Brave NoiseCat, Emily Kassie,Kellen Quinn",Sugarcane
-documentary-short-film-2025-1,Documentary Short Film,"Molly O’Brien,Lisa Remington",The Only Girl in the Orchestra
-documentary-short-film-2025-2,Documentary Short Film,"Kim A. Snyder,Janique L. Robillard",Death by Numbers
-documentary-short-film-2025-3,Documentary Short Film,"Smriti Mundhra,Maya Gnyp","I Am Ready, Warden"
-documentary-short-film-2025-4,Documentary Short Film,"Bill Morrison,Jamie Kalven",Incident
-documentary-short-film-2025-5,Documentary Short Film,"Ema Ryan Yamazaki,Eric Nyari",Instruments of a Beating Heart
-film-editing-2025-1,Film Editing,Sean Baker,Anora
-film-editing-2025-2,Film Editing,David Jancso,The Brutalist
-film-editing-2025-3,Film Editing,Nick Emerson,Conclave
-film-editing-2025-4,Film Editing,Juliette Welfling,Emilia Pérez
-film-editing-2025-5,Film Editing,Myron Kerstein,Wicked
-international-feature-film-2025-1,International Feature Film,Brazil,I'm Still Here
-international-feature-film-2025-2,International Feature Film,Denmark,The Girl with the Needle
-international-feature-film-2025-3,International Feature Film,France,Emilia Pérez
-international-feature-film-2025-4,International Feature Film,Germany,The Seed of the Sacred Fig
-international-feature-film-2025-5,International Feature Film,Latvia,Flow
-makeup-and-hairstyling-2025-1,Makeup and Hairstyling,"Pierre-Olivier Persin, Stéphanie Guillon,Marilyne Scarselli",The Substance
-makeup-and-hairstyling-2025-2,Makeup and Hairstyling,"Mike Marino, David Presto,Crystal Jurado",A Different Man
-makeup-and-hairstyling-2025-3,Makeup and Hairstyling,"Julia Floch Carbonel, Emmanuel Janvier,Jean-Christophe Spadaccini",Emilia Pérez
-makeup-and-hairstyling-2025-4,Makeup and Hairstyling,"David White, Traci Loader,Suzanne Stokes-Munton",Nosferatu
-makeup-and-hairstyling-2025-5,Makeup and Hairstyling,"Frances Hannon, Laura Blount,Sarah Nuth",Wicked
-music-original-score-2025-1,Music (Original Score),Daniel Blumberg,The Brutalist
-music-original-score-2025-2,Music (Original Score),Volker Bertelmann,Conclave
-music-original-score-2025-3,Music (Original Score),"Clément Ducol,Camille",Emilia Pérez
-music-original-score-2025-4,Music (Original Score),"John Powell,Stephen Schwartz",Wicked
-music-original-score-2025-5,Music (Original Score),Kris Bowers,The Wild Robot
-El Mal,Music (Original Song),"Emilia Pérez, Music by Clément Ducol,Camille, Lyric by Clément Ducol, Camille,Jacques Audiard",Emilia Pérez
-The Journey,Music (Original Song),"The Six Triple Eight, Diane Warren",The Six Triple Eight
-Like A Bird,Music (Original Song),"Sing Sing, Abraham Alexander,Adrian Quesada",Sing Sing
-Mi Camino,Music (Original Song),"Emilia Pérez, Camille,Clément Ducol",Emilia Pérez
-Never Too Late,Music (Original Song),"Elton John: , Elton John, Brandi Carlile, Andrew Watt,Bernie Taupin",Elton John: Never Too Late
-best-picture-2025-1,Best Picture,"Alex Coco, Samantha Quan,Sean Baker, Producers",Anora
-best-picture-2025-2,Best Picture,"Nick Gordon, Brian Young, Andrew Morrison, D.J. Gugenheim,Brady Corbet, Producers",The Brutalist
-best-picture-2025-3,Best Picture,"Fred Berger, James Mangold,Alex Heineman, Producers",A Complete Unknown
-best-picture-2025-4,Best Picture,"Tessa Ross, Juliette Howell,Michael A. Jackman, Producers",Conclave
-best-picture-2025-5,Best Picture,"Mary Parent, Cale Boyter, Tanya Lapointe,Denis Villeneuve, Producers",Dune: Part Two
-best-picture-2025-6,Best Picture,"Pascal Caucheteux,Jacques Audiard, Producers",Emilia Pérez
-best-picture-2025-7,Best Picture,"Maria Carlota Bruno,Rodrigo Teixeira, Producers",I'm Still Here
-best-picture-2025-8,Best Picture,"Dede Gardner, Jeremy Kleiner,Joslyn Barnes, Producers",Nickel Boys
-best-picture-2025-9,Best Picture,"Coralie Fargeat,Tim Bevan,Eric Fellner, Producers",The Substance
-best-picture-2025-10,Best Picture,"Marc Platt, Producer",Wicked
-production-design-2025-1,Production Design,"Nathan Crowley, Lee Sandales",Wicked
-production-design-2025-2,Production Design,"Judy Becker, Patricia Cuccia",The Brutalist
-production-design-2025-3,Production Design,"Suzie Davies, Cynthia Sleiter",Conclave
-production-design-2025-4,Production Design,"Patrice Vermette, Shane Vieau",Dune: Part Two
-production-design-2025-5,Production Design,"Craig Lathrop, Beatrice Brentnerová",Nosferatu
-live-action-short-film-2025-1,Live Action Short Film,"Victoria Warmerdam,Trent",I'm Not a Robot
-live-action-short-film-2025-2,Live Action Short Film,"Sam Cutler-Kreutz,David Cutler-Kreutz",A Lien
-live-action-short-film-2025-3,Live Action Short Film,"Adam J. Graves,Suchitra Mattai",Anuja
-live-action-short-film-2025-4,Live Action Short Film,"Cindy Lee,Darwin Shaw",The Last Ranger
-live-action-short-film-2025-5,Live Action Short Film,"Nebojša Slijepčević,Danijel Pek",The Man Who Could Not Remain Silent
-sound-2025-1,Sound,"Gareth John, Richard King, Ron Bartlett,Doug Hemphill",Dune: Part Two
-sound-2025-2,Sound,"Tod A. Maitland, Donald Sylvester, Ted Caplan, Paul Massey,David Giammarco",A Complete Unknown
-sound-2025-3,Sound,"Erwan Kerzanet, Aymeric Devoldère, Maxence Dussère, Cyril Holtz,Niels Barletta",Emilia Pérez
-sound-2025-4,Sound,"Simon Hayes, Nancy Nugent Title, Jack Dolman, Andy Nelson,John Marquis",Wicked
-sound-2025-5,Sound,"Randy Thom, Brian Chumney, Gary A. Rizzo,Leff Lefferts",The Wild Robot
-visual-effects-2025-1,Visual Effects,"Paul Lambert, Stephen James, Rhys Salcombe,Gerd Nefzer",Dune: Part Two
-visual-effects-2025-2,Visual Effects,"Eric Barba, Nelson Sepulveda-Fauser, Daniel Macarin,Shane Mahan",Alien: Romulus
-visual-effects-2025-3,Visual Effects,"Luke Millar, David Clayton, Keith Herft,Peter Stubbs",Better Man
-visual-effects-2025-4,Visual Effects,"Erik Winquist, Stephen Unterfranz, Paul Story,Rodney Burke",Kingdom of the Planet of the Apes
-visual-effects-2025-5,Visual Effects,"Pablo Helman, Jonathan Fawkner, David Shirk,Paul Corbould",Wicked
-writing-adapted-screenplay-2025-1,Writing (Adapted Screenplay),Screenplay by Peter Straughan,Conclave
-writing-adapted-screenplay-2025-2,Writing (Adapted Screenplay),"Screenplay by James Mangold,Jay Cocks",A Complete Unknown
-writing-adapted-screenplay-2025-3,Writing (Adapted Screenplay),"Screenplay by Jacques Audiard, In collaboration with Thomas Bidegain, Léa Mysius,Nicolas Livecchi",Emilia Pérez
-writing-adapted-screenplay-2025-4,Writing (Adapted Screenplay),"Screenplay by RaMell Ross,Joslyn Barnes",Nickel Boys
-writing-adapted-screenplay-2025-5,Writing (Adapted Screenplay),"Screenplay by Clint Bentley, Greg Kwedar, Story by Clint Bentley, Greg Kwedar, Clarence Maclin, John ""Divine G"" Whitfield",Sing Sing
-writing-original-screenplay-2025-1,Writing (Original Screenplay),Written by Sean Baker,Anora
-writing-original-screenplay-2025-2,Writing (Original Screenplay),"Written by Brady Corbet, Mona Fastvold",The Brutalist
-writing-original-screenplay-2025-3,Writing (Original Screenplay),Written by Jesse Eisenberg,A Real Pain
-writing-original-screenplay-2025-4,Writing (Original Screenplay),"Written by Moritz Binder, Tim Fehlbaum, Co-Written by Alex David",September 5
-writing-original-screenplay-2025-5,Writing (Original Screenplay),Written by Coralie Fargeat,The Substance
+actor-in-a-leading-role-2026-1,Actor in a Leading Role,Timothée Chalamet,Marty Supreme
+actor-in-a-leading-role-2026-2,Actor in a Leading Role,Leonardo DiCaprio,One Battle after Another
+actor-in-a-leading-role-2026-3,Actor in a Leading Role,Ethan Hawke,Blue Moon
+actor-in-a-leading-role-2026-4,Actor in a Leading Role,Michael B. Jordan,Sinners
+actor-in-a-leading-role-2026-5,Actor in a Leading Role,Wagner Moura,The Secret Agent
+actor-in-a-supporting-role-2026-1,Actor in a Supporting Role,Benicio Del Toro,One Battle after Another
+actor-in-a-supporting-role-2026-2,Actor in a Supporting Role,Jacob Elordi,Frankenstein
+actor-in-a-supporting-role-2026-3,Actor in a Supporting Role,Delroy Lindo,Sinners
+actor-in-a-supporting-role-2026-4,Actor in a Supporting Role,Sean Penn,One Battle after Another
+actor-in-a-supporting-role-2026-5,Actor in a Supporting Role,Stellan Skarsgård,Sentimental Value
+actress-in-a-leading-role-2026-1,Actress in a Leading Role,Jessie Buckley,Hamnet
+actress-in-a-leading-role-2026-2,Actress in a Leading Role,Rose Byrne,If I Had Legs I'd Kick You
+actress-in-a-leading-role-2026-3,Actress in a Leading Role,Kate Hudson,Song Sung Blue
+actress-in-a-leading-role-2026-4,Actress in a Leading Role,Renate Reinsve,Sentimental Value
+actress-in-a-leading-role-2026-5,Actress in a Leading Role,Emma Stone,Bugonia
+actress-in-a-supporting-role-2026-1,Actress in a Supporting Role,Elle Fanning,Sentimental Value
+actress-in-a-supporting-role-2026-2,Actress in a Supporting Role,Inga Ibsdotter Lilleaas,Sentimental Value
+actress-in-a-supporting-role-2026-3,Actress in a Supporting Role,Amy Madigan,Weapons
+actress-in-a-supporting-role-2026-4,Actress in a Supporting Role,Wunmi Mosaku,Sinners
+actress-in-a-supporting-role-2026-5,Actress in a Supporting Role,Teyana Taylor,One Battle after Another
+animated-feature-film-2026-1,Animated Feature Film,"Ugo Bienvenu, Félix de Givry, Sophie Mas,Natalie Portman",Arco
+animated-feature-film-2026-2,Animated Feature Film,"Madeline Sharafian, Domee Shi, Adrian Molina,Mary Alice Drumm",Elio
+animated-feature-film-2026-3,Animated Feature Film,"Maggie Kang, Chris Appelhans,Michelle L.M. Wong",KPop Demon Hunters
+animated-feature-film-2026-4,Animated Feature Film,"Maïlys Vallade, Liane-Cho Han, Nidia Santiago,Henri Magalon",Little Amélie or the Character of Rain
+animated-feature-film-2026-5,Animated Feature Film,"Jared Bush, Byron Howard,Yvett Merino",Zootopia 2
+animated-short-film-2026-1,Animated Short Film,"Florence Miailhe,Ron Dyens",Butterfly
+animated-short-film-2026-2,Animated Short Film,"Nathan Engelhardt,Jeremy Spears",Forevergreen
+animated-short-film-2026-3,Animated Short Film,"Chris Lavis,Maciek Szczerbowski",The Girl Who Cried Pearls
+animated-short-film-2026-4,Animated Short Film,"John Kelly,Andrew Freedman",Retirement Plan
+animated-short-film-2026-5,Animated Short Film,Konstantin Bronzit,The Three Sisters
+casting-2026-1,Casting,Nina Gold,Hamnet
+casting-2026-2,Casting,Jennifer Venditti,Marty Supreme
+casting-2026-3,Casting,Cassandra Kulukundis,One Battle after Another
+casting-2026-4,Casting,Gabriel Domingues,The Secret Agent
+casting-2026-5,Casting,Francine Maisler,Sinners
+cinematography-2026-1,Cinematography,Dan Laustsen,Frankenstein
+cinematography-2026-2,Cinematography,Darius Khondji,Marty Supreme
+cinematography-2026-3,Cinematography,Michael Bauman,One Battle after Another
+cinematography-2026-4,Cinematography,Autumn Durald Arkapaw,Sinners
+cinematography-2026-5,Cinematography,Adolpho Veloso,Train Dreams
+costume-design-2026-1,Costume Design,Deborah L. Scott,Avatar: Fire and Ash
+costume-design-2026-2,Costume Design,Kate Hawley,Frankenstein
+costume-design-2026-3,Costume Design,Malgosia Turzanska,Hamnet
+costume-design-2026-4,Costume Design,Miyako Bellizzi,Marty Supreme
+costume-design-2026-5,Costume Design,Ruth E. Carter,Sinners
+directing-2026-1,Directing,Chloé Zhao,Hamnet
+directing-2026-2,Directing,Josh Safdie,Marty Supreme
+directing-2026-3,Directing,Paul Thomas Anderson,One Battle after Another
+directing-2026-4,Directing,Joachim Trier,Sentimental Value
+directing-2026-5,Directing,Ryan Coogler,Sinners
+documentary-feature-film-2026-1,Documentary Feature Film,"Andrew Jarecki,Charlotte Kaufman",The Alabama Solution
+documentary-feature-film-2026-2,Documentary Feature Film,"Ryan White, Jessica Hargrave, Tig Notaro,Stef Willen",Come See Me in the Good Light
+documentary-feature-film-2026-3,Documentary Feature Film,"Sara Khaki,Mohammadreza Eyni",Cutting through Rocks
+documentary-feature-film-2026-4,Documentary Feature Film,Nominees to be determined,Mr. Nobody against Putin
+documentary-feature-film-2026-5,Documentary Feature Film,"Geeta Gandbhir, Alisa Payne, Nikon Kwantu,Sam Bisbee",The Perfect Neighbor
+documentary-short-film-2026-1,Documentary Short Film,"Joshua Seftel,Conall Jones",All the Empty Rooms
+documentary-short-film-2026-2,Documentary Short Film,"Craig Renaud,Juan Arredondo",Armed Only with a Camera: The Life and Death of Brent Renaud
+documentary-short-film-2026-3,Documentary Short Film,"Hilla Medalia,Sheila Nevins","Children No More: ""Were and Are Gone"""
+documentary-short-film-2026-4,Documentary Short Film,"Christalyn Hampton,Geeta Gandbhir",The Devil Is Busy
+documentary-short-film-2026-5,Documentary Short Film,Alison McAlpine,Perfectly a Strangeness
+film-editing-2026-1,Film Editing,Stephen Mirrione,F1
+film-editing-2026-2,Film Editing,"Ronald Bronstein,Josh Safdie",Marty Supreme
+film-editing-2026-3,Film Editing,Andy Jurgensen,One Battle after Another
+film-editing-2026-4,Film Editing,Olivier Bugge Coutté,Sentimental Value
+film-editing-2026-5,Film Editing,Michael P. Shawver,Sinners
+international-feature-film-2026-1,International Feature Film,Brazil,The Secret Agent
+international-feature-film-2026-2,International Feature Film,France,It Was Just an Accident
+international-feature-film-2026-3,International Feature Film,Norway,Sentimental Value
+international-feature-film-2026-4,International Feature Film,Spain,Sirāt
+international-feature-film-2026-5,International Feature Film,Tunisia,The Voice of Hind Rajab
+live-action-short-film-2026-1,Live Action Short Film,"Meyer Levinson-Blount,Oron Caspi",Butcher's Stain
+live-action-short-film-2026-2,Live Action Short Film,"Lee Knight,James Dean",A Friend of Dorothy
+live-action-short-film-2026-3,Live Action Short Film,"Julia Aks,Steve Pinder",Jane Austen's Period Drama
+live-action-short-film-2026-4,Live Action Short Film,"Sam A. Davis,Jack Piatt",The Singers
+live-action-short-film-2026-5,Live Action Short Film,"Alexandre Singh,Natalie Musteata",Two People Exchanging Saliva
+makeup-and-hairstyling-2026-1,Makeup and Hairstyling,"Mike Hill, Jordan Samuel,Cliona Furey",Frankenstein
+makeup-and-hairstyling-2026-2,Makeup and Hairstyling,"Kyoko Toyokawa, Naomi Hibino,Tadashi Nishimatsu",Kokuho
+makeup-and-hairstyling-2026-3,Makeup and Hairstyling,"Ken Diaz, Mike Fontaine,Shunika Terry",Sinners
+makeup-and-hairstyling-2026-4,Makeup and Hairstyling,"Kazu Hiro, Glen Griffin,Bjoern Rehbein",The Smashing Machine
+makeup-and-hairstyling-2026-5,Makeup and Hairstyling,"Thomas Foldberg,Anne Cathrine Sauerberg",The Ugly Stepsister
+music-original-score-2026-1,Music (Original Score),Jerskin Fendrix,Bugonia
+music-original-score-2026-2,Music (Original Score),Alexandre Desplat,Frankenstein
+music-original-score-2026-3,Music (Original Score),Max Richter,Hamnet
+music-original-score-2026-4,Music (Original Score),Jonny Greenwood,One Battle after Another
+music-original-score-2026-5,Music (Original Score),Ludwig Goransson,Sinners
+Dear Me,Music (Original Song),"Diane Warren: Relentless, Diane Warren",Diane Warren: Relentless
+Golden,Music (Original Song),"KPop Demon Hunters, EJAE, Mark Sonnenblick, Joong Gyu Kwak, Yu Han Lee, Hee Dong Nam, Jeong Hoon Seon,Teddy Park",KPop Demon Hunters
+I Lied To You,Music (Original Song),"Sinners, Raphael Saadiq,Ludwig Goransson",Sinners
+Sweet Dreams Of Joy,Music (Original Song),"Viva Verdi!, Nicholas Pike",Viva Verdi!
+Train Dreams,Music (Original Song),"Music by Nick Cave,Bryce Dessner, Lyric by Nick Cave",Train Dreams
+best-picture-2026-1,Best Picture,"Ed Guiney,Andrew Lowe, Yorgos Lanthimos, Emma Stone,Lars Knudsen, Producers",Bugonia
+best-picture-2026-2,Best Picture,"Chad Oman, Brad Pitt, Dede Gardner, Jeremy Kleiner, Joseph Kosinski,Jerry Bruckheimer, Producers",F1
+best-picture-2026-3,Best Picture,"Guillermo del Toro, J. Miles Dale,Scott Stuber, Producers",Frankenstein
+best-picture-2026-4,Best Picture,"Liza Marshall, Pippa Harris, Nicolas Gonda, Steven Spielberg,Sam Mendes, Producers",Hamnet
+best-picture-2026-5,Best Picture,"Eli Bush, Ronald Bronstein, Josh Safdie, Anthony Katagas,Timothée Chalamet, Producers",Marty Supreme
+best-picture-2026-6,Best Picture,"Adam Somner, Sara Murphy,Paul Thomas Anderson, Producers",One Battle after Another
+best-picture-2026-7,Best Picture,"Emilie Lesclaux, Producer",The Secret Agent
+best-picture-2026-8,Best Picture,"Maria Ekerhovd,Andrea Berentsen Ottmar, Producers",Sentimental Value
+best-picture-2026-9,Best Picture,"Zinzi Coogler, Sev Ohanian,Ryan Coogler, Producers",Sinners
+best-picture-2026-10,Best Picture,"Marissa McMahon, Teddy Schwarzman, Will Janowitz, Ashley Schlaifer,Michael Heimler, Producers",Train Dreams
+production-design-2026-1,Production Design,"Tamara Deverell, Shane Vieau",Frankenstein
+production-design-2026-2,Production Design,"Fiona Crombie, Alice Felton",Hamnet
+production-design-2026-3,Production Design,"Jack Fisk, Adam Willis",Marty Supreme
+production-design-2026-4,Production Design,"Florencia Martin, Anthony Carlino",One Battle after Another
+production-design-2026-5,Production Design,"Hannah Beachler, Monique Champagne",Sinners
+sound-2026-1,Sound,"Gareth John, Al Nelson, Gwendolyn Yates Whittle, Gary A. Rizzo,Juan Peralta",F1
+sound-2026-2,Sound,"Greg Chapman, Nathan Robitaille, Nelson Ferreira, Christian Cooke,Brad Zoern",Frankenstein
+sound-2026-3,Sound,"José Antonio García, Christopher Scarabosio,Tony Villaflor",One Battle after Another
+sound-2026-4,Sound,"Chris Welcker, Benjamin A. Burtt, Felipe Pacheco, Brandon Proctor,Steve Boeddeker",Sinners
+sound-2026-5,Sound,"Amanda Villavieja, Laia Casanovas,Yasmina Praderas",Sirāt
+visual-effects-2026-1,Visual Effects,"Joe Letteri, Richard Baneham, Eric Saindon,Daniel Barrett",Avatar: Fire and Ash
+visual-effects-2026-2,Visual Effects,"Ryan Tudhope, Nicolas Chevallier, Robert Harrington,Keith Dawson",F1
+visual-effects-2026-3,Visual Effects,"David Vickery, Stephen Aplin, Charmaine Chan,Neil Corbould",Jurassic World Rebirth
+visual-effects-2026-4,Visual Effects,"Charlie Noble, David Zaretti, Russell Bowen,Brandon K. McLaughlin",The Lost Bus
+visual-effects-2026-5,Visual Effects,"Michael Ralla, Espen Nordahl, Guido Wolter,Donnie Dean",Sinners
+writing-adapted-screenplay-2026-1,Writing (Adapted Screenplay),Screenplay by Will Tracy,Bugonia
+writing-adapted-screenplay-2026-2,Writing (Adapted Screenplay),Written for the Screen by Guillermo del Toro,Frankenstein
+writing-adapted-screenplay-2026-3,Writing (Adapted Screenplay),"Screenplay by Chloé Zhao,Maggie O'Farrell",Hamnet
+writing-adapted-screenplay-2026-4,Writing (Adapted Screenplay),Written by Paul Thomas Anderson,One Battle after Another
+writing-adapted-screenplay-2026-5,Writing (Adapted Screenplay),"Screenplay by Clint Bentley,Greg Kwedar",Train Dreams
+writing-original-screenplay-2026-1,Writing (Original Screenplay),Written by Robert Kaplow,Blue Moon
+writing-original-screenplay-2026-2,Writing (Original Screenplay),"Written by Jafar Panahi, Script collaborators - Nader Saïvar, Shadmehr Rastin, Mehdi Mahmoudian",It Was Just an Accident
+writing-original-screenplay-2026-3,Writing (Original Screenplay),"Written by Ronald Bronstein,Josh Safdie",Marty Supreme
+writing-original-screenplay-2026-4,Writing (Original Screenplay),"Written by Eskil Vogt, Joachim Trier",Sentimental Value
+writing-original-screenplay-2026-5,Writing (Original Screenplay),Written by Ryan Coogler,Sinners

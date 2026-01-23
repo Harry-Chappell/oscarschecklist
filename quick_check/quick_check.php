@@ -6,8 +6,8 @@
 
 // Enqueue scripts and styles for all users
 function quick_check_enqueue_scripts() {
-    wp_enqueue_style('quick-check-style', get_stylesheet_directory_uri() . '/quick_check/quick_check_beta.css', array(), time());
-    wp_enqueue_script('quick-check-script', get_stylesheet_directory_uri() . '/quick_check/quick_check_beta.js', array(), time(), true);
+    wp_enqueue_style('quick-check-style', get_stylesheet_directory_uri() . '/quick_check/quick_check.css', array(), time());
+    wp_enqueue_script('quick-check-script', get_stylesheet_directory_uri() . '/quick_check/quick_check.js', array(), time(), true);
 }
 add_action('wp_enqueue_scripts', 'quick_check_enqueue_scripts');
 

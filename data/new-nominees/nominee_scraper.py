@@ -34,9 +34,29 @@ def extract_text(element):
     return cleaned_content.strip()
 
 def fix_image_url(image_url):
-    """Ensure the image URL starts with 'https:' if it begins with '//'."""
-    if image_url and image_url.startswith("//"):
-        return "https:" + image_url
+    """Ensure the image URL starts with 'https:' and convert thumbnail URLs to full-size."""
+    if not image_url:
+        return image_url
+    
+    # Add https: if it starts with //
+    if image_url.startswith("//"):
+        image_url = "https:" + image_url
+    
+    # Convert thumbnail URL to full-size image URL
+    # Example: https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/File.jpg/250px-File.jpg
+    # Should become: https://upload.wikimedia.org/wikipedia/commons/8/8e/File.jpg
+    if "/thumb/" in image_url:
+        # Remove /thumb/ and everything after the last / (the size variant)
+        parts = image_url.split("/thumb/")
+        if len(parts) == 2:
+            # Get the path after /thumb/
+            after_thumb = parts[1]
+            # Split by / and remove the last part (size variant)
+            path_parts = after_thumb.rsplit("/", 1)
+            if len(path_parts) == 2:
+                # Reconstruct the full-size URL
+                image_url = parts[0] + "/" + path_parts[0]
+    
     return image_url
 
 def get_day_suffix(day):
@@ -121,7 +141,7 @@ def main():
     
     # Open the CSV file for writing
     with open(output_file, 'w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=headers)
+        writer = csv.DictWriter(file, fieldnames=headers, quoting=csv.QUOTE_NONNUMERIC)
         writer.writeheader()
         
         # Scrape each URL and write to CSV

@@ -1,12 +1,15 @@
-Name,Slug,Photo URL,Wikipedia URL,Birthday
-Sean Baker,Sean-Baker,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Sean_Baker_at_the_2024_Toronto_International_Film_Festival_2_%28cropped%29.jpg/250px-Sean_Baker_at_the_2024_Toronto_International_Film_Festival_2_%28cropped%29.jpg,https://en.wikipedia.org/wiki/Sean_Baker,"26th February, 1971"
-Samantha Quan,Samantha-Quan,https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Samantha_Quan_at_the_2024_New_York_Film_Festival.jpg/250px-Samantha_Quan_at_the_2024_New_York_Film_Festival.jpg,https://en.wikipedia.org/wiki/Samantha_Quan,"2nd September, 1975"
-Alex Coco,Alex-Coco,https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Alex_Coco_at_the_2024_New_York_Film_Festival.jpg/250px-Alex_Coco_at_the_2024_New_York_Film_Festival.jpg,https://en.wikipedia.org/wiki/Alex_Coco,
-Adrien Brody,Adrien-Brody,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Adrien_Brody_Is_This_Thing_On-89_%28cropped%29.jpg/250px-Adrien_Brody_Is_This_Thing_On-89_%28cropped%29.jpg,https://en.wikipedia.org/wiki/Adrien_Brody,"14th April, 1973"
-Mikey Madison,Mikey-Madison,https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Mikey_Madison_at_the_2024_New_York_Film_Festival_2_%28cropped_4%29.jpg/250px-Mikey_Madison_at_the_2024_New_York_Film_Festival_2_%28cropped_4%29.jpg,https://en.wikipedia.org/wiki/Mikey_Madison,"25th March, 1999"
-Kieran Culkin,Kieran-Culkin,https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Kieran_Culkin_at_the_2024_New_York_Film_Festival_2_%28cropped_II%29.jpg/250px-Kieran_Culkin_at_the_2024_New_York_Film_Festival_2_%28cropped_II%29.jpg,https://en.wikipedia.org/wiki/Kieran_Culkin,"30th September, 1982"
-Zoe Saldaña,Zoe-Salda%C3%B1a,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Zoe_Salda%C3%B1a_at_the_2024_Toronto_International_Film_Festival_%28cropped%29.jpg/250px-Zoe_Salda%C3%B1a_at_the_2024_Toronto_International_Film_Festival_%28cropped%29.jpg,https://en.wikipedia.org/wiki/Zoe_Salda%C3%B1a,"19th June, 1978"
-Gints Zilbalodis,Gints-Zilbalodis,https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Gints_Zilbalodis_in_February_2%2C_2025.jpg/250px-Gints_Zilbalodis_in_February_2%2C_2025.jpg,https://en.wikipedia.org/wiki/Gints_Zilbalodis,"13th April, 1994"
-,Walter-Salles,,https://en.wikipedia.org/wiki/Walter_Salles,
-Daniel Blumberg,Daniel-Blumberg,https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Daniel_Blumberg_at_82nd_Venice_International_Film_Festival-1_%28cropped%29.jpg/250px-Daniel_Blumberg_at_82nd_Venice_International_Film_Festival-1_%28cropped%29.jpg,https://en.wikipedia.org/wiki/Daniel_Blumberg,
-,Paul-Tazewell,,https://en.wikipedia.org/wiki/Paul_Tazewell,
+"Name","Slug","Photo URL","Wikipedia URL","Birthday"
+"Michael B. Jordan","Michael-B.-Jordan","https://upload.wikimedia.org/wikipedia/commons/8/8e/Michael_B_Jordan_-_Sinners.jpg","https://en.wikipedia.org/wiki/Michael_B._Jordan","9th February, 1987"
+"Wagner Moura","Wagner-Moura","https://upload.wikimedia.org/wikipedia/commons/8/85/Wagner_Moura-6546.jpg","https://en.wikipedia.org/wiki/Wagner_Moura","27th June, 1976"
+"Jacob Elordi","Jacob-Elordi","https://upload.wikimedia.org/wikipedia/commons/9/93/JacobElordi-TIFF2025-01_%28cropped_2%29.png","https://en.wikipedia.org/wiki/Jacob_Elordi","26th June, 1997"
+"Delroy Lindo","Delroy-Lindo","https://upload.wikimedia.org/wikipedia/commons/e/e5/Delroy_Lindo_cropped.jpg","https://en.wikipedia.org/wiki/Delroy_Lindo","18th November, 1952"
+"Stellan Skarsgård","Stellan-Skarsg%C3%A5rd","https://upload.wikimedia.org/wikipedia/commons/0/0e/Stellan_Skarsg%C3%A5rd-9707_%28cropped%29.jpg","https://en.wikipedia.org/wiki/Stellan_Skarsg%C3%A5rd","13th June, 1951"
+"Rose Byrne","Rose-Byrne","https://upload.wikimedia.org/wikipedia/commons/1/14/Rose_Byrne_Blue_Moon-21_%28cropped%29.jpg","https://en.wikipedia.org/wiki/Rose_Byrne","24th July, 1979"
+"Renate Reinsve","Renate-Reinsve","https://upload.wikimedia.org/wikipedia/commons/4/4f/Renate_Reinsve-9937.jpg","https://en.wikipedia.org/wiki/Renate_Reinsve","24th November, 1987"
+"Elle Fanning","Elle-Fanning","https://upload.wikimedia.org/wikipedia/commons/b/ba/Elle_Fanning_at_the_2025_Cannes_Film_Festival.jpg","https://en.wikipedia.org/wiki/Elle_Fanning","9th April, 1998"
+"Inga Ibsdotter Lilleaas","Inga-Ibsdotter-Lilleaas","https://upload.wikimedia.org/wikipedia/commons/2/23/Inga_Ibsdotter_Lilleaas-9741.jpg","https://en.wikipedia.org/wiki/Inga_Ibsdotter_Lilleaas","9th April, 1989"
+"Wunmi Mosaku","Wunmi-Mosaku","https://upload.wikimedia.org/wikipedia/commons/7/7d/Wunmi_Mosaku_-_Sinners.jpg","https://en.wikipedia.org/wiki/Wunmi_Mosaku","31st July, 1986"
+"Teyana Taylor","Teyana-Taylor","https://upload.wikimedia.org/wikipedia/commons/1/1d/Teyana_Taylor_%28cropped%29.jpg","https://en.wikipedia.org/wiki/Teyana_Taylor","10th December, 1990"
+"Josh Safdie","Josh-Safdie","https://upload.wikimedia.org/wikipedia/commons/9/97/Josh_Safdie_%282010%29.png","https://en.wikipedia.org/wiki/Josh_Safdie","3rd April, 1984"
+"Joachim Trier","Joachim-Trier","https://upload.wikimedia.org/wikipedia/commons/9/97/Joachim_Trier-9987.jpg","https://en.wikipedia.org/wiki/Joachim_Trier","1st March, 1974"
+"Max Richter","Max-Richter","https://upload.wikimedia.org/wikipedia/commons/9/9b/Max_Richter_at_Berlinale_2024.jpg","https://en.wikipedia.org/wiki/Max_Richter","22nd March, 1966"
