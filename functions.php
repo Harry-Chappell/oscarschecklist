@@ -309,9 +309,9 @@ function markAsWatched() {
 
             $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
             error_log('[+' . $elapsed . 'ms] 📊 Calling update_watched_by_day_json()');
-            update_watched_by_day_json($post_id, $timer_start);
-            $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
-            error_log('[+' . $elapsed . 'ms] ✅ update_watched_by_day_json() completed');
+            // update_watched_by_day_json($post_id, $timer_start);
+            // $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
+            // error_log('[+' . $elapsed . 'ms] ✅ update_watched_by_day_json() completed');
         }
     } elseif ($action === 'unwatched') {
         $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
@@ -336,10 +336,10 @@ function markAsWatched() {
     error_log('[+' . $elapsed . 'ms] ✅ save_user_meta_json() completed');
     if ($changed) {
         $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
-        error_log('[+' . $elapsed . 'ms] 📊 Calling oscars_update_film_stats_json()');
+        // error_log('[+' . $elapsed . 'ms] 📊 Calling oscars_update_film_stats_json()');
         oscars_update_film_stats_json($post_id, $action, $timer_start);
         $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
-        error_log('[+' . $elapsed . 'ms] ✅ oscars_update_film_stats_json() completed');
+        // error_log('[+' . $elapsed . 'ms] ✅ oscars_update_film_stats_json() completed');
     }
     $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
     error_log('[+' . $elapsed . 'ms] 🏁 markAsWatched() COMPLETE');
@@ -413,7 +413,7 @@ function markAsWatchedBatch() {
             $films_to_update_stats[] = $film_id;
             
             // Update watched_by_day_json for each film
-            update_watched_by_day_json($film_id, $timer_start);
+            // update_watched_by_day_json($film_id, $timer_start);
         }
     }
     
@@ -433,9 +433,9 @@ function markAsWatchedBatch() {
     if ($added_count > 0) {
         $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
         error_log('[+' . $elapsed . 'ms] 📊 Updating film stats for ' . count($films_to_update_stats) . ' films');
-        foreach ($films_to_update_stats as $film_id) {
-            oscars_update_film_stats_json($film_id, 'watched', $timer_start);
-        }
+        // foreach ($films_to_update_stats as $film_id) {
+        //     oscars_update_film_stats_json($film_id, 'watched', $timer_start);
+        // }
     }
     
     $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
@@ -1790,15 +1790,34 @@ add_action('wp_ajax_aggregate_watched_dates', function() {
     wp_die('Aggregation complete!');
 });
 
-// Schedule daily cron job for watched dates aggregation
+// Add custom 6-hour cron schedule
+add_filter('cron_schedules', function($schedules) {
+    $schedules['every_six_hours'] = [
+        'interval' => 21600, // 6 hours in seconds
+        'display'  => __('Every 6 Hours')
+    ];
+    return $schedules;
+});
+
+// Schedule 6-hour cron job for watched dates aggregation
 add_action('wp', function() {
-    if (!wp_next_scheduled('daily_aggregate_watched_dates')) {
-        wp_schedule_event(time(), 'daily', 'daily_aggregate_watched_dates');
+    if (!wp_next_scheduled('six_hourly_aggregate_watched_dates')) {
+        wp_schedule_event(time(), 'every_six_hours', 'six_hourly_aggregate_watched_dates');
     }
 });
 
 // Hook the aggregation function to the cron event
-add_action('daily_aggregate_watched_dates', 'aggregate_watched_dates_to_by_day_json');
+add_action('six_hourly_aggregate_watched_dates', 'aggregate_watched_dates_to_by_day_json');
+
+// Schedule 6-hour cron job for films stats generation
+add_action('wp', function() {
+    if (!wp_next_scheduled('six_hourly_compile_films_stats')) {
+        wp_schedule_event(time(), 'every_six_hours', 'six_hourly_compile_films_stats');
+    }
+});
+
+// Hook the films stats compilation function to the cron event
+add_action('six_hourly_compile_films_stats', 'oscars_compile_films_stats');
 
 
 require_once get_stylesheet_directory() . '/watchlist/watchlist.php';
