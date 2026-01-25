@@ -1823,6 +1823,38 @@ add_action('six_hourly_compile_films_stats', 'oscars_compile_films_stats');
 require_once get_stylesheet_directory() . '/watchlist/watchlist.php';
 require_once get_stylesheet_directory() . '/quick_check/quick_check.php';
 
+// === Track new user signups ===
+add_action('user_register', 'oscars_track_signup');
+function oscars_track_signup($user_id) {
+    $upload_dir = wp_upload_dir();
+    $json_file = $upload_dir['basedir'] . '/signup_dates.json';
+    
+    // Current date in ISO 8601 format
+    $current_date = date('Y-m-d\TH:i:s');
+    
+    // Read existing data
+    if (file_exists($json_file)) {
+        $json_content = file_get_contents($json_file);
+        $data = json_decode($json_content, true);
+        if (!$data) {
+            $data = ['signups' => [], 'total_count' => 0, 'generated_at' => ''];
+        }
+    } else {
+        $data = ['signups' => [], 'total_count' => 0, 'generated_at' => ''];
+    }
+    
+    // Add new signup with running total
+    $count = count($data['signups']) + 1;
+    $data['signups'][] = ['date' => $current_date, 'count' => $count];
+    
+    // Update metadata
+    $data['total_count'] = $count;
+    $data['generated_at'] = $current_date;
+    
+    // Write back to file (compact format)
+    file_put_contents($json_file, json_encode($data));
+}
+
 // === AJAX: Get user data as JSON ===
 add_action('wp_ajax_get_user_data', 'oscars_get_user_data');
 add_action('wp_ajax_nopriv_get_user_data', 'oscars_get_user_data');
