@@ -375,9 +375,11 @@
         // Clear existing prediction icons
         document.querySelectorAll('.prediction-icon').forEach(icon => icon.remove());
         
-        // Loop through each user's predictions
+        // Loop through each user's data
         Object.keys(predictionsData).forEach(userId => {
-            const predictions = predictionsData[userId];
+            const userData = predictionsData[userId];
+            const predictions = userData.predictions || [];
+            const favourites = userData.favourites || [];
             
             // Get the friend item element to copy the icon from
             const friendItem = document.querySelector(`.friend-item[data-user-id="${userId}"]`);
@@ -386,30 +388,94 @@
             const friendPhoto = friendItem.querySelector('.friend-photo');
             if (!friendPhoto) return;
             
-            // For each prediction ID, find the matching nomination and add the icon
+            // Track nominations we've already processed
+            const processed = new Set();
+            
+            // Process nominations that are BOTH predictions and favourites
             predictions.forEach(nominationId => {
-                const nomination = document.getElementById(`nomination-${nominationId}`);
-                if (nomination) {
-                    // Create wrapper for the icon with the same style attribute (for --randomcolornum)
-                    const iconWrapper = document.createElement('div');
-                    iconWrapper.classList.add('prediction-icon');
-                    iconWrapper.setAttribute('data-user-id', userId);
-                    
-                    // Copy the style attribute from parent friend item (contains --randomcolornum)
-                    const styleAttr = friendItem.getAttribute('style');
-                    if (styleAttr) {
-                        iconWrapper.setAttribute('style', styleAttr);
+                if (favourites.includes(nominationId)) {
+                    const nomination = document.getElementById(`nomination-${nominationId}`);
+                    if (nomination) {
+                        const container = nomination.querySelector('.prediction-favourites');
+                        if (container) {
+                            const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, 'both');
+                            container.appendChild(iconWrapper);
+                            processed.add(nominationId);
+                        }
                     }
-                    
-                    // Clone the friend photo
-                    const iconClone = friendPhoto.cloneNode(true);
-                    iconWrapper.appendChild(iconClone);
-                    
-                    // Add to nomination
-                    nomination.appendChild(iconWrapper);
+                }
+            });
+            
+            // Process predictions only (not favourites)
+            predictions.forEach(nominationId => {
+                if (!processed.has(nominationId)) {
+                    const nomination = document.getElementById(`nomination-${nominationId}`);
+                    if (nomination) {
+                        const container = nomination.querySelector('.prediction-favourites');
+                        if (container) {
+                            const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, 'prediction');
+                            container.appendChild(iconWrapper);
+                            processed.add(nominationId);
+                        }
+                    }
+                }
+            });
+            
+            // Process favourites only (not predictions)
+            favourites.forEach(nominationId => {
+                if (!processed.has(nominationId)) {
+                    const nomination = document.getElementById(`nomination-${nominationId}`);
+                    if (nomination) {
+                        const container = nomination.querySelector('.prediction-favourites');
+                        if (container) {
+                            const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, 'favourite');
+                            container.appendChild(iconWrapper);
+                        }
+                    }
                 }
             });
         });
+    }
+    
+    /**
+     * Create a prediction icon element
+     */
+    function createPredictionIcon(friendItem, friendPhoto, userId, type) {
+        // Get display name from friend item
+        const friendNameEl = friendItem.querySelector('.friend-name');
+        const displayName = friendNameEl ? friendNameEl.textContent : 'User';
+        
+        // Create wrapper for the icon with the same style attribute (for --randomcolornum)
+        const iconWrapper = document.createElement('div');
+        iconWrapper.classList.add('prediction-icon');
+        iconWrapper.classList.add(`prediction-${type}`);
+        iconWrapper.setAttribute('data-user-id', userId);
+        
+        // Copy the style attribute from parent friend item (contains --randomcolornum)
+        const styleAttr = friendItem.getAttribute('style');
+        if (styleAttr) {
+            iconWrapper.setAttribute('style', styleAttr);
+        }
+        
+        // Clone the friend photo
+        const iconClone = friendPhoto.cloneNode(true);
+        iconWrapper.appendChild(iconClone);
+        
+        // Create tooltip
+        const tooltip = document.createElement('span');
+        tooltip.classList.add('prediction-tooltip');
+        let tooltipText = displayName + "'s ";
+        if (type === 'both') {
+            tooltipText += 'Prediction & Favourite';
+        } else if (type === 'prediction') {
+            tooltipText += 'Prediction';
+        } else {
+            tooltipText += 'Favourite';
+        }
+        tooltip.textContent = tooltipText;
+        iconWrapper.appendChild(tooltip);
+        
+        return iconWrapper;
     }
     
     /**

@@ -354,51 +354,105 @@ section.right {
         position: relative;
     }
     
+    /* Prediction/Favourite Container */
+    .prediction-favourites {
+        display: flex;
+        gap: 5px;
+        margin-top: auto;
+        padding-top: 5px;
+    }
+    
     /* Prediction Icons */
-    ul.nominations-list > li .prediction-icon {
-        position: absolute;
-        top: 5px;
-        right: 5px;
+    .prediction-favourites .prediction-icon {
         width: 30px;
         height: 30px;
-        z-index: 10;
+        flex-shrink: 0;
     }
     
-    ul.nominations-list > li .prediction-icon + .prediction-icon {
-        right: 40px;
+    .prediction-favourites .prediction-icon {
+        position: relative;
+        transition: transform 0.2s ease;
     }
     
-    ul.nominations-list > li .prediction-icon + .prediction-icon + .prediction-icon {
-        right: 75px;
-    }
-    
-    ul.nominations-list > li .prediction-icon + .prediction-icon + .prediction-icon + .prediction-icon {
-        right: 110px;
-    }
-    
-    ul.nominations-list > li .prediction-icon .friend-photo {
+    .prediction-favourites .prediction-icon .friend-photo {
         width: 30px;
         height: 30px;
         margin: 0;
         border-radius: 50%;
         overflow: hidden;
-        border: 2px solid var(--theme-palette-color-7);
+        border: 3px solid var(--theme-palette-color-7);
         flex-shrink: 0;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
         background: color-mix(in oklab, var(--theme-palette-color-6) 0%, var(--theme-palette-color-4) 5%);
+        transition: border-color 0.2s ease;
     }
     
-    ul.nominations-list > li .prediction-icon .friend-photo img {
+    /* Gold border for predictions */
+    .prediction-favourites .prediction-icon.prediction-prediction .friend-photo {
+        border-color: var(--theme-palette-color-1);
+    }
+    
+    /* Pinkish border for favourites */
+    .prediction-favourites .prediction-icon.prediction-favourite .friend-photo {
+        border-color: #cd5c5c;
+    }
+    
+    /* Split border for both prediction and favourite */
+    .prediction-favourites .prediction-icon.prediction-both .friend-photo {
+        border: 3px solid;
+        border-image: linear-gradient(to right, var(--theme-palette-color-1) 50%, #cd5c5c 50%) 1;
+        border-radius: 50%;
+        /* Fallback for border-radius with border-image */
+        background: linear-gradient(var(--theme-palette-color-7), var(--theme-palette-color-7)) padding-box,
+                    linear-gradient(to right, var(--theme-palette-color-1) 50%, #cd5c5c 50%) border-box;
+        border: 3px solid transparent;
+    }
+    
+    /* Tooltip styling */
+    .prediction-favourites .prediction-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--theme-palette-color-2);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        margin-bottom: 6px;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .prediction-favourites .prediction-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: var(--theme-palette-color-2);
+    }
+    
+    .prediction-favourites .prediction-icon:hover .prediction-tooltip {
+        opacity: 1;
+    }
+    
+    .prediction-favourites .prediction-icon .friend-photo img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         border-radius: 50%;
     }
     
-    ul.nominations-list > li .prediction-icon .friend-initials {
+    .prediction-favourites .prediction-icon .friend-initials {
         background-color: hsl(calc(var(--randomcolornum) * 0.36) 90% 70%);
         width: 100%;
         height: 100%;
@@ -442,7 +496,7 @@ section.right {
     ul.nominations-list .right-section {
         width: calc(100% - 55px);
         display: flex;
-        flex-flow: column;
+        flex-flow: column-reverse;
         height: 100%;
         padding: 5px 0;
     }

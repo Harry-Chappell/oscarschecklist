@@ -297,8 +297,11 @@ function scoreboard_get_friend_predictions() {
     if (file_exists($current_user_file)) {
         $content = file_get_contents($current_user_file);
         $data = json_decode($content, true);
-        if (is_array($data) && isset($data['predictions'])) {
-            $predictions_data[$current_user_id] = $data['predictions'];
+        if (is_array($data)) {
+            $predictions_data[$current_user_id] = array(
+                'predictions' => isset($data['predictions']) ? $data['predictions'] : array(),
+                'favourites' => isset($data['favourites']) ? $data['favourites'] : array()
+            );
         }
     }
     
@@ -309,8 +312,11 @@ function scoreboard_get_friend_predictions() {
             if (file_exists($friend_file)) {
                 $content = file_get_contents($friend_file);
                 $data = json_decode($content, true);
-                if (is_array($data) && isset($data['predictions'])) {
-                    $predictions_data[$friend_id] = $data['predictions'];
+                if (is_array($data)) {
+                    $predictions_data[$friend_id] = array(
+                        'predictions' => isset($data['predictions']) ? $data['predictions'] : array(),
+                        'favourites' => isset($data['favourites']) ? $data['favourites'] : array()
+                    );
                 }
             }
         }

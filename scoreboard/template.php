@@ -373,6 +373,8 @@
                                                 }
                                                 $output .= '</ul>';
                                             }
+
+                                            $output .= '<div class="prediction-favourites"></div>';
                                         $output .= '</div>'; // .right-section
 
                                     $output .= '</li>';
