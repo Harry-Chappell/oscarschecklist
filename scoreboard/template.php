@@ -20,6 +20,7 @@
                 echo '</div>';
                 echo '<div class="friend-info">';
                 echo '<span class="friend-name">' . esc_html($current_user->display_name) . '</span>';
+                echo '<span class="file-size" data-user-id="' . esc_attr($current_user_id) . '">Loading...</span>';
                 echo '</div>';
                 echo '</li>';
                 
@@ -60,6 +61,7 @@
                         echo '</div>';
                         echo '<div class="friend-info">';
                         echo '<span class="friend-name">' . esc_html($friend_user->display_name) . '</span>';
+                        echo '<span class="file-size" data-user-id="' . esc_attr($friend_id) . '">Loading...</span>';
                         echo '</div>';
                         echo '</li>';
                     }

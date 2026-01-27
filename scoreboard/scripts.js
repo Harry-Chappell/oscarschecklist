@@ -300,6 +300,59 @@
         .catch(error => {
             console.error('Error loading data:', error);
         });
+        
+        // Also load friend file sizes
+        loadFriendFileSizes();
+    }
+    
+    /**
+     * Load friend file sizes
+     */
+    function loadFriendFileSizes() {
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_get_friend_file_sizes');
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateFileSizeDisplays(data.data);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading file sizes:', error);
+        });
+    }
+    
+    /**
+     * Update file size displays
+     */
+    function updateFileSizeDisplays(fileSizes) {
+        Object.keys(fileSizes).forEach(userId => {
+            const fileSize = fileSizes[userId];
+            const fileSizeEl = document.querySelector(`.file-size[data-user-id="${userId}"]`);
+            
+            if (fileSizeEl) {
+                fileSizeEl.textContent = formatFileSize(fileSize);
+            }
+        });
+    }
+    
+    /**
+     * Format file size in human-readable format
+     */
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
     
     /**

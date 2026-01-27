@@ -222,3 +222,50 @@ function scoreboard_clear_all_notices() {
     wp_send_json_success($data);
 }
 add_action('wp_ajax_scoreboard_clear_all_notices', 'scoreboard_clear_all_notices');
+
+/**
+ * Get friend file sizes for pred_fav files
+ */
+function scoreboard_get_friend_file_sizes() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Not logged in');
+    }
+    
+    $current_user_id = get_current_user_id();
+    $friends = friends_get_friend_user_ids($current_user_id);
+    
+    $file_sizes = array();
+    
+    // Base path to user_meta folder in uploads directory
+    $upload_dir = wp_upload_dir();
+    $base_path = $upload_dir['basedir'] . '/user_meta/';
+    
+    // Get file size for current user
+    $current_user_file = $base_path . 'user_' . $current_user_id . '_pred_fav.json';
+    if (file_exists($current_user_file)) {
+        $file_sizes[$current_user_id] = filesize($current_user_file);
+    } else {
+        $file_sizes[$current_user_id] = 0;
+    }
+    
+    // Get file sizes for friends
+    if ($friends) {
+        foreach ($friends as $friend_id) {
+            $friend_file = $base_path . 'user_' . $friend_id . '_pred_fav.json';
+            if (file_exists($friend_file)) {
+                $file_sizes[$friend_id] = filesize($friend_file);
+            } else {
+                $file_sizes[$friend_id] = 0;
+            }
+        }
+    }
+    
+    wp_send_json_success($file_sizes);
+}
+add_action('wp_ajax_scoreboard_get_friend_file_sizes', 'scoreboard_get_friend_file_sizes');
+add_action('wp_ajax_nopriv_scoreboard_get_friend_file_sizes', 'scoreboard_get_friend_file_sizes');
