@@ -303,6 +303,9 @@
         
         // Also load friend file sizes
         loadFriendFileSizes();
+        
+        // Also load friend predictions
+        loadFriendPredictions();
     }
     
     /**
@@ -339,6 +342,73 @@
             if (fileSizeEl) {
                 fileSizeEl.textContent = formatFileSize(fileSize);
             }
+        });
+    }
+    
+    /**
+     * Load friend predictions
+     */
+    function loadFriendPredictions() {
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_get_friend_predictions');
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayPredictionIcons(data.data);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading predictions:', error);
+        });
+    }
+    
+    /**
+     * Display prediction icons in nominations
+     */
+    function displayPredictionIcons(predictionsData) {
+        // Clear existing prediction icons
+        document.querySelectorAll('.prediction-icon').forEach(icon => icon.remove());
+        
+        // Loop through each user's predictions
+        Object.keys(predictionsData).forEach(userId => {
+            const predictions = predictionsData[userId];
+            
+            // Get the friend item element to copy the icon from
+            const friendItem = document.querySelector(`.friend-item[data-user-id="${userId}"]`);
+            if (!friendItem) return;
+            
+            const friendPhoto = friendItem.querySelector('.friend-photo');
+            if (!friendPhoto) return;
+            
+            // For each prediction ID, find the matching nomination and add the icon
+            predictions.forEach(nominationId => {
+                const nomination = document.getElementById(`nomination-${nominationId}`);
+                if (nomination) {
+                    // Create wrapper for the icon with the same style attribute (for --randomcolornum)
+                    const iconWrapper = document.createElement('div');
+                    iconWrapper.classList.add('prediction-icon');
+                    iconWrapper.setAttribute('data-user-id', userId);
+                    
+                    // Copy the style attribute from parent friend item (contains --randomcolornum)
+                    const styleAttr = friendItem.getAttribute('style');
+                    if (styleAttr) {
+                        iconWrapper.setAttribute('style', styleAttr);
+                    }
+                    
+                    // Clone the friend photo
+                    const iconClone = friendPhoto.cloneNode(true);
+                    iconWrapper.appendChild(iconClone);
+                    
+                    // Add to nomination
+                    nomination.appendChild(iconWrapper);
+                }
+            });
         });
     }
     

@@ -269,3 +269,54 @@ function scoreboard_get_friend_file_sizes() {
 }
 add_action('wp_ajax_scoreboard_get_friend_file_sizes', 'scoreboard_get_friend_file_sizes');
 add_action('wp_ajax_nopriv_scoreboard_get_friend_file_sizes', 'scoreboard_get_friend_file_sizes');
+
+/**
+ * Get friend predictions from pred_fav files
+ */
+function scoreboard_get_friend_predictions() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Not logged in');
+    }
+    
+    $current_user_id = get_current_user_id();
+    $friends = friends_get_friend_user_ids($current_user_id);
+    
+    $predictions_data = array();
+    
+    // Base path to user_meta folder in uploads directory
+    $upload_dir = wp_upload_dir();
+    $base_path = $upload_dir['basedir'] . '/user_meta/';
+    
+    // Get predictions for current user
+    $current_user_file = $base_path . 'user_' . $current_user_id . '_pred_fav.json';
+    if (file_exists($current_user_file)) {
+        $content = file_get_contents($current_user_file);
+        $data = json_decode($content, true);
+        if (is_array($data) && isset($data['predictions'])) {
+            $predictions_data[$current_user_id] = $data['predictions'];
+        }
+    }
+    
+    // Get predictions for friends
+    if ($friends) {
+        foreach ($friends as $friend_id) {
+            $friend_file = $base_path . 'user_' . $friend_id . '_pred_fav.json';
+            if (file_exists($friend_file)) {
+                $content = file_get_contents($friend_file);
+                $data = json_decode($content, true);
+                if (is_array($data) && isset($data['predictions'])) {
+                    $predictions_data[$friend_id] = $data['predictions'];
+                }
+            }
+        }
+    }
+    
+    wp_send_json_success($predictions_data);
+}
+add_action('wp_ajax_scoreboard_get_friend_predictions', 'scoreboard_get_friend_predictions');
+add_action('wp_ajax_nopriv_scoreboard_get_friend_predictions', 'scoreboard_get_friend_predictions');
