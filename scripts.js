@@ -294,6 +294,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Select the heading element
         const progressHeading = document.querySelector('#your-progress h2');
     
+        // Check if we're on the scoreboard page - if so, skip friend item click handlers
+        const isScoreboardPage = document.querySelector('#main-scoreboard-container') !== null;
+    
         // Function to handle friend item click
         function handleFriendItemClick(item, index) {
             // Remove "active" class from all friend items
@@ -339,11 +342,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     
         // Add a click event listener to each .friend-item
-        friendItems.forEach(function(item, index) {
-            item.addEventListener('click', function() {
-                handleFriendItemClick(item, index);
+        // Skip adding click handlers if on scoreboard page
+        if (!isScoreboardPage) {
+            friendItems.forEach(function(item, index) {
+                item.addEventListener('click', function() {
+                    handleFriendItemClick(item, index);
+                });
             });
-        });
+        }
     
         // Function to update TOC and simulate first friend click if friendId is null
         function updateTOC(friendId = null) {

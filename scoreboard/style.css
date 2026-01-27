@@ -318,3 +318,334 @@ section.right {
     }
 }
 
+
+#main-scoreboard-container {
+    section#categories {
+        display: flex;
+        flex-direction: column;
+    }
+    .awards-category .category-title {
+        top: 0px;
+        background: none !important;
+        margin: 0;
+        padding-top: 0;
+        position: relative;
+    }
+    .awards-category {
+        padding: 10px;
+        background: var(--theme-palette-color-7);
+        border: 1px solid color-mix(in oklab, var(--theme-palette-color-6) 50%, var(--theme-palette-color-4) 10%);
+        border-radius: 15px;
+        margin-bottom: 20px;
+    }
+    ul.nominations-list {
+        flex-flow: column;
+        padding: 0;
+        gap: 10px;
+        margin-bottom: 0px !important;
+    }
+    ul.nominations-list > li {
+        flex-flow: column wrap;
+        padding: 0;
+        width: 100%;
+        height: 82px;
+        background: color-mix(in oklab, var(--theme-palette-color-6) 0%, var(--theme-palette-color-4) 5%);
+        border: 1px solid color-mix(in oklab, var(--theme-palette-color-6) 100%, var(--theme-palette-color-4) 17%);
+    }
+    ul.nominations-list .film-poster, 
+    ul.nominations-list .nominee-photo {
+        height: 80px;
+        width: 50px;
+        border-radius: 9px 0px 0px 9px;
+        overflow: hidden;
+    }
+    ul.nominations-list .film-poster img, 
+    ul.nominations-list .nominee-photo img {
+        border-radius: 0px;
+    }
+    ul.nominations-list img {
+        object-fit: cover;
+    }
+    ul.nominations-list.nominee_visibility-prominent .film-poster {
+        margin-top: auto;
+        margin-left: -10px;
+        margin-bottom: 5px;
+        height: 60px;
+        width: 41px;
+        border-radius: 3px;
+        box-shadow: 0 0 5px var(--theme-palette-color-6);
+    }
+    ul.nominations-list .left-section {
+        display: flex;
+        gap: 5px;
+        margin-right: 10px;
+    }
+    ul.nominations-list .right-section {
+        width: calc(100% - 55px);
+        display: flex;
+        flex-flow: column;
+        height: 100%;
+        padding: 5px 0;
+    }
+    .left-section:has(span.nominee-photo) + .right-section {
+        width: calc(100% - 75px);
+    }
+    ul.nominations-list h3 {
+        margin: 0;
+    }
+    ul.nominations-list .film-name {
+        padding: 0;
+    }
+    ul.nominations-list .film-name:has(+.nominees-name) {
+        font-size: 12px;
+    }
+    .awards-category.active,
+    .awards-category.awarded {
+        border: 1px solid var(--theme-palette-color-1);
+        order: -2;
+    }
+    .awards-category.awarded {
+        animation: gold-pulse 2s ease-in-out infinite;
+    }
+    ul.nominations-list > li.watched::after {
+        display: none;
+    }
+
+
+
+
+
+    /* Films List Styles */
+    section#films {
+        display: flex;
+        flex-direction: column;
+    }
+
+    section#films ul#films-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    section#films ul#films-list .film-item {
+        background: var(--theme-palette-color-7);
+        border: 1px solid color-mix(in oklab, var(--theme-palette-color-6) 50%, var(--theme-palette-color-4) 10%);
+        border-radius: 15px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    section#films .film-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    section#films .film-poster {
+        width: 50px;
+        height: 75px;
+        border-radius: 5px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: color-mix(in oklab, var(--theme-palette-color-6) 0%, var(--theme-palette-color-4) 5%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    section#films .film-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    section#films .film-poster svg {
+        width: 30px;
+        height: 30px;
+        fill: var(--theme-palette-color-6);
+    }
+
+    section#films .film-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+    }
+
+    section#films .film-name {
+        font-size: 16px;
+        font-weight: 400;
+        margin: 0;
+    }
+
+    section#films .nomination-count {
+        font-size: 12px;
+        color: var(--theme-palette-color-6);
+        font-weight: 500;
+    }
+
+    section#films .nominations-icons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-left: 62px;
+    }
+
+    section#films .trophy-icon {
+        width: 28px;
+        height: 28px;
+        padding: 6px;
+        background: color-mix(in oklab, var(--theme-palette-color-6) 0%, var(--theme-palette-color-4) 5%);
+        border: 1px solid color-mix(in oklab, var(--theme-palette-color-6) 100%, var(--theme-palette-color-4) 17%);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    section#films .trophy-icon svg {
+        width: 100%;
+        height: 100%;
+        fill: var(--theme-palette-color-1);
+    }
+
+    section#films .trophy-icon:hover {
+        background: var(--theme-palette-color-1);
+        border-color: var(--theme-palette-color-1);
+        transform: translateY(-2px);
+    }
+
+    section#films .trophy-icon:hover svg {
+        fill: var(--theme-palette-color-7);
+    }
+
+    section#films .category-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--theme-palette-color-2);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        margin-bottom: 6px;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    section#films .category-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: var(--theme-palette-color-2);
+    }
+
+    section#films .trophy-icon:hover .category-tooltip {
+        opacity: 1;
+    }
+
+/* Friends List Styles */
+section#friends {
+    display: flex;
+    flex-direction: column;
+}
+
+section#friends ul#friends-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+section#friends .friend-item {
+    background: var(--theme-palette-color-7);
+    border: 1px solid color-mix(in oklab, var(--theme-palette-color-6) 50%, var(--theme-palette-color-4) 10%);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+section#friends .friend-photo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in oklab, var(--theme-palette-color-6) 0%, var(--theme-palette-color-4) 5%);
+}
+
+section#friends .friend-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+section#friends .friend-photo .friend-initials {
+    background-color: hsl(calc(var(--randomcolornum) * 0.36) 90% 70%);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--theme-palette-color-3);
+    border-radius: 50%;
+}
+
+@media (prefers-color-scheme: dark) {
+    section#friends .friend-photo .friend-initials {
+        background-color: hsl(calc(var(--randomcolornum) * 0.36) 50% 40%);
+        color: white;
+    }
+}
+
+section#friends .friend-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+section#friends .friend-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--theme-palette-color-3);
+}
+
+
+}
+
+@keyframes gold-pulse {
+    0%, 100% {
+        box-shadow: 0 0 10px var(--theme-palette-color-1);
+    }
+    50% {
+        box-shadow: 0 0 30px var(--theme-palette-color-1);
+    }
+}
