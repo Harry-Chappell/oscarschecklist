@@ -75,6 +75,9 @@
         // Load initial data
         loadData();
         
+        // Load current category on initial load
+        loadCurrentCategory();
+        
         // Start countdown
         startCountdown();
     }
@@ -306,6 +309,9 @@
         
         // Also load friend predictions
         loadFriendPredictions();
+        
+        // Also load current category display
+        loadCurrentCategory();
     }
     
     /**
@@ -492,6 +498,42 @@
     }
     
     /**
+     * Load and update current category display
+     */
+    function loadCurrentCategory() {
+        const currentCategoryContainer = document.getElementById('current-category-container');
+        
+        // Only proceed if we're on a page with the current category container
+        if (!currentCategoryContainer) {
+            return;
+        }
+        
+        // Fetch the JSON file to get the active category
+        fetch('/wp-content/uploads/2026-results.json')
+            .then(response => response.json())
+            .then(data => {
+                const activeCategory = data.active_category;
+                
+                if (activeCategory) {
+                    // Hide all category displays
+                    const allDisplays = currentCategoryContainer.querySelectorAll('.current-category-display');
+                    allDisplays.forEach(display => {
+                        display.style.display = 'none';
+                    });
+                    
+                    // Show the active category display
+                    const activeDisplay = currentCategoryContainer.querySelector(`.current-category-display[data-category-slug="${activeCategory}"]`);
+                    if (activeDisplay) {
+                        activeDisplay.style.display = 'block';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading current category from JSON:', error);
+            });
+    }
+    
+    /**
      * Render notices in the list
      */
     function renderNotices(notices) {
@@ -611,12 +653,83 @@
         return div.innerHTML;
     }
     
+    /**
+     * Handle category activation
+     */
+    function handleCategoryActivate() {
+        const categorySelect = document.getElementById('category-select');
+        const activateBtn = document.getElementById('set-category-btn');
+        
+        if (!categorySelect || !activateBtn) return;
+        
+        activateBtn.addEventListener('click', function() {
+            const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+            
+            if (!selectedOption || !selectedOption.value) {
+                console.error('Please select a category first');
+                return;
+            }
+            
+            const categorySlug = selectedOption.getAttribute('data-slug');
+            const categoryName = selectedOption.textContent;
+            
+            if (!categorySlug) {
+                console.error('Invalid category selection');
+                return;
+            }
+            
+            console.log('Activating category:', categoryName, 'with slug:', categorySlug);
+            
+            // Disable button during request
+            activateBtn.disabled = true;
+            activateBtn.textContent = 'Activating...';
+            
+            // Send AJAX request
+            fetch(scoreboardData.ajaxurl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'scoreboard_set_active_category',
+                    category_slug: categorySlug,
+                    nonce: scoreboardData.nonce
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+                if (data.success) {
+                    console.log(`✅ Category "${categoryName}" activated successfully!`);
+                    console.log('Response data:', data.data);
+                    // Optionally reset the select
+                    // categorySelect.selectedIndex = 0;
+                } else {
+                    console.error('❌ Error activating category:', data.data || 'Failed to activate category');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error during category activation:', error);
+            })
+            .finally(() => {
+                // Re-enable button
+                activateBtn.disabled = false;
+                activateBtn.textContent = 'Activate';
+            });
+        });
+    }
+    
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initScoreboard);
+        document.addEventListener('DOMContentLoaded', function() {
+            initScoreboard();
+            handleCategoryActivate();
+        });
     } else {
         initScoreboard();
+        handleCategoryActivate();
     }
+
     
     // Cleanup on page unload
     window.addEventListener('beforeunload', () => {

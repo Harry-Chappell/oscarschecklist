@@ -326,3 +326,255 @@ function scoreboard_get_friend_predictions() {
 }
 add_action('wp_ajax_scoreboard_get_friend_predictions', 'scoreboard_get_friend_predictions');
 add_action('wp_ajax_nopriv_scoreboard_get_friend_predictions', 'scoreboard_get_friend_predictions');
+
+/**
+ * Set active category for 2026 results
+ */
+function scoreboard_set_active_category() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $category_slug = isset($_POST['category_slug']) ? sanitize_text_field($_POST['category_slug']) : '';
+    
+    if (empty($category_slug)) {
+        wp_send_json_error('Category slug is required');
+    }
+    
+    // Path to 2026-results.json in user-meta folder - using ABSPATH pattern like rest of theme
+    $file_path = ABSPATH . 'wp-content/uploads/2026-results.json';
+    
+    // Debug: Check if file exists and is writable
+    if (!file_exists($file_path)) {
+        wp_send_json_error('File does not exist: ' . $file_path);
+    }
+    
+    if (!is_writable($file_path)) {
+        wp_send_json_error('File is not writable: ' . $file_path . ' (permissions: ' . substr(sprintf('%o', fileperms($file_path)), -4) . ')');
+    }
+    
+    // Read existing data or create new structure
+    $data = [
+        'last_updated' => '',
+        'active_category' => '',
+        'past_categories' => []
+    ];
+    
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        error_log('2026-results.json BEFORE write: ' . $content);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    // Update active category and timestamp
+    $data['active_category'] = $category_slug;
+    $data['last_updated'] = current_time('mysql');
+    
+    error_log('Data to be written: ' . print_r($data, true));
+    
+    // Save to file
+    $json_string = json_encode($data, JSON_PRETTY_PRINT);
+    error_log('JSON string to write: ' . $json_string);
+    $bytes_written = file_put_contents($file_path, $json_string);
+    error_log('Bytes written: ' . $bytes_written);
+    
+    // Verify the write
+    if (file_exists($file_path)) {
+        $verify_content = file_get_contents($file_path);
+        error_log('2026-results.json AFTER write: ' . $verify_content);
+    }
+    
+    if ($bytes_written === false) {
+        wp_send_json_error('Failed to write to file: ' . $file_path . ' (bytes: ' . $bytes_written . ')');
+    }
+    
+    wp_send_json_success([
+        'message' => 'Category activated successfully',
+        'data' => $data,
+        'bytes_written' => $bytes_written,
+        'file_path' => $file_path
+    ]);
+}
+add_action('wp_ajax_scoreboard_set_active_category', 'scoreboard_set_active_category');
+
+/**
+ * Get current category display HTML
+ */
+function scoreboard_get_current_category() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    // Start output buffering
+    ob_start();
+    
+    // Read the JSON file to get the current category
+    $json_file = ABSPATH . 'wp-content/uploads/2026-results.json';
+    $current_category_slug = '';
+    $current_category_name = '';
+    
+    if (file_exists($json_file)) {
+        $json_data = json_decode(file_get_contents($json_file), true);
+        $current_category_slug = isset($json_data['active_category']) ? $json_data['active_category'] : '';
+        
+        if ($current_category_slug) {
+            // Get the category term
+            $category_term = get_term_by('slug', $current_category_slug, 'award-categories');
+            if ($category_term && !is_wp_error($category_term)) {
+                $current_category_name = $category_term->name;
+                
+                // Query nominations for this category in 2026
+                $args = array(
+                    'post_type' => 'nominations',
+                    'order' => 'ASC',
+                    'orderby' => 'name',
+                    'posts_per_page' => -1,
+                    'date_query' => array(
+                        array(
+                            'year' => 2026,
+                        ),
+                    ),
+                    'tax_query' => array(
+                        array(
+                            'taxonomy' => 'award-categories',
+                            'field' => 'slug',
+                            'terms' => $current_category_slug,
+                        ),
+                    ),
+                );
+                
+                $nominations_query = new WP_Query($args);
+                
+                // Determine nominee visibility based on category
+                $nominee_visibility = "hidden";
+                if (in_array($current_category_name, ["Actor in a Leading Role", "Actor in a Supporting Role", "Actress in a Leading Role", "Actress in a Supporting Role"])) {
+                    $nominee_visibility = "prominent";
+                } elseif (in_array($current_category_name, ["Directing", "Music (Original Song)", "Music (Original Score)"])) {
+                    $nominee_visibility = "shown";
+                }
+                
+                $is_song = ($current_category_name == "Music (Original Song)");
+                
+                echo '<div class="current-category-display">';
+                echo '<h3 class="category-title">' . esc_html($current_category_name) . '</h3>';
+                
+                if ($nominations_query->have_posts()) {
+                    echo '<ul class="nominations-list nominee_visibility-' . $nominee_visibility . '">';
+                    
+                    while ($nominations_query->have_posts()) {
+                        $nominations_query->the_post();
+                        
+                        $films = get_the_terms(get_the_ID(), 'films');
+                        if (is_array($films) || is_object($films)) {
+                            foreach ($films as $film) {
+                                $nominees = get_the_terms(get_the_ID(), 'nominees');
+                                $categories = get_the_terms(get_the_ID(), 'award-categories');
+                                
+                                $winner = '';
+                                if ($categories && !is_wp_error($categories)) {
+                                    foreach ($categories as $category) {
+                                        if ($category->slug == "winner") {
+                                            $winner = "winner";
+                                        }
+                                    }
+                                }
+                                
+                                $nomination_id = get_the_ID();
+                                
+                                echo '<li id="nomination-' . esc_attr($nomination_id) . '" class="' . $winner . ' film-id-' . $film->term_id;
+                                if ($is_song) {
+                                    echo ' song';
+                                }
+                                echo '" data-film-id="' . $film->term_id . '">';
+                                
+                                echo '<div class="left-section">';
+                                echo '<span class="film-poster">';
+                                $poster = get_field('poster', "films_" . $film->term_id);
+                                
+                                if ($poster) {
+                                    echo '<img src="' . esc_url($poster) . '" alt="' . esc_attr($film->name) . '">';
+                                } else {
+                                    echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32l384 0c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM48 368l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 240l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 112l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16L64 96c-8.8 0-16 7.2-16 16zM416 96c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM160 128l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L192 96c-17.7 0-32 14.3-32 32zm32 160c-17.7 0-32 14.3-32 32l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32l-128 0z"/></svg>';
+                                }
+                                echo '</span>';
+                                
+                                if ($nominee_visibility == "prominent") {
+                                    if (is_array($nominees)) {
+                                        foreach ($nominees as $nominee) {
+                                            echo '<span class="nominee-photo">';
+                                            $photo = get_field('photo', "nominees_" . $nominee->term_id);
+                                            
+                                            if (is_array($photo) && isset($photo['id'])) {
+                                                echo wp_get_attachment_image($photo['id'], 'medium');
+                                            } else {
+                                                echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></svg>';
+                                            }
+                                            echo '</span>';
+                                        }
+                                    }
+                                }
+                                echo '</div>'; // .left-section
+                                
+                                echo '<div class="right-section">';
+                                if ($is_song) {
+                                    echo '<h3 class="song-name">' . esc_html(get_the_title()) . '</h3>';
+                                }
+                                
+                                if ($nominee_visibility == "prominent") {
+                                    echo '<span class="film-name"><p>' . esc_html($film->name) . '</p></span>';
+                                } elseif ($is_song) {
+                                    echo '<span class="film-name"><h4>' . esc_html($film->name) . '</h4></span>';
+                                } else {
+                                    echo '<span class="film-name"><h3>' . esc_html($film->name) . '</h3></span>';
+                                }
+                                
+                                if (!$is_song) {
+                                    echo '<ul class="nominees-name">';
+                                    if (is_array($nominees)) {
+                                        foreach ($nominees as $nominee) {
+                                            if ($nominee_visibility == "prominent") {
+                                                echo '<li><span class="nominee-name"><h3>' . esc_html($nominee->name) . '</h3></span></li>';
+                                            } elseif ($nominee_visibility == "shown") {
+                                                echo '<li><span class="nominee-name">' . esc_html($nominee->name) . '</span></li>';
+                                            }
+                                        }
+                                    }
+                                    echo '</ul>';
+                                }
+                                
+                                echo '</div>'; // .right-section
+                                
+                                echo '</li>';
+                            }
+                        }
+                    }
+                    
+                    echo '</ul>';
+                } else {
+                    echo '<p>No nominations found for this category.</p>';
+                }
+                
+                echo '</div>'; // .current-category-display
+                
+                wp_reset_postdata();
+            } else {
+                echo '<p>Category not found.</p>';
+            }
+        } else {
+            echo '<p>No active category set.</p>';
+        }
+    } else {
+        echo '<p>Results file not found.</p>';
+    }
+    
+    $html = ob_get_clean();
+    
+    wp_send_json_success(['html' => $html]);
+}
+add_action('wp_ajax_scoreboard_get_current_category', 'scoreboard_get_current_category');
+add_action('wp_ajax_nopriv_scoreboard_get_current_category', 'scoreboard_get_current_category');
