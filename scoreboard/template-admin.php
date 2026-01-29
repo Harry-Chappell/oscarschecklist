@@ -237,11 +237,17 @@
 
         <div class="controller interval-control-controller">
             <h2>Interval Control</h2>
-            <p>Set the interval for how often the scoreboard reloads.</p>
+            <p>Set the intervals for how often the admin page and scoreboard reload.</p>
             <div id="interval-control">
-                <label for="interval-input">Reload Interval (seconds):</label>
-                <input type="number" id="interval-input" min="1" step="1" value="5" />
-                <div id="countdown-display">Next reload in: <span id="countdown">5</span>s</div>
+                <div class="interval-setting">
+                    <label for="admin-interval-input">Admin Reload Interval (seconds):</label>
+                    <input type="number" id="admin-interval-input" min="1" step="1" value="5" />
+                    <div id="admin-countdown-display">Next reload in: <span id="admin-countdown">5</span>s</div>
+                </div>
+                <div class="interval-setting">
+                    <label for="scoreboard-interval-input">Scoreboard Reload Interval (seconds):</label>
+                    <input type="number" id="scoreboard-interval-input" min="1" step="1" value="10" />
+                </div>
             </div>
         </div>
         

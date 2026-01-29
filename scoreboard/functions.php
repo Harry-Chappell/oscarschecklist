@@ -95,9 +95,9 @@ add_action('wp_ajax_scoreboard_save_notice', 'scoreboard_save_notice');
 add_action('wp_ajax_nopriv_scoreboard_save_notice', 'scoreboard_save_notice');
 
 /**
- * Update reload interval
+ * Update admin reload interval
  */
-function scoreboard_update_interval() {
+function scoreboard_update_admin_interval() {
     // Verify nonce if provided
     if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
         wp_send_json_error('Invalid nonce');
@@ -112,25 +112,77 @@ function scoreboard_update_interval() {
     $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
     
     // Read existing data
-    $data = ['interval' => 5, 'notices' => []];
+    $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => []];
     if (file_exists($file_path)) {
         $content = file_get_contents($file_path);
         $decoded = json_decode($content, true);
         if (is_array($decoded)) {
             $data = $decoded;
+            // Ensure both intervals exist
+            if (!isset($data['admin_interval'])) {
+                $data['admin_interval'] = isset($data['interval']) ? $data['interval'] : 5;
+            }
+            if (!isset($data['scoreboard_interval'])) {
+                $data['scoreboard_interval'] = 10;
+            }
         }
     }
     
-    // Update interval
-    $data['interval'] = $interval;
+    // Update admin interval
+    $data['admin_interval'] = $interval;
     
     // Save to file
     file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
     
     wp_send_json_success($data);
 }
-add_action('wp_ajax_scoreboard_update_interval', 'scoreboard_update_interval');
-add_action('wp_ajax_nopriv_scoreboard_update_interval', 'scoreboard_update_interval');
+add_action('wp_ajax_scoreboard_update_admin_interval', 'scoreboard_update_admin_interval');
+add_action('wp_ajax_nopriv_scoreboard_update_admin_interval', 'scoreboard_update_admin_interval');
+
+/**
+ * Update scoreboard reload interval
+ */
+function scoreboard_update_scoreboard_interval() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $interval = isset($_POST['interval']) ? intval($_POST['interval']) : 10;
+    
+    if ($interval < 1) {
+        wp_send_json_error('Interval must be at least 1 second');
+    }
+    
+    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    
+    // Read existing data
+    $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => []];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+            // Ensure both intervals exist
+            if (!isset($data['admin_interval'])) {
+                $data['admin_interval'] = isset($data['interval']) ? $data['interval'] : 5;
+            }
+            if (!isset($data['scoreboard_interval'])) {
+                $data['scoreboard_interval'] = 10;
+            }
+        }
+    }
+    
+    // Update scoreboard interval
+    $data['scoreboard_interval'] = $interval;
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_update_scoreboard_interval', 'scoreboard_update_scoreboard_interval');
+add_action('wp_ajax_nopriv_scoreboard_update_scoreboard_interval', 'scoreboard_update_scoreboard_interval');
 
 /**
  * Get all notices from JSON file
@@ -143,12 +195,19 @@ function scoreboard_get_notices() {
     
     $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
     
-    $data = ['interval' => 5, 'notices' => []];
+    $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => []];
     if (file_exists($file_path)) {
         $content = file_get_contents($file_path);
         $decoded = json_decode($content, true);
         if (is_array($decoded)) {
             $data = $decoded;
+            // Ensure both intervals exist for backwards compatibility
+            if (!isset($data['admin_interval'])) {
+                $data['admin_interval'] = isset($data['interval']) ? $data['interval'] : 5;
+            }
+            if (!isset($data['scoreboard_interval'])) {
+                $data['scoreboard_interval'] = 10;
+            }
         }
     }
     

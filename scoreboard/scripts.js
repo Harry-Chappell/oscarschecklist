@@ -11,8 +11,11 @@
     let lastNoticeCount = 0;
     let pollingInterval = null;
     let countdownInterval = null;
-    let currentInterval = 10; // Default to 10 seconds
-    let countdown = 10;
+    let adminInterval = 5; // Default to 5 seconds for admin
+    let scoreboardInterval = 10; // Default to 10 seconds for scoreboard
+    let currentInterval = 5; // Will be set based on page type
+    let countdown = 5;
+    let isAdminPage = false;
     
     // LocalStorage key for dismissed notices
     const DISMISSED_KEY = 'scoreboard_dismissed_notices';
@@ -57,15 +60,27 @@
     function initScoreboard() {
         const form = document.getElementById('notice-form');
         const input = document.getElementById('notice-input');
-        const intervalInput = document.getElementById('interval-input');
+        const adminIntervalInput = document.getElementById('admin-interval-input');
+        const scoreboardIntervalInput = document.getElementById('scoreboard-interval-input');
         const clearAllBtn = document.getElementById('clear-all-notices');
+        
+        // Detect if we're on admin page
+        isAdminPage = !!adminIntervalInput;
+        
+        // Set current interval based on page type
+        currentInterval = isAdminPage ? adminInterval : scoreboardInterval;
+        countdown = currentInterval;
         
         if (form && input) {
             form.addEventListener('submit', handleNoticeSubmit);
         }
         
-        if (intervalInput) {
-            intervalInput.addEventListener('change', handleIntervalChange);
+        if (adminIntervalInput) {
+            adminIntervalInput.addEventListener('change', handleAdminIntervalChange);
+        }
+        
+        if (scoreboardIntervalInput) {
+            scoreboardIntervalInput.addEventListener('change', handleScoreboardIntervalChange);
         }
         
         if (clearAllBtn) {
@@ -121,7 +136,9 @@
      * Update countdown display
      */
     function updateCountdown() {
-        const countdownEl = document.getElementById('countdown');
+        const countdownEl = isAdminPage 
+            ? document.getElementById('admin-countdown') 
+            : document.getElementById('countdown');
         
         if (countdownEl) {
             countdownEl.textContent = countdown;
@@ -129,13 +146,13 @@
     }
     
     /**
-     * Handle interval change - save to server
+     * Handle admin interval change - save to server and update countdown
      */
-    function handleIntervalChange(e) {
+    function handleAdminIntervalChange(e) {
         const newInterval = parseInt(e.target.value);
-        if (newInterval > 0 && newInterval !== currentInterval) {
+        if (newInterval > 0 && newInterval !== adminInterval) {
             const formData = new FormData();
-            formData.append('action', 'scoreboard_update_interval');
+            formData.append('action', 'scoreboard_update_admin_interval');
             formData.append('interval', newInterval);
             formData.append('nonce', scoreboardData.nonce);
             
@@ -146,12 +163,48 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Data will be updated on next load
-                    console.log('Interval updated');
+                    adminInterval = newInterval;
+                    if (isAdminPage) {
+                        currentInterval = adminInterval;
+                        startCountdown();
+                    }
+                    console.log('Admin interval updated');
                 }
             })
             .catch(error => {
-                console.error('Error updating interval:', error);
+                console.error('Error updating admin interval:', error);
+            });
+        }
+    }
+    
+    /**
+     * Handle scoreboard interval change - save to server
+     */
+    function handleScoreboardIntervalChange(e) {
+        const newInterval = parseInt(e.target.value);
+        if (newInterval > 0 && newInterval !== scoreboardInterval) {
+            const formData = new FormData();
+            formData.append('action', 'scoreboard_update_scoreboard_interval');
+            formData.append('interval', newInterval);
+            formData.append('nonce', scoreboardData.nonce);
+            
+            fetch(scoreboardData.ajaxurl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    scoreboardInterval = newInterval;
+                    if (!isAdminPage) {
+                        currentInterval = scoreboardInterval;
+                        startCountdown();
+                    }
+                    console.log('Scoreboard interval updated');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating scoreboard interval:', error);
             });
         }
     }
@@ -285,15 +338,30 @@
                 // Update admin notices list if on admin page
                 renderAdminNoticesList(serverData.notices || []);
                 
-                // Update interval if changed
-                const serverInterval = serverData.interval || 10; // Default to 10 seconds
-                if (serverInterval !== currentInterval) {
-                    currentInterval = serverInterval;
-                    const intervalInput = document.getElementById('interval-input');
-                    if (intervalInput) {
-                        intervalInput.value = currentInterval;
+                // Update intervals if changed
+                const serverAdminInterval = serverData.admin_interval || 5;
+                const serverScoreboardInterval = serverData.scoreboard_interval || 10;
+                
+                if (serverAdminInterval !== adminInterval) {
+                    adminInterval = serverAdminInterval;
+                    const adminIntervalInput = document.getElementById('admin-interval-input');
+                    if (adminIntervalInput) {
+                        adminIntervalInput.value = adminInterval;
                     }
-                    // Restart countdown with new interval
+                }
+                
+                if (serverScoreboardInterval !== scoreboardInterval) {
+                    scoreboardInterval = serverScoreboardInterval;
+                    const scoreboardIntervalInput = document.getElementById('scoreboard-interval-input');
+                    if (scoreboardIntervalInput) {
+                        scoreboardIntervalInput.value = scoreboardInterval;
+                    }
+                }
+                
+                // Update current interval based on page type and restart if changed
+                const newCurrentInterval = isAdminPage ? adminInterval : scoreboardInterval;
+                if (newCurrentInterval !== currentInterval) {
+                    currentInterval = newCurrentInterval;
                     startCountdown();
                 }
             } else {
