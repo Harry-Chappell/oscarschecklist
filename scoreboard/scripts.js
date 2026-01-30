@@ -380,6 +380,9 @@
         
         // Also load current category display
         loadCurrentCategory();
+        
+        // Also load upcoming categories (admin only)
+        loadUpcomingCategories();
     }
     
     /**
@@ -563,6 +566,107 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    
+    /**
+     * Load and update upcoming categories section
+     */
+    function loadUpcomingCategories() {
+        const upcomingController = document.querySelector('.upcoming-categories-controller');
+        
+        // Only proceed if we're on admin page with the upcoming categories controller
+        if (!upcomingController) {
+            return;
+        }
+        
+        const categorySelect = document.getElementById('category-select');
+        const setBtn = document.getElementById('set-category-btn');
+        
+        // Don't update if user is actively interacting with the dropdown or button
+        if (categorySelect && (document.activeElement === categorySelect || 
+            document.activeElement === setBtn)) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_get_upcoming_categories');
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.html) {
+                // Check if there are actual changes before updating
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data.data.html;
+                
+                const newOptions = Array.from(tempDiv.querySelectorAll('#category-select option'))
+                    .map(opt => opt.getAttribute('data-slug')).filter(Boolean);
+                const newChips = Array.from(tempDiv.querySelectorAll('.category-chip'))
+                    .map(chip => chip.getAttribute('data-slug'));
+                
+                const existingSelect = upcomingController.querySelector('#category-select');
+                const existingOptions = existingSelect ? 
+                    Array.from(existingSelect.querySelectorAll('option'))
+                        .map(opt => opt.getAttribute('data-slug')).filter(Boolean) : [];
+                const existingChips = Array.from(upcomingController.querySelectorAll('.category-chip'))
+                    .map(chip => chip.getAttribute('data-slug'));
+                
+                // Check if options or chips have changed
+                const optionsChanged = JSON.stringify(newOptions) !== JSON.stringify(existingOptions);
+                const chipsChanged = JSON.stringify(newChips) !== JSON.stringify(existingChips);
+                
+                if (!optionsChanged && !chipsChanged) {
+                    // No changes, skip update
+                    return;
+                }
+                
+                // Save the current selected value if it exists
+                const currentValue = categorySelect ? categorySelect.value : '';
+                
+                // Find the container that holds the category control and completed chips
+                const existingControl = upcomingController.querySelector('#category-control');
+                const existingCompleted = upcomingController.querySelector('#completed-categories-display');
+                const existingMessage = upcomingController.querySelector('p');
+                
+                // Remove existing elements (but not the description paragraph)
+                if (existingControl) existingControl.remove();
+                if (existingCompleted) existingCompleted.remove();
+                if (existingMessage && existingMessage.textContent.includes('No upcoming')) {
+                    existingMessage.remove();
+                }
+                
+                // Insert the new HTML after the <p> description
+                const description = Array.from(upcomingController.querySelectorAll('p'))
+                    .find(p => p.textContent.includes('Select the current category'));
+                if (description) {
+                    description.insertAdjacentHTML('afterend', data.data.html);
+                } else {
+                    // If no description, append to the controller
+                    upcomingController.insertAdjacentHTML('beforeend', data.data.html);
+                }
+                
+                // Restore the selected value if it still exists in the new dropdown
+                const newSelect = document.getElementById('category-select');
+                if (newSelect && currentValue) {
+                    for (let i = 0; i < newSelect.options.length; i++) {
+                        if (newSelect.options[i].value === currentValue) {
+                            newSelect.value = currentValue;
+                            break;
+                        }
+                    }
+                }
+                
+                // Re-attach event listener for the activate button
+                handleCategoryActivate();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading upcoming categories:', error);
+        });
     }
     
     /**
@@ -787,15 +891,191 @@
         });
     }
     
+    /**
+     * Handle category completion
+     */
+    function handleCategoryComplete() {
+        const completeBtn = document.getElementById('complete-category-btn');
+        
+        if (!completeBtn) return;
+        
+        completeBtn.addEventListener('click', function() {
+            // if (!confirm('Are you sure you want to mark the current category as complete? This will move it to past categories.')) {
+            //     return;
+            // }
+            
+            console.log('Marking current category as complete');
+            
+            // Disable button during request
+            completeBtn.disabled = true;
+            completeBtn.textContent = 'Processing...';
+            
+            // Send AJAX request
+            fetch(scoreboardData.ajaxurl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'scoreboard_complete_category',
+                    nonce: scoreboardData.nonce
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+                if (data.success) {
+                    console.log('✅ Category marked as complete successfully!');
+                    console.log('Response data:', data.data);
+                    
+                    // Hide all category displays
+                    const currentCategoryContainer = document.getElementById('current-category-container');
+                    if (currentCategoryContainer) {
+                        const allDisplays = currentCategoryContainer.querySelectorAll('.current-category-display');
+                        allDisplays.forEach(display => {
+                            display.style.display = 'none';
+                        });
+                    }
+                    
+                    // Update the upcoming categories section
+                    updateUpcomingCategories(data.completed_category);
+                    
+                    // Re-enable and update button text
+                    completeBtn.disabled = false;
+                    completeBtn.textContent = 'Mark Category as Complete';
+                } else {
+                    console.error('❌ Error completing category:', data.data || 'Failed to complete category');
+                    completeBtn.disabled = false;
+                    completeBtn.textContent = 'Mark Category as Complete';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error during category completion:', error);
+                completeBtn.disabled = false;
+                completeBtn.textContent = 'Mark Category as Complete';
+            });
+        });
+    }
+    
+    /**
+     * Update upcoming categories section after completion
+     */
+    function updateUpcomingCategories(completedSlug) {
+        const categorySelect = document.getElementById('category-select');
+        
+        if (!categorySelect) return;
+        
+        // Find and remove the completed category from the dropdown
+        let completedOptionText = '';
+        for (let i = 0; i < categorySelect.options.length; i++) {
+            const option = categorySelect.options[i];
+            if (option.getAttribute('data-slug') === completedSlug) {
+                completedOptionText = option.textContent;
+                categorySelect.remove(i);
+                break;
+            }
+        }
+        
+        // If no completed categories display exists, create it
+        let completedDisplay = document.getElementById('completed-categories-display');
+        if (!completedDisplay && completedOptionText) {
+            completedDisplay = document.createElement('div');
+            completedDisplay.id = 'completed-categories-display';
+            completedDisplay.style.marginTop = '20px';
+            completedDisplay.innerHTML = '<h3>Completed Categories</h3><div class="completed-chips"></div>';
+            
+            const upcomingController = document.querySelector('.upcoming-categories-controller');
+            if (upcomingController) {
+                upcomingController.appendChild(completedDisplay);
+            }
+        }
+        
+        // Add the completed category chip
+        if (completedDisplay && completedOptionText) {
+            const chipsContainer = completedDisplay.querySelector('.completed-chips');
+            if (chipsContainer) {
+                const chip = document.createElement('span');
+                chip.className = 'category-chip';
+                chip.setAttribute('data-slug', completedSlug);
+                chip.textContent = completedOptionText;
+                chipsContainer.appendChild(chip);
+            }
+        }
+    }
+    
+    /**
+     * Handle marking a nomination as winner
+     */
+    function handleMarkWinner() {
+        // Use event delegation for dynamically added buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.mark-winner-btn')) {
+                const btn = e.target.closest('.mark-winner-btn');
+                const nominationId = btn.getAttribute('data-nomination-id');
+                
+                if (!nominationId) {
+                    console.error('No nomination ID found');
+                    return;
+                }
+                
+                console.log('Marking nomination as winner:', nominationId);
+                
+                // Disable button during request
+                btn.disabled = true;
+                
+                // Send AJAX request
+                fetch(scoreboardData.ajaxurl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'scoreboard_mark_winner',
+                        nomination_id: nominationId,
+                        nonce: scoreboardData.nonce
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Server response:', data);
+                    if (data.success) {
+                        console.log('✅ Winner marked successfully!');
+                        console.log('Response data:', data.data);
+                        
+                        // Add visual feedback - add 'winner' class to the nomination
+                        const nominationLi = btn.closest('li');
+                        if (nominationLi) {
+                            nominationLi.classList.add('winner');
+                        }
+                        
+                        // Re-enable button
+                        btn.disabled = false;
+                    } else {
+                        console.error('❌ Error marking winner:', data.data || 'Failed to mark winner');
+                        btn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error during winner marking:', error);
+                    btn.disabled = false;
+                });
+            }
+        });
+    }
+    
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             initScoreboard();
             handleCategoryActivate();
+            handleCategoryComplete();
+            handleMarkWinner();
         });
     } else {
         initScoreboard();
         handleCategoryActivate();
+        handleCategoryComplete();
+        handleMarkWinner();
     }
 
     

@@ -637,3 +637,256 @@ function scoreboard_get_current_category() {
 }
 add_action('wp_ajax_scoreboard_get_current_category', 'scoreboard_get_current_category');
 add_action('wp_ajax_nopriv_scoreboard_get_current_category', 'scoreboard_get_current_category');
+
+/**
+ * Complete current category - move it to past categories
+ */
+function scoreboard_complete_category() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    // Path to 2026-results.json in user-meta folder
+    $file_path = ABSPATH . 'wp-content/uploads/2026-results.json';
+    
+    // Check if file exists
+    if (!file_exists($file_path)) {
+        wp_send_json_error('Results file does not exist: ' . $file_path);
+    }
+    
+    if (!is_writable($file_path)) {
+        wp_send_json_error('File is not writable: ' . $file_path);
+    }
+    
+    // Read existing data
+    $content = file_get_contents($file_path);
+    $data = json_decode($content, true);
+    
+    if (!is_array($data)) {
+        wp_send_json_error('Invalid JSON data in results file');
+    }
+    
+    // Get the current active category
+    $active_category = isset($data['active_category']) ? $data['active_category'] : '';
+    
+    if (empty($active_category)) {
+        wp_send_json_error('No active category to complete');
+    }
+    
+    // Initialize past_categories if it doesn't exist
+    if (!isset($data['past_categories']) || !is_array($data['past_categories'])) {
+        $data['past_categories'] = [];
+    }
+    
+    // Calculate the order number: -(100 + count)
+    // If this is the 1st category completed, order = -101
+    // If this is the 2nd category completed, order = -102
+    // If this is the 3rd category completed, order = -103
+    $category_count = count($data['past_categories']);
+    $order = -1 * (100 + $category_count + 1);
+    
+    // Add the current category to past_categories with the calculated order
+    $data['past_categories'][] = [
+        'slug' => $active_category,
+        'order' => $order,
+        'completed_at' => current_time('mysql')
+    ];
+    
+    // Clear the active category
+    $data['active_category'] = '';
+    
+    // Update timestamp
+    $data['last_updated'] = current_time('mysql');
+    
+    // Save to file
+    $json_string = json_encode($data, JSON_PRETTY_PRINT);
+    $bytes_written = file_put_contents($file_path, $json_string);
+    
+    if ($bytes_written === false) {
+        wp_send_json_error('Failed to write to file: ' . $file_path);
+    }
+    
+    wp_send_json_success([
+        'message' => 'Category marked as complete successfully',
+        'data' => $data,
+        'completed_category' => $active_category,
+        'order' => $order
+    ]);
+}
+add_action('wp_ajax_scoreboard_complete_category', 'scoreboard_complete_category');
+
+/**
+ * Get upcoming categories HTML for dynamic refresh
+ */
+function scoreboard_get_upcoming_categories() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    // Start output buffering
+    ob_start();
+    
+    // Read 2026-results.json to get past categories
+    $json_file = ABSPATH . 'wp-content/uploads/2026-results.json';
+    $past_category_slugs = [];
+    if (file_exists($json_file)) {
+        $json_data = json_decode(file_get_contents($json_file), true);
+        if (isset($json_data['past_categories']) && is_array($json_data['past_categories'])) {
+            foreach ($json_data['past_categories'] as $past_cat) {
+                if (isset($past_cat['slug'])) {
+                    $past_category_slugs[] = $past_cat['slug'];
+                }
+            }
+        }
+    }
+    
+    // Query nominations for 2026
+    $nominations_2026 = get_posts([
+        'post_type'      => 'nominations',
+        'posts_per_page' => -1,
+        'date_query'     => [
+            [
+                'year' => 2026,
+            ],
+        ],
+    ]);
+
+    // Extract unique category IDs from the nominations
+    $category_ids = [];
+    foreach ($nominations_2026 as $nomination) {
+        $post_categories = wp_get_post_terms($nomination->ID, 'award-categories', ['fields' => 'ids']);
+        $category_ids = array_merge($category_ids, $post_categories);
+    }
+    $category_ids = array_unique($category_ids);
+
+    // Fetch the categories with those IDs
+    $categories = get_terms([
+        'taxonomy'   => 'award-categories',
+        'hide_empty' => false,
+        'include'    => $category_ids,
+        'orderby'    => 'name',
+        'order'      => 'ASC',
+    ]);
+    
+    // Filter out past categories and 'winner' category
+    $upcoming_categories = [];
+    $completed_categories = [];
+    if (!empty($categories) && !is_wp_error($categories)) {
+        foreach ($categories as $category) {
+            if ($category->slug === 'winner') continue;
+            
+            if (in_array($category->slug, $past_category_slugs)) {
+                $completed_categories[] = $category;
+            } else {
+                $upcoming_categories[] = $category;
+            }
+        }
+    }
+
+    if (!empty($upcoming_categories)) :
+    ?>
+        <div id="category-control">
+            <label for="category-select">Select New Current Category:</label>
+            <select id="category-select">
+                <option value="">-- Select a category --</option>
+                <?php foreach ($upcoming_categories as $category) : ?>
+                    <option value="<?php echo esc_attr($category->term_id); ?>" data-slug="<?php echo esc_attr($category->slug); ?>">
+                        <?php echo esc_html($category->name); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <button type="button" id="set-category-btn">Activate</button>
+        </div>
+    <?php else : ?>
+        <p>No upcoming categories found.</p>
+    <?php endif; ?>
+    
+    <?php if (!empty($completed_categories)) : ?>
+        <div id="completed-categories-display" style="margin-top: 20px;">
+            <h3>Completed Categories</h3>
+            <div class="completed-chips">
+                <?php foreach ($completed_categories as $category) : ?>
+                    <span class="category-chip" data-slug="<?php echo esc_attr($category->slug); ?>">
+                        <?php echo esc_html($category->name); ?>
+                    </span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+    
+    <?php
+    $html = ob_get_clean();
+    
+    wp_send_json_success(['html' => $html]);
+}
+add_action('wp_ajax_scoreboard_get_upcoming_categories', 'scoreboard_get_upcoming_categories');
+add_action('wp_ajax_nopriv_scoreboard_get_upcoming_categories', 'scoreboard_get_upcoming_categories');
+
+/**
+ * Mark a nomination as winner in 2026-results.json
+ */
+function scoreboard_mark_winner() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $nomination_id = isset($_POST['nomination_id']) ? intval($_POST['nomination_id']) : 0;
+    
+    if (!$nomination_id) {
+        wp_send_json_error('Nomination ID is required');
+    }
+    
+    // Path to 2026-results.json
+    $file_path = ABSPATH . 'wp-content/uploads/2026-results.json';
+    
+    // Check if file exists
+    if (!file_exists($file_path)) {
+        wp_send_json_error('Results file does not exist: ' . $file_path);
+    }
+    
+    if (!is_writable($file_path)) {
+        wp_send_json_error('File is not writable: ' . $file_path);
+    }
+    
+    // Read existing data
+    $content = file_get_contents($file_path);
+    $data = json_decode($content, true);
+    
+    if (!is_array($data)) {
+        wp_send_json_error('Invalid JSON data in results file');
+    }
+    
+    // Initialize winners array if it doesn't exist
+    if (!isset($data['winners']) || !is_array($data['winners'])) {
+        $data['winners'] = [];
+    }
+    
+    // Check if this nomination is already marked as winner
+    if (in_array($nomination_id, $data['winners'])) {
+        wp_send_json_error('This nomination is already marked as winner');
+    }
+    
+    // Add the nomination ID to winners
+    $data['winners'][] = $nomination_id;
+    
+    // Update timestamp
+    $data['last_updated'] = current_time('mysql');
+    
+    // Save to file
+    $json_string = json_encode($data, JSON_PRETTY_PRINT);
+    $bytes_written = file_put_contents($file_path, $json_string);
+    
+    if ($bytes_written === false) {
+        wp_send_json_error('Failed to write to file: ' . $file_path);
+    }
+    
+    wp_send_json_success([
+        'message' => 'Winner marked successfully',
+        'data' => $data,
+        'nomination_id' => $nomination_id
+    ]);
+}
+add_action('wp_ajax_scoreboard_mark_winner', 'scoreboard_mark_winner');

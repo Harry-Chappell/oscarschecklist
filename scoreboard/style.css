@@ -167,7 +167,7 @@ section.right {
 
 #progress-bar {
     height: 100%;
-    background: linear-gradient(to right, var(--theme-palette-color-7) calc(100% - 100px), var(--theme-palette-color-1));
+    background: linear-gradient(to right, var(--theme-palette-color-7) calc(100% - 100px), var(--theme-palette-color-6));
     width: 0;
     animation: progress-animation 10s linear;
 }
@@ -833,4 +833,21 @@ div#interval-control {
 .current-category-display .nominations-list > li.winner {
     border-color: var(--theme-palette-color-1);
     background: color-mix(in oklab, var(--theme-palette-color-1) 10%, var(--theme-palette-color-4) 5%);
+}
+
+.controller.current-category-controller > div {
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.completed-chips {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 5px;
+}
+.category-chip {
+    font-size: 12px;
+    background: var(--theme-palette-color-6);
+    padding: 3px 7px 0;
 }
