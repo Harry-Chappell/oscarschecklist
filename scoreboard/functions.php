@@ -185,6 +185,46 @@ add_action('wp_ajax_scoreboard_update_scoreboard_interval', 'scoreboard_update_s
 add_action('wp_ajax_nopriv_scoreboard_update_scoreboard_interval', 'scoreboard_update_scoreboard_interval');
 
 /**
+ * Update event status
+ */
+function scoreboard_update_event_status() {
+    // Verify nonce if provided
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : 'welcome';
+    
+    // Validate status value
+    $valid_statuses = ['welcome', 'in-progress', 'finished'];
+    if (!in_array($status, $valid_statuses)) {
+        wp_send_json_error('Invalid status value');
+    }
+    
+    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    
+    // Read existing data
+    $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => [], 'event_status' => 'welcome'];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    // Update event status
+    $data['event_status'] = $status;
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_update_event_status', 'scoreboard_update_event_status');
+add_action('wp_ajax_nopriv_scoreboard_update_event_status', 'scoreboard_update_event_status');
+
+/**
  * Get all notices from JSON file
  */
 function scoreboard_get_notices() {

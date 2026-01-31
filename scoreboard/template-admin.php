@@ -319,7 +319,30 @@
 
         <div class="controller event-status-controller">
             <h2>Set Event Status</h2>
-            <p></p>
+            <p>Set the current status of the event.</p>
+            <?php
+            // Load current event status from JSON
+            $json_file = get_stylesheet_directory() . '/scoreboard/testing.json';
+            $current_event_status = 'welcome'; // default
+            if (file_exists($json_file)) {
+                $json_data = json_decode(file_get_contents($json_file), true);
+                if (isset($json_data['event_status'])) {
+                    $current_event_status = $json_data['event_status'];
+                }
+            }
+            ?>
+            <div id="current-event-status-display" style="margin-bottom: 15px;">
+                <strong>Current Status:</strong> <span id="current-event-status-text"><?php echo esc_html(ucwords(str_replace('-', ' ', $current_event_status))); ?></span>
+            </div>
+            <form id="event-status-form">
+                <label for="event-status-select">Event Status:</label>
+                <select id="event-status-select" required>
+                    <option value="welcome" <?php selected($current_event_status, 'welcome'); ?>>Welcome</option>
+                    <option value="in-progress" <?php selected($current_event_status, 'in-progress'); ?>>In Progress</option>
+                    <option value="finished" <?php selected($current_event_status, 'finished'); ?>>Finished</option>
+                </select>
+                <button type="submit">Update Status</button>
+            </form>
         </div>
 
     </section>

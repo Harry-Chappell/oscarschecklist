@@ -63,6 +63,7 @@
         const adminIntervalInput = document.getElementById('admin-interval-input');
         const scoreboardIntervalInput = document.getElementById('scoreboard-interval-input');
         const clearAllBtn = document.getElementById('clear-all-notices');
+        const eventStatusForm = document.getElementById('event-status-form');
         
         // Detect if we're on admin page
         isAdminPage = !!adminIntervalInput;
@@ -85,6 +86,10 @@
         
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', handleClearAllNotices);
+        }
+        
+        if (eventStatusForm) {
+            eventStatusForm.addEventListener('submit', handleEventStatusSubmit);
         }
         
         // Load initial data
@@ -206,6 +211,64 @@
             .catch(error => {
                 console.error('Error updating scoreboard interval:', error);
             });
+        }
+    }
+    
+    /**
+     * Handle event status form submission
+     */
+    function handleEventStatusSubmit(e) {
+        e.preventDefault();
+        
+        const select = document.getElementById('event-status-select');
+        const status = select.value;
+        
+        if (!status) return;
+        
+        // Disable form while submitting
+        select.disabled = true;
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_update_event_status');
+        formData.append('status', status);
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Event status updated to:', status);
+                // Update the display immediately
+                updateEventStatusDisplay(status);
+            } else {
+                console.error('Error saving event status:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            select.disabled = false;
+            if (submitBtn) submitBtn.disabled = false;
+        });
+    }
+    
+    /**
+     * Update event status display
+     */
+    function updateEventStatusDisplay(status) {
+        const statusText = document.getElementById('current-event-status-text');
+        if (statusText) {
+            // Convert "in-progress" to "In Progress", etc.
+            const displayText = status.split('-').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            statusText.textContent = displayText;
         }
     }
     
@@ -356,6 +419,11 @@
                     if (scoreboardIntervalInput) {
                         scoreboardIntervalInput.value = scoreboardInterval;
                     }
+                }
+                
+                // Update event status display if present (not the dropdown)
+                if (serverData.event_status) {
+                    updateEventStatusDisplay(serverData.event_status);
                 }
                 
                 // Update current interval based on page type and restart if changed
