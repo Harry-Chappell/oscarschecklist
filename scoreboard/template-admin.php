@@ -322,7 +322,7 @@
             <p>Set the current status of the event.</p>
             <?php
             // Load current event status from JSON
-            $json_file = get_stylesheet_directory() . '/scoreboard/testing.json';
+            $json_file = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
             $current_event_status = 'welcome'; // default
             if (file_exists($json_file)) {
                 $json_data = json_decode(file_get_contents($json_file), true);
@@ -344,6 +344,8 @@
                 <button type="submit">Update Status</button>
             </form>
         </div>
+
+        <div class="controller danger-zone"></div>
 
     </section>
     <footer>

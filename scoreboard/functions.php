@@ -67,7 +67,7 @@ function scoreboard_save_notice() {
         wp_send_json_error('Message is required');
     }
     
-    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
     
     // Read existing data
     $data = ['interval' => 5, 'notices' => []];
@@ -109,7 +109,7 @@ function scoreboard_update_admin_interval() {
         wp_send_json_error('Interval must be at least 1 second');
     }
     
-    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
     
     // Read existing data
     $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => []];
@@ -154,7 +154,7 @@ function scoreboard_update_scoreboard_interval() {
         wp_send_json_error('Interval must be at least 1 second');
     }
     
-    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
     
     // Read existing data
     $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => []];
@@ -201,7 +201,7 @@ function scoreboard_update_event_status() {
         wp_send_json_error('Invalid status value');
     }
     
-    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
     
     // Read existing data
     $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => [], 'event_status' => 'welcome'];
@@ -233,7 +233,7 @@ function scoreboard_get_notices() {
         wp_send_json_error('Invalid nonce');
     }
     
-    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
     
     $data = ['admin_interval' => 5, 'scoreboard_interval' => 10, 'notices' => []];
     if (file_exists($file_path)) {
@@ -271,7 +271,7 @@ function scoreboard_delete_notice() {
         wp_send_json_error('Timestamp is required');
     }
     
-    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
     
     $data = ['interval' => 5, 'notices' => []];
     if (file_exists($file_path)) {
@@ -303,7 +303,7 @@ function scoreboard_clear_all_notices() {
         wp_send_json_error('Invalid nonce');
     }
     
-    $file_path = get_stylesheet_directory() . '/scoreboard/testing.json';
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
     
     $data = ['interval' => 5, 'notices' => []];
     if (file_exists($file_path)) {
