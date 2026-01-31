@@ -92,6 +92,28 @@
             eventStatusForm.addEventListener('submit', handleEventStatusSubmit);
         }
         
+        // Danger zone controls
+        const testingModeCheckbox = document.getElementById('testing-mode-checkbox');
+        const forceRefreshBtn = document.getElementById('force-refresh-btn');
+        const resetResultsBtn = document.getElementById('reset-results-btn');
+        const resetSettingsBtn = document.getElementById('reset-settings-btn');
+        
+        if (testingModeCheckbox) {
+            testingModeCheckbox.addEventListener('change', handleTestingModeChange);
+        }
+        
+        if (forceRefreshBtn) {
+            forceRefreshBtn.addEventListener('click', handleForceRefresh);
+        }
+        
+        if (resetResultsBtn) {
+            resetResultsBtn.addEventListener('click', handleResetResults);
+        }
+        
+        if (resetSettingsBtn) {
+            resetSettingsBtn.addEventListener('click', handleResetSettings);
+        }
+        
         // Load initial data
         loadData();
         
@@ -367,6 +389,171 @@
         })
         .catch(error => {
             console.error('Error:', error);
+        });
+    }
+    
+    /**
+     * Handle testing mode toggle
+     */
+    function handleTestingModeChange(e) {
+        const isEnabled = e.target.checked;
+        
+        e.target.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_toggle_testing');
+        formData.append('testing', isEnabled ? '1' : '0');
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Testing mode:', isEnabled ? 'enabled' : 'disabled');
+            } else {
+                console.error('Error toggling testing mode:', data);
+                // Revert checkbox on error
+                e.target.checked = !isEnabled;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Revert checkbox on error
+            e.target.checked = !isEnabled;
+        })
+        .finally(() => {
+            e.target.disabled = false;
+        });
+    }
+    
+    /**
+     * Handle force refresh button
+     */
+    function handleForceRefresh() {
+        if (!confirm('This will force all scoreboard clients to refresh in 10 seconds. Continue?')) {
+            return;
+        }
+        
+        const btn = document.getElementById('force-refresh-btn');
+        btn.disabled = true;
+        btn.textContent = 'Sending refresh signal...';
+        
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_force_refresh');
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Force refresh signal sent! All clients will refresh in 10 seconds.');
+            } else {
+                alert('Error sending refresh signal: ' + (data.data || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error sending refresh signal');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = 'Force Refresh All Clients';
+        });
+    }
+    
+    /**
+     * Handle reset results button
+     */
+    function handleResetResults() {
+        if (!confirm('⚠️ WARNING: This will RESET ALL 2026 results including winners and category progress.\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?')) {
+            return;
+        }
+        
+        // Double confirmation for destructive action
+        if (!confirm('Last chance! Click OK to permanently delete all 2026 results.')) {
+            return;
+        }
+        
+        const btn = document.getElementById('reset-results-btn');
+        btn.disabled = true;
+        btn.textContent = 'Resetting...';
+        
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_reset_results');
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('2026 results have been reset successfully.');
+                // Reload the page to reflect changes
+                window.location.reload();
+            } else {
+                alert('Error resetting results: ' + (data.data || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error resetting results');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = 'Reset 2026 Results';
+        });
+    }
+    
+    /**
+     * Handle reset settings button
+     */
+    function handleResetSettings() {
+        if (!confirm('⚠️ WARNING: This will RESET ALL scoreboard settings including:\n- All notices\n- Reload intervals\n- Event status\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?')) {
+            return;
+        }
+        
+        // Double confirmation for destructive action
+        if (!confirm('Last chance! Click OK to permanently reset all settings.')) {
+            return;
+        }
+        
+        const btn = document.getElementById('reset-settings-btn');
+        btn.disabled = true;
+        btn.textContent = 'Resetting...';
+        
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_reset_settings');
+        formData.append('nonce', scoreboardData.nonce);
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Scoreboard settings have been reset successfully.');
+                // Reload the page to reflect changes
+                window.location.reload();
+            } else {
+                alert('Error resetting settings: ' + (data.data || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error resetting settings');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = 'Reset Scoreboard Settings';
         });
     }
     

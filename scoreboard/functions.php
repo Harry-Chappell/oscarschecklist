@@ -930,3 +930,126 @@ function scoreboard_mark_winner() {
     ]);
 }
 add_action('wp_ajax_scoreboard_mark_winner', 'scoreboard_mark_winner');
+/**
+ * Toggle testing mode
+ */
+function scoreboard_toggle_testing() {
+    // Verify nonce
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $testing = isset($_POST['testing']) && $_POST['testing'] === '1';
+    
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
+    
+    // Read existing data
+    $data = ['notices' => [], 'admin_interval' => 10, 'scoreboard_interval' => 30, 'event_status' => 'welcome'];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    // Update testing mode
+    $data['testing'] = $testing;
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success(['testing' => $testing]);
+}
+add_action('wp_ajax_scoreboard_toggle_testing', 'scoreboard_toggle_testing');
+
+/**
+ * Force refresh all clients
+ */
+function scoreboard_force_refresh() {
+    // Verify nonce
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
+    
+    // Read existing data
+    $data = ['notices' => [], 'admin_interval' => 10, 'scoreboard_interval' => 30, 'event_status' => 'welcome'];
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+    
+    // Set force refresh timestamp to 10 seconds in the future
+    $data['force_refresh'] = time() + 10;
+    
+    // Save to file
+    file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    wp_send_json_success(['force_refresh' => $data['force_refresh']]);
+}
+add_action('wp_ajax_scoreboard_force_refresh', 'scoreboard_force_refresh');
+
+/**
+ * Reset 2026 results
+ */
+function scoreboard_reset_results() {
+    // Verify nonce
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $file_path = ABSPATH . 'wp-content/uploads/2026-results.json';
+    
+    // Reset to default structure
+    $data = [
+        'last_updated' => '',
+        'active_category' => '',
+        'past_categories' => [],
+        'winners' => []
+    ];
+    
+    // Save to file
+    $result = file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    if ($result === false) {
+        wp_send_json_error('Failed to write to file');
+    }
+    
+    wp_send_json_success(['message' => '2026 results have been reset']);
+}
+add_action('wp_ajax_scoreboard_reset_results', 'scoreboard_reset_results');
+
+/**
+ * Reset scoreboard settings
+ */
+function scoreboard_reset_settings() {
+    // Verify nonce
+    if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'scoreboard_nonce')) {
+        wp_send_json_error('Invalid nonce');
+    }
+    
+    $file_path = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
+    
+    // Reset to default structure
+    $data = [
+        'notices' => [],
+        'admin_interval' => 10,
+        'scoreboard_interval' => 30,
+        'event_status' => 'welcome'
+    ];
+    
+    // Save to file
+    $result = file_put_contents($file_path, json_encode($data, JSON_PRETTY_PRINT));
+    
+    if ($result === false) {
+        wp_send_json_error('Failed to write to file');
+    }
+    
+    wp_send_json_success(['message' => 'Scoreboard settings have been reset']);
+}
+add_action('wp_ajax_scoreboard_reset_settings', 'scoreboard_reset_settings');

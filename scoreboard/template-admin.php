@@ -5,7 +5,7 @@
     <section class="admin-controls">
 
         <div class="controller upcoming-categories-controller">
-            <h2>Upcoming Categories</h2>
+            <h2>📅 Upcoming Categories 📅</h2>
             <p>Select the current category being announced.</p>
             <?php
             // Read 2026-results.json to get past categories
@@ -98,7 +98,7 @@
         </div>
 
         <div class="controller current-category-controller">
-            <h2>Current Category</h2>
+            <h2>🏆 Current Category 🏆</h2>
             <button type="button" id="complete-category-btn" class="complete-btn" style="margin-bottom: 15px;">Mark Category as Complete</button>
             <div id="current-category-container">
             <?php
@@ -285,7 +285,7 @@
         </div>
 
         <div class="controller interval-control-controller">
-            <h2>Interval Control</h2>
+            <h2>⏱️ Interval Control ⏱️</h2>
             <p>Set the intervals for how often the admin page and scoreboard reload.</p>
             <div id="interval-control">
                 <div class="interval-setting">
@@ -301,7 +301,7 @@
         </div>
         
         <div class="controller notice-posting-controller">
-            <h2>Post a Notice</h2>
+            <h2>📢 Post a Notice 📢</h2>
             <p>Post a new notice to be displayed on the scoreboard.</p>
             <form id="notice-form">
                 <input type="text" id="notice-input" placeholder="Type your notice..." required />
@@ -318,7 +318,7 @@
         </div>
 
         <div class="controller event-status-controller">
-            <h2>Set Event Status</h2>
+            <h2>🚦 Set Event Status 🚦</h2>
             <p>Set the current status of the event.</p>
             <?php
             // Load current event status from JSON
@@ -345,7 +345,45 @@
             </form>
         </div>
 
-        <div class="controller danger-zone"></div>
+        <div class="controller danger-zone">
+            <h2>⚠️ Danger Zone ⚠️</h2>
+            <p>Advanced controls - use with caution!</p>
+            
+            <?php
+            // Load current testing mode from JSON
+            $json_file = ABSPATH . 'wp-content/uploads/scoreboard_settings.json';
+            $testing_mode = false;
+            if (file_exists($json_file)) {
+                $json_data = json_decode(file_get_contents($json_file), true);
+                if (isset($json_data['testing'])) {
+                    $testing_mode = $json_data['testing'];
+                }
+            }
+            ?>
+            
+            <div class="danger-zone-control">
+                <label>
+                    <input type="checkbox" id="testing-mode-checkbox" <?php checked($testing_mode, true); ?>>
+                    <strong>Testing Mode</strong>
+                </label>
+                <p class="control-description">Enable testing features and debugging information</p>
+            </div>
+            
+            <div class="danger-zone-control">
+                <button type="button" id="force-refresh-btn" class="danger-btn">Force Refresh All Clients</button>
+                <p class="control-description">Forces all scoreboard clients to refresh in 10 seconds</p>
+            </div>
+            
+            <div class="danger-zone-control">
+                <button type="button" id="reset-results-btn" class="danger-btn">Reset 2026 Results</button>
+                <p class="control-description">Clears all winners and category progress for 2026</p>
+            </div>
+            
+            <div class="danger-zone-control">
+                <button type="button" id="reset-settings-btn" class="danger-btn">Reset Scoreboard Settings</button>
+                <p class="control-description">Resets all scoreboard settings to defaults (notices, intervals, event status)</p>
+            </div>
+        </div>
 
     </section>
     <footer>

@@ -658,6 +658,8 @@ div#main-scoreboard-container > section.admin-controls {
     padding: 10px;
     background-color: var(--theme-palette-color-7);
     width: calc((100% - 40px) / 3);
+    height: calc((100% - 20px) / 2);
+    overflow: auto;
 }
 .controller h2 {
     margin: 0;
