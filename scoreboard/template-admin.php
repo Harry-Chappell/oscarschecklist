@@ -68,16 +68,18 @@
             if (!empty($upcoming_categories)) :
             ?>
                 <div id="category-control">
-                    <label for="category-select">Select New Current Category:</label>
-                    <select id="category-select">
-                        <option value="">-- Select a category --</option>
-                        <?php foreach ($upcoming_categories as $category) : ?>
-                            <option value="<?php echo esc_attr($category->term_id); ?>" data-slug="<?php echo esc_attr($category->slug); ?>">
-                                <?php echo esc_html($category->name); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <button type="button" id="set-category-btn">Activate</button>
+                    <!-- <label for="category-select">Select New Current Category:</label> -->
+                     <form>
+                        <select id="category-select">
+                            <option value="">-- Select a category --</option>
+                            <?php foreach ($upcoming_categories as $category) : ?>
+                                <option value="<?php echo esc_attr($category->term_id); ?>" data-slug="<?php echo esc_attr($category->slug); ?>">
+                                    <?php echo esc_html($category->name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="button" id="set-category-btn">Activate</button>
+                    </form>
                 </div>
             <?php else : ?>
                 <p>No upcoming categories found.</p>
@@ -287,26 +289,25 @@
         <div class="controller interval-control-controller">
             <h2>⏱️ Interval Control ⏱️</h2>
             <p>Set the intervals for how often the admin page and scoreboard reload.</p>
-            <div id="interval-control">
-                <div class="interval-setting">
-                    <label for="admin-interval-input">Admin Reload Interval (seconds):</label>
-                    <input type="number" id="admin-interval-input" min="1" step="1" value="5" />
-                    <div id="admin-countdown-display">Next reload in: <span id="admin-countdown">5</span>s</div>
-                </div>
-                <div class="interval-setting">
-                    <label for="scoreboard-interval-input">Scoreboard Reload Interval (seconds):</label>
-                    <input type="number" id="scoreboard-interval-input" min="1" step="1" value="10" />
-                </div>
+            <div class="interval-setting">
+                <label for="admin-interval-input">Admin Interval:</label>
+                <input type="number" id="admin-interval-input" min="1" step="1" value="5" />
+            </div>
+            <div class="interval-setting">
+                <label for="scoreboard-interval-input">Scoreboard Interval:</label>
+                <input type="number" id="scoreboard-interval-input" min="1" step="1" value="10" />
             </div>
         </div>
         
         <div class="controller notice-posting-controller">
             <h2>📢 Post a Notice 📢</h2>
             <p>Post a new notice to be displayed on the scoreboard.</p>
-            <form id="notice-form">
-                <input type="text" id="notice-input" placeholder="Type your notice..." required />
-                <button type="submit">Post</button>
-            </form>
+            <div>
+                <form id="notice-form">
+                    <input type="text" id="notice-input" placeholder="Type your notice..." required />
+                    <button type="submit">Post</button>
+                </form>
+            </div>
             
             <details id="admin-notices-section">
                 <summary>Manage Current Notices (<span id="notice-count">0</span>)</summary>
@@ -388,6 +389,7 @@
     </section>
     <footer>
         <div id="progress-bar-container">
+            <div id="admin-countdown-display">Next reload in: <span id="admin-countdown">5</span>s</div>
             <div id="progress-bar"></div>
         </div>
     </footer>

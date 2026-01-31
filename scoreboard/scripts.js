@@ -100,6 +100,10 @@
         
         if (testingModeCheckbox) {
             testingModeCheckbox.addEventListener('change', handleTestingModeChange);
+            // Apply testing class to body if checkbox is checked on page load
+            if (testingModeCheckbox.checked) {
+                document.body.classList.add('testing');
+            }
         }
         
         if (forceRefreshBtn) {
@@ -400,6 +404,13 @@
         
         e.target.disabled = true;
         
+        // Toggle testing class on body
+        if (isEnabled) {
+            document.body.classList.add('testing');
+        } else {
+            document.body.classList.remove('testing');
+        }
+        
         const formData = new FormData();
         formData.append('action', 'scoreboard_toggle_testing');
         formData.append('testing', isEnabled ? '1' : '0');
@@ -415,14 +426,24 @@
                 console.log('Testing mode:', isEnabled ? 'enabled' : 'disabled');
             } else {
                 console.error('Error toggling testing mode:', data);
-                // Revert checkbox on error
+                // Revert checkbox and body class on error
                 e.target.checked = !isEnabled;
+                if (isEnabled) {
+                    document.body.classList.remove('testing');
+                } else {
+                    document.body.classList.add('testing');
+                }
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            // Revert checkbox on error
+            // Revert checkbox and body class on error
             e.target.checked = !isEnabled;
+            if (isEnabled) {
+                document.body.classList.remove('testing');
+            } else {
+                document.body.classList.add('testing');
+            }
         })
         .finally(() => {
             e.target.disabled = false;

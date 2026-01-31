@@ -828,16 +828,18 @@ function scoreboard_get_upcoming_categories() {
     if (!empty($upcoming_categories)) :
     ?>
         <div id="category-control">
-            <label for="category-select">Select New Current Category:</label>
-            <select id="category-select">
-                <option value="">-- Select a category --</option>
-                <?php foreach ($upcoming_categories as $category) : ?>
-                    <option value="<?php echo esc_attr($category->term_id); ?>" data-slug="<?php echo esc_attr($category->slug); ?>">
-                        <?php echo esc_html($category->name); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <button type="button" id="set-category-btn">Activate</button>
+            <!-- <label for="category-select">Select New Current Category:</label> -->
+             <form>
+                <select id="category-select">
+                    <option value="">-- Select a category --</option>
+                    <?php foreach ($upcoming_categories as $category) : ?>
+                        <option value="<?php echo esc_attr($category->term_id); ?>" data-slug="<?php echo esc_attr($category->slug); ?>">
+                            <?php echo esc_html($category->name); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" id="set-category-btn">Activate</button>
+            </form>
         </div>
     <?php else : ?>
         <p>No upcoming categories found.</p>
