@@ -950,9 +950,10 @@
      */
     function loadCurrentCategory() {
         const currentCategoryContainer = document.getElementById('current-category-container');
+        const categoriesSection = document.getElementById('categories');
         
-        // Only proceed if we're on a page with the current category container
-        if (!currentCategoryContainer) {
+        // Only proceed if we're on a page with the current category container or categories section
+        if (!currentCategoryContainer && !categoriesSection) {
             return;
         }
         
@@ -962,19 +963,52 @@
             .then(data => {
                 const activeCategory = data.active_category;
                 
-                if (activeCategory) {
-                    // Hide all category displays
-                    const allDisplays = currentCategoryContainer.querySelectorAll('.current-category-display');
-                    allDisplays.forEach(display => {
-                        display.classList.add('hidden');
-                        display.classList.remove('active');
+                // Handle current-category-container (admin page)
+                if (currentCategoryContainer) {
+                    if (activeCategory) {
+                        // Hide all category displays
+                        const allDisplays = currentCategoryContainer.querySelectorAll('.current-category-display');
+                        allDisplays.forEach(display => {
+                            display.classList.add('hidden');
+                            display.classList.remove('active');
+                        });
+                        
+                        // Show the active category display
+                        const activeDisplay = currentCategoryContainer.querySelector(`.current-category-display[data-category-slug="${activeCategory}"]`);
+                        if (activeDisplay) {
+                            activeDisplay.classList.remove('hidden');
+                            activeDisplay.classList.add('active');
+                        }
+                    }
+                }
+                
+                // Handle #categories section (main scoreboard)
+                if (categoriesSection) {
+                    // First, remove 'active' and 'past' classes from all categories
+                    const allCategories = categoriesSection.querySelectorAll('.awards-category');
+                    allCategories.forEach(category => {
+                        category.classList.remove('active', 'past');
+                        // Reset inline order style
+                        category.style.order = '';
                     });
                     
-                    // Show the active category display
-                    const activeDisplay = currentCategoryContainer.querySelector(`.current-category-display[data-category-slug="${activeCategory}"]`);
-                    if (activeDisplay) {
-                        activeDisplay.classList.remove('hidden');
-                        activeDisplay.classList.add('active');
+                    // If there's an active category, add 'active' class to it
+                    if (activeCategory) {
+                        const activeElement = categoriesSection.querySelector(`.awards-category[data-category-slug="${activeCategory}"]`);
+                        if (activeElement) {
+                            activeElement.classList.add('active');
+                        }
+                    }
+                    
+                    // Apply order values and 'past' class to past categories
+                    if (data.past_categories && Array.isArray(data.past_categories)) {
+                        data.past_categories.forEach(pastCategory => {
+                            const pastElement = categoriesSection.querySelector(`.awards-category[data-category-slug="${pastCategory.slug}"]`);
+                            if (pastElement && pastCategory.order !== undefined) {
+                                pastElement.style.order = pastCategory.order;
+                                pastElement.classList.add('past');
+                            }
+                        });
                     }
                 }
             })

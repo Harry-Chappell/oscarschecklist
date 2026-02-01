@@ -721,10 +721,10 @@ function scoreboard_complete_category() {
     
     // Calculate the order number: -(100 + count)
     // If this is the 1st category completed, order = -101
-    // If this is the 2nd category completed, order = -102
-    // If this is the 3rd category completed, order = -103
+    // If this is the 2nd category completed, order = -100
+    // If this is the 3rd category completed, order = -99
     $category_count = count($data['past_categories']);
-    $order = -1 * (100 + $category_count + 1);
+    $order = -1 * (101 - $category_count);
     
     // Add the current category to past_categories with the calculated order
     $data['past_categories'][] = [

@@ -1,7 +1,6 @@
 <div id="main-scoreboard-container">
     <header>
         <h1>Oscars Scoreboard</h1>
-        <p>Under Exciting Construction!</p>
     </header>
     <section id="friends" class="border-r p-20">
         <ul id="friends-list">
@@ -394,6 +393,7 @@
         ?>
     </section>
     <footer>
+        <div id="countdown-display">Next reload in: <span id="countdown">30</span>s</div>
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
         </div>

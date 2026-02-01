@@ -21,19 +21,20 @@ div#main-scoreboard-container > footer {
 }
 div#main-scoreboard-container > header {
     border-bottom: 1px solid var(--theme-palette-color-6);
-    margin-bottom: 10px;
+    /* margin-bottom: 10px; */
 }
 div#main-scoreboard-container > footer {
     border-top: 1px solid var(--theme-palette-color-6);
-    margin-top: 10px;
+    /* margin-top: 10px; */
     height: 50px;
 }
 div#main-scoreboard-container > section {
     width: calc(100% / 3);
-    max-height: calc(100vh - var(--admin-bar) - 170px);
+    max-height: calc(100vh - var(--admin-bar) - 150px);
     display: flex;
     height: 100vh;
-    overflow: scroll;
+    overflow-y: scroll;
+    overflow-x: hidden;
     position: relative;
 }
 div#main-scoreboard-container > section.full-width {
@@ -207,6 +208,16 @@ section.right {
         gap: 10px;
         margin-bottom: 0px !important;
     }
+    ul.nominations-list.category-best-picture {
+        flex-flow: row wrap;
+    }
+    ul.nominations-list.category-best-picture > li {
+        width: calc((100% - 10px) / 2);
+    }
+    ul.nominations-list.category-best-picture h3 {
+        font-size: 12px;
+        line-height: 1;
+    }
     ul.nominations-list > li {
         flex-flow: column wrap;
         padding: 0;
@@ -379,14 +390,122 @@ section.right {
     }
     .awards-category.active,
     .awards-category.awarded {
-        border: 1px solid var(--theme-palette-color-1);
+        /* background: var(--theme-palette-color-2); */
         order: -2;
+        border: 2px solid var(--theme-palette-color-1);
     }
-    .awards-category.awarded {
-        animation: gold-pulse 2s ease-in-out infinite;
+    ul.nominations-list > li {
+        background:  color-mix(in oklab, var(--theme-palette-color-8) 0%, var(--theme-palette-color-4) 5%) !important;
+        border-color: rgba(0, 0, 0, 0) !important;
     }
     ul.nominations-list > li.watched::after {
         display: none;
+    }
+
+    #categories:has(.active):after {
+        content: "";
+        background: black;
+        position: fixed;
+        inset: 0;
+        z-index: 99;
+        opacity: 0.9;
+    }
+    .awards-category.active {
+        animation: gold-pulse 2s ease-in-out infinite;
+        position: fixed;
+        inset: 100px 50px;
+        margin: 0;
+        z-index: 100;
+        width: auto !important;
+        display: flex;
+        flex-flow: column;
+
+        .category-title {
+            display: flex;
+            justify-content: center;
+
+            h2 {
+                font-size: 32px;
+
+                &:before {
+                    content: "Awarding: ";
+                }
+            }
+        }
+
+        ul.nominations-list {
+            flex-flow: row wrap !important;
+            flex: 1;
+        }
+        ul.nominations-list > li {
+            width: calc((100% - 40px) / 5);
+            flex-flow: column;
+            height: auto;
+            align-items: center;
+            padding: 15px 5px 0;
+            background: color-mix(in oklab, var(--theme-palette-color-8) 0%, var(--theme-palette-color-4) 3%) !important;
+        }
+        ul.nominations-list .left-section, 
+        ul.nominations-list .right-section {
+            width: 100% !important;
+            height: auto !important;
+            display: flex;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        ul.nominations-list .film-poster, 
+        ul.nominations-list .nominee-photo {
+            height: 160px;
+            width: 110px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        ul.nominations-list.nominee_visibility-prominent .film-poster {
+            margin-top: auto;
+            margin-left: 0px;
+            margin-bottom: 0;
+            height: 100px;
+            width: 70px;
+            border-radius: 10px;
+            box-shadow: none;
+        }
+        ul.nominations-list h3 {
+            font-size: 28px;
+        }
+        ul.nominations-list .film-name:has(+.nominees-name) {
+            font-size: 18px;
+            min-height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        ul.nominations-list .right-section {
+            flex: 1;
+        }
+        .prediction-favourites .prediction-icon,
+        .prediction-favourites .prediction-icon .friend-photo {
+            width: 50px;
+            height: 50px;
+            border-width: 0px;
+        }
+        .prediction-favourites .prediction-favourite {
+            order: 1;
+        }
+        .prediction-favourites .prediction-favourite,
+        .prediction-favourites .prediction-favourite .friend-photo {
+            width: 30px;
+            height: 30px;
+            border-width: 0px;
+        }
+        .prediction-favourites .prediction-prediction .friend-initials {
+            font-size: 20px;
+        }
+        .prediction-favourites .prediction-tooltip {
+            font-size: 18px;
+        }
     }
 
 
@@ -772,7 +891,7 @@ button:disabled {
     cursor: not-allowed;
 }
 
-.scoreboard-admin-container #progress-bar-container {
+#main-scoreboard-container #progress-bar-container {
     position: relative;
     height: 15px;
     border-radius: 5px;
