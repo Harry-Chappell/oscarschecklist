@@ -387,8 +387,8 @@
 
     </section>
     <footer>
+        <div id="admin-countdown-display">Next reload in: <span id="admin-countdown">5</span>s</div>
         <div id="progress-bar-container">
-            <div id="admin-countdown-display">Next reload in: <span id="admin-countdown">5</span>s</div>
             <div id="progress-bar"></div>
         </div>
     </footer>

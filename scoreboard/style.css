@@ -772,7 +772,15 @@ button:disabled {
     cursor: not-allowed;
 }
 
-
+.scoreboard-admin-container #progress-bar-container {
+    position: relative;
+    height: 15px;
+    border-radius: 5px;
+    border: 2px solid white;
+    max-width: calc(100% - 150px);
+    margin-left: auto;
+    margin-right: 0;
+}
 
 #interval-input {
     width: 100px;
