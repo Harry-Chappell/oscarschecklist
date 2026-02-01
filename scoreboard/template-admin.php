@@ -170,7 +170,7 @@
                     
                     $is_song = ($current_category_name == "Music (Original Song)");
                     
-                    echo '<div class="current-category-display" data-category-slug="' . esc_attr($current_category_slug) . '" style="display: none;">';
+                    echo '<div class="current-category-display hidden" data-category-slug="' . esc_attr($current_category_slug) . '">';
                     echo '<h3 class="category-title">' . esc_html($current_category_name) . '</h3>';
                     
                     if ($nominations_query->have_posts()) {

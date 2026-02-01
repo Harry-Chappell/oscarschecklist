@@ -966,13 +966,15 @@
                     // Hide all category displays
                     const allDisplays = currentCategoryContainer.querySelectorAll('.current-category-display');
                     allDisplays.forEach(display => {
-                        display.style.display = 'none';
+                        display.classList.add('hidden');
+                        display.classList.remove('active');
                     });
                     
                     // Show the active category display
                     const activeDisplay = currentCategoryContainer.querySelector(`.current-category-display[data-category-slug="${activeCategory}"]`);
                     if (activeDisplay) {
-                        activeDisplay.style.display = 'block';
+                        activeDisplay.classList.remove('hidden');
+                        activeDisplay.classList.add('active');
                     }
                 }
             })
@@ -1209,7 +1211,7 @@
                     if (currentCategoryContainer) {
                         const allDisplays = currentCategoryContainer.querySelectorAll('.current-category-display');
                         allDisplays.forEach(display => {
-                            display.style.display = 'none';
+                            display.classList.add('hidden');
                         });
                     }
                     

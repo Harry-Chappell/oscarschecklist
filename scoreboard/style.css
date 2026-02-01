@@ -772,6 +772,8 @@ button:disabled {
     cursor: not-allowed;
 }
 
+
+
 #interval-input {
     width: 100px;
     padding: 8px 12px;
@@ -794,7 +796,7 @@ button:disabled {
     margin: auto;
     display: none;
 }
-div#current-category-container:has(* .winner) + #complete-category-btn {
+#current-category-container:has(.active > ul > li.winner) + #complete-category-btn {
     display: block;
 }
 
@@ -874,6 +876,10 @@ div#current-category-container:has(* .winner) + #complete-category-btn {
     background: var(--theme-palette-color-8);
     border-radius: 4px;
     border: 1px solid var(--theme-palette-color-6);
+}
+
+.current-category-display.hidden {
+    display: none;
 }
 
 .current-category-display .category-title {
