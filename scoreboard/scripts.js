@@ -741,49 +741,28 @@
             const friendPhoto = friendItem.querySelector('.friend-photo');
             if (!friendPhoto) return;
             
-            // Track nominations we've already processed
-            const processed = new Set();
-            
-            // Process nominations that are BOTH predictions and favourites
+            // Process all predictions
             predictions.forEach(nominationId => {
-                if (favourites.includes(nominationId)) {
-                    const nomination = document.getElementById(`nomination-${nominationId}`);
-                    if (nomination) {
-                        const container = nomination.querySelector('.prediction-favourites');
-                        if (container) {
-                            const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, 'both');
-                            container.appendChild(iconWrapper);
-                            processed.add(nominationId);
-                        }
+                const nomination = document.getElementById(`nomination-${nominationId}`);
+                if (nomination) {
+                    const container = nomination.querySelector('.predictions');
+                    if (container) {
+                        const type = favourites.includes(nominationId) ? 'both' : 'prediction';
+                        const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, type);
+                        container.appendChild(iconWrapper);
                     }
                 }
             });
             
-            // Process predictions only (not favourites)
-            predictions.forEach(nominationId => {
-                if (!processed.has(nominationId)) {
-                    const nomination = document.getElementById(`nomination-${nominationId}`);
-                    if (nomination) {
-                        const container = nomination.querySelector('.prediction-favourites');
-                        if (container) {
-                            const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, 'prediction');
-                            container.appendChild(iconWrapper);
-                            processed.add(nominationId);
-                        }
-                    }
-                }
-            });
-            
-            // Process favourites only (not predictions)
+            // Process all favourites
             favourites.forEach(nominationId => {
-                if (!processed.has(nominationId)) {
-                    const nomination = document.getElementById(`nomination-${nominationId}`);
-                    if (nomination) {
-                        const container = nomination.querySelector('.prediction-favourites');
-                        if (container) {
-                            const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, 'favourite');
-                            container.appendChild(iconWrapper);
-                        }
+                const nomination = document.getElementById(`nomination-${nominationId}`);
+                if (nomination) {
+                    const container = nomination.querySelector('.favourites');
+                    if (container) {
+                        const type = predictions.includes(nominationId) ? 'both' : 'favourite';
+                        const iconWrapper = createPredictionIcon(friendItem, friendPhoto, userId, type);
+                        container.appendChild(iconWrapper);
                     }
                 }
             });
@@ -1316,6 +1295,116 @@
     }
     
     /**
+     * Handle prediction button clicks
+     */
+    function handlePredictionClick() {
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.pred-btn')) {
+                const btn = e.target.closest('.pred-btn');
+                const nominationId = btn.getAttribute('data-nomination-id');
+                const categorySlug = btn.getAttribute('data-category-slug');
+                
+                if (!nominationId || !categorySlug) {
+                    console.error('Missing nomination ID or category slug');
+                    return;
+                }
+                
+                console.log('Adding prediction:', nominationId, 'for category:', categorySlug);
+                
+                // Disable button during request
+                btn.disabled = true;
+                
+                // Send AJAX request
+                fetch(scoreboardData.ajaxurl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'scoreboard_save_prediction',
+                        nomination_id: nominationId,
+                        category_slug: categorySlug,
+                        nonce: scoreboardData.nonce
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Server response:', data);
+                    if (data.success) {
+                        console.log('✅ Prediction saved successfully!');
+                        // Visual feedback
+                        btn.classList.add('selected');
+                        setTimeout(() => btn.classList.remove('selected'), 1000);
+                    } else {
+                        console.error('❌ Error saving prediction:', data.data || 'Failed to save prediction');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error during prediction save:', error);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                });
+            }
+        });
+    }
+    
+    /**
+     * Handle favourite button clicks
+     */
+    function handleFavouriteClick() {
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.fav-btn')) {
+                const btn = e.target.closest('.fav-btn');
+                const nominationId = btn.getAttribute('data-nomination-id');
+                const categorySlug = btn.getAttribute('data-category-slug');
+                
+                if (!nominationId || !categorySlug) {
+                    console.error('Missing nomination ID or category slug');
+                    return;
+                }
+                
+                console.log('Adding favourite:', nominationId, 'for category:', categorySlug);
+                
+                // Disable button during request
+                btn.disabled = true;
+                
+                // Send AJAX request
+                fetch(scoreboardData.ajaxurl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'scoreboard_save_favourite',
+                        nomination_id: nominationId,
+                        category_slug: categorySlug,
+                        nonce: scoreboardData.nonce
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Server response:', data);
+                    if (data.success) {
+                        console.log('✅ Favourite saved successfully!');
+                        // Visual feedback
+                        btn.classList.add('selected');
+                        setTimeout(() => btn.classList.remove('selected'), 1000);
+                    } else {
+                        console.error('❌ Error saving favourite:', data.data || 'Failed to save favourite');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error during favourite save:', error);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                });
+            }
+        });
+    }
+    
+    /**
      * Handle marking a nomination as winner
      */
     function handleMarkWinner() {
@@ -1382,12 +1471,16 @@
             handleCategoryActivate();
             handleCategoryComplete();
             handleMarkWinner();
+            handlePredictionClick();
+            handleFavouriteClick();
         });
     } else {
         initScoreboard();
         handleCategoryActivate();
         handleCategoryComplete();
         handleMarkWinner();
+        handlePredictionClick();
+        handleFavouriteClick();
     }
 
     

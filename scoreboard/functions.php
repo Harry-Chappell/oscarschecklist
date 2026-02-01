@@ -1055,3 +1055,151 @@ function scoreboard_reset_settings() {
     wp_send_json_success(['message' => 'Scoreboard settings have been reset']);
 }
 add_action('wp_ajax_scoreboard_reset_settings', 'scoreboard_reset_settings');
+
+/**
+ * Save user prediction
+ */
+function scoreboard_save_prediction() {
+    check_ajax_referer('scoreboard_nonce', 'nonce');
+    
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+    
+    $nomination_id = intval($_POST['nomination_id']);
+    $category_slug = sanitize_text_field($_POST['category_slug']);
+    $user_id = get_current_user_id();
+    
+    // Load user's JSON file
+    $upload_dir = wp_upload_dir();
+    $file_path = $upload_dir['basedir'] . '/user_meta/user_' . $user_id . '_pred_fav.json';
+    
+    if (file_exists($file_path)) {
+        $json_data = json_decode(file_get_contents($file_path), true);
+    } else {
+        $user = wp_get_current_user();
+        $json_data = [
+            'username' => $user->display_name,
+            'correct-predictions' => 0,
+            'incorrect-predictions' => 0,
+            'correct-prediction-rate' => 0,
+            'predictions' => [],
+            'favourites' => []
+        ];
+    }
+    
+    // Get all nominations for this category to find which to remove
+    $args = array(
+        'post_type' => 'nominations',
+        'posts_per_page' => -1,
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'award-categories',
+                'field' => 'slug',
+                'terms' => $category_slug,
+            ),
+        ),
+    );
+    $category_nominations = get_posts($args);
+    $category_nomination_ids = wp_list_pluck($category_nominations, 'ID');
+    
+    // Remove any existing predictions from this category
+    $json_data['predictions'] = array_values(array_diff($json_data['predictions'], $category_nomination_ids));
+    
+    // Add the new prediction
+    if (!in_array($nomination_id, $json_data['predictions'])) {
+        $json_data['predictions'][] = $nomination_id;
+    }
+    
+    // Ensure directory exists
+    $dir = dirname($file_path);
+    if (!file_exists($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    
+    // Save back to file
+    $result = file_put_contents($file_path, json_encode($json_data, JSON_PRETTY_PRINT));
+    
+    if ($result === false) {
+        wp_send_json_error('Failed to save prediction');
+        return;
+    }
+    
+    wp_send_json_success(['message' => 'Prediction saved', 'data' => $json_data]);
+}
+add_action('wp_ajax_scoreboard_save_prediction', 'scoreboard_save_prediction');
+
+/**
+ * Save user favourite
+ */
+function scoreboard_save_favourite() {
+    check_ajax_referer('scoreboard_nonce', 'nonce');
+    
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+    
+    $nomination_id = intval($_POST['nomination_id']);
+    $category_slug = sanitize_text_field($_POST['category_slug']);
+    $user_id = get_current_user_id();
+    
+    // Load user's JSON file
+    $upload_dir = wp_upload_dir();
+    $file_path = $upload_dir['basedir'] . '/user_meta/user_' . $user_id . '_pred_fav.json';
+    
+    if (file_exists($file_path)) {
+        $json_data = json_decode(file_get_contents($file_path), true);
+    } else {
+        $user = wp_get_current_user();
+        $json_data = [
+            'username' => $user->display_name,
+            'correct-predictions' => 0,
+            'incorrect-predictions' => 0,
+            'correct-prediction-rate' => 0,
+            'predictions' => [],
+            'favourites' => []
+        ];
+    }
+    
+    // Get all nominations for this category to find which to remove
+    $args = array(
+        'post_type' => 'nominations',
+        'posts_per_page' => -1,
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'award-categories',
+                'field' => 'slug',
+                'terms' => $category_slug,
+            ),
+        ),
+    );
+    $category_nominations = get_posts($args);
+    $category_nomination_ids = wp_list_pluck($category_nominations, 'ID');
+    
+    // Remove any existing favourites from this category
+    $json_data['favourites'] = array_values(array_diff($json_data['favourites'], $category_nomination_ids));
+    
+    // Add the new favourite
+    if (!in_array($nomination_id, $json_data['favourites'])) {
+        $json_data['favourites'][] = $nomination_id;
+    }
+    
+    // Ensure directory exists
+    $dir = dirname($file_path);
+    if (!file_exists($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    
+    // Save back to file
+    $result = file_put_contents($file_path, json_encode($json_data, JSON_PRETTY_PRINT));
+    
+    if ($result === false) {
+        wp_send_json_error('Failed to save favourite');
+        return;
+    }
+    
+    wp_send_json_success(['message' => 'Favourite saved', 'data' => $json_data]);
+}
+add_action('wp_ajax_scoreboard_save_favourite', 'scoreboard_save_favourite');
