@@ -510,6 +510,36 @@ section.right {
 
 
 
+    ul.nominations-list > li .pred-fav-btns button {
+        background: none !important;
+        border: 1px solid;
+        color: 1px solid var(--theme-palette-color-5) !important;
+        opacity: 0.2;
+        width: 30px;
+        height: 30px;
+        padding: 0 !important;
+        margin: 3px 0;
+        
+        svg path {
+            fill: var(--theme-palette-color-5) !important;
+        }
+        
+        &:hover {
+            fill: var(--theme-palette-color-4) !important;
+            opacity: 1;
+
+            svg path {
+                fill: var(--theme-palette-color-4) !important;
+            }
+        }
+    }
+    .awards-category.past .pred-fav-btns,
+    ul.nominations-list > li:not(:hover) .pred-fav-btns,
+    .awards-category:not(.past) ul.nominations-list > li:hover .film-name,
+    .awards-category:not(.past) ul.nominations-list > li:hover .nominees-name {
+        display: none;
+    }
+
 
 
     /* Films List Styles */
