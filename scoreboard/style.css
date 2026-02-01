@@ -754,14 +754,16 @@ form {
 button {
     text-transform: uppercase;
     background: var(--theme-palette-color-1) !important;
+    color: black !important;
     border: 0;
-    padding: 5px 10px !important;
+    padding: 3px 10px 0 !important;
     font-size: 16px;
     border-radius: 5px;
 }
 
 button:hover {
     background: var(--theme-palette-color-4) !important;
+    color: var(--theme-palette-color-8) !important;
     cursor: pointer;
 }
 
@@ -784,30 +786,17 @@ button:disabled {
     color: var(--theme-palette-color-1);
 }
 
-/* #notice-form {
+.controller.current-category-controller {
     display: flex;
-    gap: 10px;
-    width: 100%;
+    flex-direction: column;
 }
-
-#notice-input {
-    flex: 1;
-    padding: 10px 15px;
-    border: 1px solid var(--theme-palette-color-6);
-    border-radius: 4px;
-    font-size: 16px;
+#complete-category-btn {
+    margin: auto;
+    display: none;
 }
-
-#notice-form button {
-    padding: 10px 20px;
-    background: var(--theme-palette-color-1);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-} */
-
+div#current-category-container:has(* .winner) + #complete-category-btn {
+    display: block;
+}
 
 /* Admin Notices Management Section */
 #admin-notices-section {

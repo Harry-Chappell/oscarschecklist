@@ -68,7 +68,6 @@
             if (!empty($upcoming_categories)) :
             ?>
                 <div id="category-control">
-                    <!-- <label for="category-select">Select New Current Category:</label> -->
                      <form>
                         <select id="category-select">
                             <option value="">-- Select a category --</option>
@@ -101,7 +100,6 @@
 
         <div class="controller current-category-controller">
             <h2>🏆 Current Category 🏆</h2>
-            <button type="button" id="complete-category-btn" class="complete-btn" style="margin-bottom: 15px;">Mark Category as Complete</button>
             <div id="current-category-container">
             <?php
             // Get all categories with 2026 nominations
@@ -284,6 +282,7 @@
                 }
             ?>
             </div>
+            <button type="button" id="complete-category-btn" class="complete-btn">Mark Category as Complete</button>
         </div>
 
         <div class="controller interval-control-controller">
