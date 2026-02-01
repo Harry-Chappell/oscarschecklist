@@ -335,7 +335,7 @@
                 <strong>Current Status:</strong> <span id="current-event-status-text"><?php echo esc_html(ucwords(str_replace('-', ' ', $current_event_status))); ?></span>
             </div>
             <form id="event-status-form">
-                <label for="event-status-select">Event Status:</label>
+                <!-- <label for="event-status-select">Event Status:</label> -->
                 <select id="event-status-select" required>
                     <option value="welcome" <?php selected($current_event_status, 'welcome'); ?>>Welcome</option>
                     <option value="in-progress" <?php selected($current_event_status, 'in-progress'); ?>>In Progress</option>

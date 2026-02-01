@@ -800,6 +800,14 @@ button:disabled {
     display: block;
 }
 
+select#event-status-select {
+    width: calc(100% - 150px);
+}
+
+select#event-status-select + button {
+    width: 140px;
+}
+
 /* Admin Notices Management Section */
 #admin-notices-section {
     margin-top: 10px;
