@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "user-meta"
+		},
+		{
+			"path": "../scoreboard.oscarschecklist"
 		}
 	],
 	"settings": {}

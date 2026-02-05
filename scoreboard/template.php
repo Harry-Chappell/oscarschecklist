@@ -3,71 +3,7 @@
         <h1>Oscars Scoreboard</h1>
     </header>
     <section id="friends" class="border-r p-20">
-        <ul id="friends-list">
-            <?php
-            if (is_user_logged_in()) {
-                $current_user_id = get_current_user_id();
-                $friends = friends_get_friend_user_ids($current_user_id);
-                
-                // Add current user first
-                $current_user = wp_get_current_user();
-                $current_avatar_url = get_avatar_url($current_user_id, ['size' => 64]);
-                
-                echo '<li class="friend-item" data-user-id="' . esc_attr($current_user_id) . '">';
-                echo '<div class="friend-photo">';
-                echo '<img src="' . esc_url($current_avatar_url) . '" alt="' . esc_attr($current_user->display_name) . '">';
-                echo '</div>';
-                echo '<div class="friend-info">';
-                echo '<span class="friend-name">' . esc_html($current_user->display_name) . '</span>';
-                echo '<span class="file-size" data-user-id="' . esc_attr($current_user_id) . '">Loading...</span>';
-                echo '</div>';
-                echo '</li>';
-                
-                // Add friends
-                if ($friends) {
-                    foreach ($friends as $friend_id) {
-                        $friend_user = get_userdata($friend_id);
-                        if (!$friend_user) continue;
-                        
-                        $avatar_url = get_avatar_url($friend_id, ['size' => 64]);
-                        $first_name = $friend_user->user_firstname;
-                        $last_name = $friend_user->user_lastname;
-                        $user_login = $friend_user->user_login;
-                        $user_email = $friend_user->user_email;
-                        
-                        // Generate color from hash
-                        $hash_string = $friend_id . $user_login . $first_name . $last_name . $user_email;
-                        $hash = crc32($hash_string);
-                        $randomcolornum = abs($hash) % 1000;
-                        
-                        // Get initials
-                        $initials = strtoupper(substr($first_name, 0, 1) . substr($last_name, 0, 1));
-                        
-                        echo '<li class="friend-item" data-user-id="' . esc_attr($friend_id) . '" style="--randomcolornum:' . $randomcolornum . '">';
-                        echo '<div class="friend-photo">';
-                        
-                        // Check if avatar is default Gravatar
-                        $is_default_avatar = strpos($avatar_url, 'd=mm') !== false || strpos($avatar_url, 'd=blank') !== false;
-                        
-                        if ($is_default_avatar) {
-                            // Show initials with color
-                            echo '<div class="friend-initials">' . esc_html($initials) . '</div>';
-                        } else {
-                            // Show avatar image
-                            echo '<img src="' . esc_url($avatar_url) . '" alt="' . esc_attr($friend_user->display_name) . '">';
-                        }
-                        
-                        echo '</div>';
-                        echo '<div class="friend-info">';
-                        echo '<span class="friend-name">' . esc_html($friend_user->display_name) . '</span>';
-                        echo '<span class="file-size" data-user-id="' . esc_attr($friend_id) . '">Loading...</span>';
-                        echo '</div>';
-                        echo '</li>';
-                    }
-                }
-            }
-            ?>
-        </ul>
+        <a href="https://oscarschecklist.com/scoreboard" class="scoreboard-back-link">Log in to Scoreboard</a>
     </section>
     <section id="films" class="border-r p-20">
         <ul id="films-list">

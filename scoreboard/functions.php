@@ -1203,3 +1203,79 @@ function scoreboard_save_favourite() {
     wp_send_json_success(['message' => 'Favourite saved', 'data' => $json_data]);
 }
 add_action('wp_ajax_scoreboard_save_favourite', 'scoreboard_save_favourite');
+
+// /**
+//  * Compile all pred_fav usernames and IDs into one JSON file (runs every minute).
+//  */
+// function scoreboard_compile_pred_fav_user_index() {
+//     $upload_dir = wp_upload_dir();
+//     $base_dir = trailingslashit($upload_dir['basedir']) . 'user_meta/';
+
+//     if (!is_dir($base_dir)) {
+//         return;
+//     }
+
+//     $files = glob($base_dir . '*_pred_fav.json');
+//     if ($files === false) {
+//         return;
+//     }
+
+//     $users = array();
+
+//     foreach ($files as $file_path) {
+//         $filename = basename($file_path);
+
+//         if (!preg_match('/user_(\d+)_pred_fav\.json$/', $filename, $matches)) {
+//             continue;
+//         }
+
+//         $user_id = intval($matches[1]);
+//         $content = file_get_contents($file_path);
+//         if ($content === false) {
+//             continue;
+//         }
+
+//         $json = json_decode($content, true);
+//         if (!is_array($json) || empty($json['username'])) {
+//             continue;
+//         }
+
+//         $users[$user_id] = array(
+//             'user_id' => $user_id,
+//             'username' => $json['username']
+//         );
+//     }
+
+//     if (!empty($users)) {
+//         ksort($users);
+//     }
+
+//     $output = array(
+//         'generated_at' => current_time('Y-m-d H:i:s'),
+//         'users' => array_values($users)
+//     );
+
+//     $output_file = trailingslashit($upload_dir['basedir']) . 'pred_fav_users.json';
+//     file_put_contents($output_file, json_encode($output, JSON_PRETTY_PRINT));
+// }
+
+// // Add custom 1-minute cron schedule
+// add_filter('cron_schedules', function($schedules) {
+//     if (!isset($schedules['every_minute'])) {
+//         $schedules['every_minute'] = array(
+//             'interval' => 60,
+//             'display'  => __('Every Minute')
+//         );
+//     }
+//     return $schedules;
+// });
+
+// // Schedule 1-minute cron job for compiling pred_fav usernames
+// add_action('wp', function() {
+//     if (!wp_next_scheduled('scoreboard_compile_pred_fav_user_index')) {
+//         wp_schedule_event(time(), 'every_minute', 'scoreboard_compile_pred_fav_user_index');
+//     }
+// });
+
+// // Hook the compile function to the cron event
+// add_action('scoreboard_compile_pred_fav_user_index', 'scoreboard_compile_pred_fav_user_index');
