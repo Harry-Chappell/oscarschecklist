@@ -1,13 +1,18 @@
 {
 	"folders": [
 		{
+			"name": "oscarschecklist",
 			"path": "."
 		},
 		{
-			"path": "user-meta"
+			"name": "scoreboard.oscarschecklist",
+			"path": "../scoreboard.oscarschecklist"
 		},
 		{
-			"path": "../scoreboard.oscarschecklist"
+			"path": "../scoreboard.oscarschecklist/scoreboard-data"
+		},
+		{
+			"path": "main-data"
 		}
 	],
 	"settings": {}

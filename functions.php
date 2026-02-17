@@ -179,6 +179,60 @@ function save_user_pred_fav_json($user_id, $data) {
     file_put_contents($file_path, wp_json_encode($filtered_data));
 }
 
+// === Remote pred_fav helpers ===
+if (!defined('OSCARS_PRED_FAV_SHARED_KEY')) {
+    define('OSCARS_PRED_FAV_SHARED_KEY', 'oscars_test_shared_key_2026');
+}
+if (!defined('OSCARS_PRED_FAV_REMOTE_URL')) {
+    define('OSCARS_PRED_FAV_REMOTE_URL', 'https://scoreboard.oscarschecklist.com/wp-admin/admin-ajax.php');
+}
+
+function oscars_pred_fav_remote_enabled($user_id) {
+    // return (int)$user_id === 6;
+    return true; // Enable remote for everyone for now
+}
+
+function oscars_pred_fav_remote_request($action, $payload = []) {
+    $body = array_merge([
+        'action' => $action,
+        'shared_key' => OSCARS_PRED_FAV_SHARED_KEY,
+    ], $payload);
+
+    $response = wp_remote_post(OSCARS_PRED_FAV_REMOTE_URL, [
+        'timeout' => 10,
+        'body' => $body,
+    ]);
+
+    if (is_wp_error($response)) {
+        return $response;
+    }
+
+    $status = wp_remote_retrieve_response_code($response);
+    $raw = wp_remote_retrieve_body($response);
+    if ($status < 200 || $status >= 300) {
+        return new WP_Error('remote_error', 'Remote request failed', [
+            'status' => $status,
+            'body' => $raw,
+        ]);
+    }
+
+    return $raw;
+}
+
+function oscars_get_nomination_category_slugs($nomination_id) {
+    $terms = get_the_terms($nomination_id, 'award-categories');
+    if (!$terms || is_wp_error($terms)) {
+        return [];
+    }
+    $slugs = array_map(function($term) {
+        return $term->slug;
+    }, $terms);
+
+    return array_values(array_filter($slugs, function($slug) {
+        return $slug !== 'winner';
+    }));
+}
+
 function oscars_update_film_stats_json($film_id, $action, $timer_start = null) {
     if ($timer_start === null) $timer_start = microtime(true);
     $elapsed = round((microtime(true) - $timer_start) * 1000, 2);
@@ -503,6 +557,13 @@ function markAsFav()
     $json = load_user_pred_fav_json($user_id);
 
     if ($fav_action === 'fav') {
+        $target_slugs = oscars_get_nomination_category_slugs((int)$fav_nom_id);
+        // Remove existing favourites in the same category
+        $json['favourites'] = array_values(array_filter($json['favourites'], function($existing_id) use ($fav_nom_id, $target_slugs) {
+            if ((int)$existing_id === (int)$fav_nom_id) return false; // Remove if same nomination
+            $existing_slugs = oscars_get_nomination_category_slugs((int)$existing_id);
+            return empty(array_intersect($target_slugs, $existing_slugs)); // Remove if same category
+        }));
         if (!in_array((int)$fav_nom_id, $json['favourites'])) {
             $json['favourites'][] = (int)$fav_nom_id;
         }
@@ -528,6 +589,13 @@ function markAspredict()
     $json = load_user_pred_fav_json($user_id);
 
     if ($predict_action === 'predict') {
+        $target_slugs = oscars_get_nomination_category_slugs((int)$predict_nom_id);
+        // Remove existing predictions in the same category
+        $json['predictions'] = array_values(array_filter($json['predictions'], function($existing_id) use ($predict_nom_id, $target_slugs) {
+            if ((int)$existing_id === (int)$predict_nom_id) return false; // Remove if same nomination
+            $existing_slugs = oscars_get_nomination_category_slugs((int)$existing_id);
+            return empty(array_intersect($target_slugs, $existing_slugs)); // Remove if same category
+        }));
         if (!in_array((int)$predict_nom_id, $json['predictions'])) {
             $json['predictions'][] = (int)$predict_nom_id;
         }
@@ -1871,6 +1939,81 @@ function oscars_get_user_data() {
     wp_send_json(json_decode($json, true));
 }
 
+// === AJAX: Get pred_fav data as JSON ===
+add_action('wp_ajax_oscars_get_pred_fav_data', 'oscars_get_pred_fav_data');
+add_action('wp_ajax_nopriv_oscars_get_pred_fav_data', 'oscars_get_pred_fav_data');
+function oscars_get_pred_fav_data() {
+    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    if (!$user_id) {
+        wp_send_json_error(['error' => 'No user_id provided']);
+    }
+    if (!is_user_logged_in() || get_current_user_id() !== $user_id) {
+        wp_send_json_error(['error' => 'Not allowed']);
+    }
+    
+    // For user 6, fetch from remote scoreboard site
+    if (oscars_pred_fav_remote_enabled($user_id)) {
+        $remote_result = oscars_pred_fav_remote_request('oscars_pred_fav_get', [
+            'user_id' => $user_id,
+        ]);
+        
+        if (is_wp_error($remote_result)) {
+            wp_send_json_error(['error' => $remote_result->get_error_message()]);
+        }
+        
+        $decoded = json_decode($remote_result, true);
+        if (is_array($decoded) && isset($decoded['success'])) {
+            wp_send_json($decoded['data']);
+        }
+        wp_send_json_error(['error' => 'Remote fetch failed']);
+    }
+    
+    // For other users, load locally
+    $data = load_user_pred_fav_json($user_id);
+    wp_send_json($data);
+}
+
+// === AJAX: Save pred_fav data as JSON ===
+add_action('wp_ajax_oscars_save_pred_fav_data', 'oscars_save_pred_fav_data');
+add_action('wp_ajax_nopriv_oscars_save_pred_fav_data', 'oscars_save_pred_fav_data');
+function oscars_save_pred_fav_data() {
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    if (!$user_id) {
+        wp_send_json_error(['error' => 'No user_id provided']);
+    }
+    if (!is_user_logged_in() || get_current_user_id() !== $user_id) {
+        wp_send_json_error(['error' => 'Not allowed']);
+    }
+
+    $raw_data = isset($_POST['data']) ? wp_unslash($_POST['data']) : '';
+    $data = is_array($raw_data) ? $raw_data : json_decode($raw_data, true);
+    if (!is_array($data)) {
+        wp_send_json_error(['error' => 'Invalid data']);
+    }
+
+    // For user 6, send to remote scoreboard site
+    if (oscars_pred_fav_remote_enabled($user_id)) {
+        $remote_result = oscars_pred_fav_remote_request('oscars_pred_fav_save', [
+            'user_id' => $user_id,
+            'data' => wp_json_encode($data),
+        ]);
+        
+        if (is_wp_error($remote_result)) {
+            wp_send_json_error(['error' => $remote_result->get_error_message()]);
+        }
+        
+        $decoded = json_decode($remote_result, true);
+        if (is_array($decoded) && isset($decoded['success'])) {
+            wp_send_json_success($decoded['data']);
+        }
+        wp_send_json_error(['error' => 'Remote save failed']);
+    }
+
+    // For other users, save locally
+    save_user_pred_fav_json($user_id, $data);
+    wp_send_json_success(['saved' => true]);
+}
+
 // === AJAX: Initialize user data file ===
 add_action('wp_ajax_init_user_data', 'oscars_init_user_data');
 add_action('wp_ajax_nopriv_init_user_data', 'oscars_init_user_data');
@@ -1951,6 +2094,193 @@ function oscars_update_category() {
     }
     file_put_contents($file, json_encode($data));
     wp_send_json_success(['data' => $data]);
+}
+
+// === Shortcode: [test_send] ===
+add_shortcode('test_send', 'oscars_test_send_shortcode');
+function oscars_test_send_shortcode() {
+    $ajax_url = admin_url('admin-ajax.php');
+    $nonce = wp_create_nonce('oscars_test_message');
+    $id = 'oscars-test-send-' . wp_generate_uuid4();
+    $source = home_url();
+
+    ob_start();
+    ?>
+    <div id="<?php echo esc_attr($id); ?>" class="oscars-test-send" data-ajax-url="<?php echo esc_url($ajax_url); ?>" data-nonce="<?php echo esc_attr($nonce); ?>" data-source="<?php echo esc_attr($source); ?>">
+        <div class="oscars-test-send__controls">
+            <input type="text" class="oscars-test-send__input" placeholder="Type a message..." />
+            <button type="button" class="oscars-test-send__button">Send</button>
+        </div>
+        <textarea class="oscars-test-send__output" rows="6" readonly style="width:100%; min-height:140px; font-family: monospace; white-space: pre; overflow: auto;"></textarea>
+    </div>
+    <script>
+    (function() {
+        var container = document.getElementById('<?php echo esc_js($id); ?>');
+        if (!container) return;
+
+        var input = container.querySelector('.oscars-test-send__input');
+        var button = container.querySelector('.oscars-test-send__button');
+        var output = container.querySelector('.oscars-test-send__output');
+        var ajaxUrl = container.getAttribute('data-ajax-url');
+        var nonce = container.getAttribute('data-nonce');
+        var source = container.getAttribute('data-source') || '';
+
+        function sendMessage() {
+            var message = input.value || '';
+            console.log('[test_send] sending message', { message: message });
+            var formData = new FormData();
+            formData.append('action', 'test_send_message');
+            formData.append('message', message);
+            formData.append('source', source);
+            formData.append('nonce', nonce);
+
+            fetch(ajaxUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: formData
+            })
+            .then(function(response) {
+                console.log('[test_send] send response status', response.status);
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('[test_send] send response data', data);
+                try { console.log('[test_send] send response data (json)', JSON.stringify(data)); } catch (e) {}
+                if (data && data.success && data.data && data.data.raw) {
+                    console.log('[test_send] send ok, length', data.data.raw.length);
+                } else if (data && data.success && data.data) {
+                    var fallback = JSON.stringify(data.data, null, 2);
+                    console.log('[test_send] send ok (fallback), length', fallback.length);
+                }
+            })
+            .catch(function(error) {
+                console.log('[test_send] send error', error);
+            });
+        }
+
+        function fetchMessage() {
+            console.log('[test_send] fetching message');
+            var formData = new FormData();
+            formData.append('action', 'test_get_message');
+            formData.append('nonce', nonce);
+
+            fetch(ajaxUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: formData
+            })
+            .then(function(response) {
+                console.log('[test_send] fetch response status', response.status);
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('[test_send] fetch response data', data);
+                try { console.log('[test_send] fetch response data (json)', JSON.stringify(data)); } catch (e) {}
+                if (data && data.success && data.data && data.data.raw !== undefined) {
+                    output.value = data.data.raw;
+                    output.textContent = data.data.raw;
+                    console.log('[test_send] output length', (data.data.raw || '').length);
+                }
+            })
+            .catch(function(error) {
+                console.log('[test_send] fetch error', error);
+            });
+        }
+
+        button.addEventListener('click', function() {
+            sendMessage();
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        fetchMessage();
+        setInterval(fetchMessage, 5000);
+    })();
+    </script>
+    <?php
+    return ob_get_clean();
+}
+
+// === AJAX: write/read test_message.json in document root ===
+if (!defined('OSCARS_TEST_SHARED_KEY')) {
+    define('OSCARS_TEST_SHARED_KEY', 'oscars_test_shared_key_2026');
+}
+
+function oscars_test_shared_key_valid() {
+    $shared = isset($_POST['shared_key']) ? sanitize_text_field(wp_unslash($_POST['shared_key'])) : '';
+    return $shared && hash_equals(OSCARS_TEST_SHARED_KEY, $shared);
+}
+
+add_action('wp_ajax_test_send_message', 'oscars_test_send_message');
+add_action('wp_ajax_nopriv_test_send_message', 'oscars_test_send_message');
+function oscars_test_send_message() {
+    $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+    if (!wp_verify_nonce($nonce, 'oscars_test_message') && !oscars_test_shared_key_valid()) {
+        wp_send_json_error(['error' => 'Invalid nonce']);
+    }
+
+    $message = isset($_POST['message']) ? wp_unslash($_POST['message']) : '';
+    $message = sanitize_text_field($message);
+    $source = isset($_POST['source']) ? wp_unslash($_POST['source']) : '';
+    $source = sanitize_text_field($source);
+    if ($source === '') {
+        $source = home_url();
+    }
+
+    $file_path = trailingslashit(ABSPATH) . 'test_message.json';
+    $existing = [];
+    if (file_exists($file_path)) {
+        $raw = file_get_contents($file_path);
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            if (isset($decoded['messages']) && is_array($decoded['messages'])) {
+                $existing = $decoded['messages'];
+            } elseif (isset($decoded[0])) {
+                $existing = $decoded;
+            }
+        }
+    }
+
+    $entry = [
+        'message' => $message,
+        'updated' => current_time('mysql'),
+        'source' => $source,
+    ];
+    $existing[] = $entry;
+
+    $payload = [
+        'messages' => $existing,
+        'last_updated' => $entry['updated'],
+    ];
+
+    file_put_contents($file_path, wp_json_encode($payload, JSON_PRETTY_PRINT));
+    wp_send_json_success(['raw' => wp_json_encode($payload, JSON_PRETTY_PRINT)]);
+}
+
+add_action('wp_ajax_test_get_message', 'oscars_test_get_message');
+add_action('wp_ajax_nopriv_test_get_message', 'oscars_test_get_message');
+function oscars_test_get_message() {
+    $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+    if (!wp_verify_nonce($nonce, 'oscars_test_message') && !oscars_test_shared_key_valid()) {
+        wp_send_json_error(['error' => 'Invalid nonce']);
+    }
+
+    $file_path = trailingslashit(ABSPATH) . 'test_message.json';
+    if (!file_exists($file_path)) {
+        $default = [
+            'messages' => [],
+            'last_updated' => '',
+        ];
+        file_put_contents($file_path, wp_json_encode($default, JSON_PRETTY_PRINT));
+    }
+
+    $raw = file_get_contents($file_path);
+    wp_send_json_success(['raw' => $raw !== false ? $raw : '']);
 }
 
 

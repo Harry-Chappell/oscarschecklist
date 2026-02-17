@@ -3,7 +3,7 @@
         <h1>Oscars Scoreboard</h1>
     </header>
     <section id="friends" class="border-r p-20">
-        <a href="https://oscarschecklist.com/scoreboard" class="scoreboard-back-link">Log in to Scoreboard</a>
+        <a href="https://oscarschecklist.com/oscars-scoreboard-login/" class="scoreboard-back-link">Log in to Scoreboard</a>
     </section>
     <section id="films" class="border-r p-20">
         <ul id="films-list">

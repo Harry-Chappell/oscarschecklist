@@ -12,7 +12,78 @@ function resetPerfTimer() {
     perfTimerStart = null;
 }
 
+// === Global pred_fav cache helpers ===
+let globalPredFavData = {};
+let globalPredFavTimeouts = {};
+
+function getPredFavLocal(userId) {
+    if (globalPredFavData[userId] !== undefined) return globalPredFavData[userId];
+    const CACHE_KEY = `userdata_${userId}_pred_fav`;
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+        try {
+            globalPredFavData[userId] = JSON.parse(cached);
+            return globalPredFavData[userId];
+        } catch (e) {
+            console.warn('Failed to parse cached pred_fav data:', e);
+        }
+    }
+    return { username: '', favourites: [], predictions: [] };
+}
+
+function setPredFavLocal(userId, data) {
+    const CACHE_KEY = `userdata_${userId}_pred_fav`;
+    globalPredFavData[userId] = data;
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+}
+
+function schedulePredFavSave(userId, data) {
+    const REMOTE_SAVE_DELAY = 2000; // 2 seconds
+    
+    // Cancel previous timeout for this user
+    if (globalPredFavTimeouts[userId]) {
+        clearTimeout(globalPredFavTimeouts[userId]);
+    }
+    
+    // Schedule new save (fire-and-forget, don't wait for response)
+    globalPredFavTimeouts[userId] = setTimeout(function() {
+        // Send directly to scoreboard endpoint for user 6
+        if (userId === 6) {
+            fetch('https://scoreboard.oscarschecklist.com/wp-admin/admin-ajax.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=oscars_pred_fav_save&user_id=' + userId + '&data=' + encodeURIComponent(JSON.stringify(data)) + '&shared_key=oscars_test_shared_key_2026'
+            })
+            .then(() => {
+                console.log('Pred/Fav sent to scoreboard');
+                globalPredFavTimeouts[userId] = null;
+            })
+            .catch(error => {
+                console.error('Error syncing pred/fav:', error);
+                globalPredFavTimeouts[userId] = null;
+            });
+        } else {
+            // For other users, send locally
+            fetch('/wp-admin/admin-ajax.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=oscars_save_pred_fav_data&user_id=' + userId + '&data=' + encodeURIComponent(JSON.stringify(data))
+            })
+            .then(() => {
+                console.log('Pred/Fav saved locally');
+                globalPredFavTimeouts[userId] = null;
+            })
+            .catch(error => {
+                console.error('Error saving pred/fav:', error);
+                globalPredFavTimeouts[userId] = null;
+            });
+        }
+    }, REMOTE_SAVE_DELAY);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+
+    const userId = OscarsChecklist.userId;
 
     // Function to handle marking films as watched or unwatched
     function handleWatchButtons() {
@@ -115,85 +186,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 var nominationId = button.getAttribute('data-nomination-id');
                 var favAction = button.getAttribute('data-action');
                 var listItem = button.closest('li');
-                var list = button.closest('ul'); // Scope to the parent list
+                var list = button.closest('ul');
     
                 if (!listItem || !list) {
                     console.error('No containing <li> or <ul> element found for button:', button);
                     return;
                 }
+
+                // Get local data
+                const predFavData = getPredFavLocal(userId);
+                const isFav = favAction === 'fav';
     
-                var formData = new FormData();
-                formData.append('fav_nom_id', nominationId);
-                formData.append('fav_action', favAction);
-    
-                fetch('https://oscarschecklist.com/', {
-                    method: 'POST',
-                    body: formData,
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
+                // Update local data (enforce one-per-category by removing from category)
+                if (isFav) {
+                    // Remove existing fav in same category (PHP will handle this via category terms)
+                    // For now, just add to list
+                    if (!predFavData.favourites.includes(parseInt(nominationId))) {
+                        predFavData.favourites.push(parseInt(nominationId));
+                    }
+                } else {
+                    predFavData.favourites = predFavData.favourites.filter(id => id !== parseInt(nominationId));
+                }
+
+                // Save to local cache
+                setPredFavLocal(userId, predFavData);
+
+                // Update UI immediately
+                if (isFav) {
+                    // Remove 'fav' from other list items in the same list
+                    list.querySelectorAll('li.fav').forEach(function (otherListItem) {
+                        if (otherListItem !== listItem) {
+                            var otherButton = otherListItem.querySelector('.mark-as-unfav-button');
+                            if (otherButton) {
+                                otherButton.classList.remove('mark-as-unfav-button');
+                                otherButton.classList.add('mark-as-fav-button');
+                                otherButton.setAttribute('data-action', 'fav');
+                                otherListItem.classList.remove('fav');
+                                
+                                // Remove from local data
+                                const otherNomId = parseInt(otherButton.getAttribute('data-nomination-id'));
+                                predFavData.favourites = predFavData.favourites.filter(id => id !== otherNomId);
+                            }
                         }
-    
-                        var isFav = favAction === 'fav';
-    
-                        if (isFav) {
-                            // Remove 'fav' from any other list items in the same list
-                            list.querySelectorAll('li.fav').forEach(function (otherListItem) {
-                                if (otherListItem !== listItem) {
-                                    var otherButton = otherListItem.querySelector('.mark-as-unfav-button');
-                                    if (otherButton) {
-                                        otherButton.classList.toggle('mark-as-fav-button', true);
-                                        otherButton.classList.toggle('mark-as-unfav-button', false);
-                                        otherButton.setAttribute('data-action', 'fav');
-    
-                                        // Update button text
-                                        // otherButton.childNodes.forEach(node => {
-                                        //     if (node.nodeType === Node.TEXT_NODE) {
-                                        //         node.textContent = 'Mark as Favourite';
-                                        //     }
-                                        // });
-    
-                                        // Toggle the 'fav' class on the <li> element
-                                        otherListItem.classList.toggle('fav', false);
-    
-                                        // Simulate a POST request for the unfavored item
-                                        var unfavFormData = new FormData();
-                                        unfavFormData.append('fav_nom_id', otherButton.getAttribute('data-nomination-id'));
-                                        unfavFormData.append('fav_action', 'unfav');
-    
-                                        fetch('https://oscarschecklist.com/', {
-                                            method: 'POST',
-                                            body: unfavFormData,
-                                        }).catch(error => console.error('Error unfaving:', error));
-                                    }
-                                }
-                            });
-                        }
-    
-                        // Update the clicked button and list item
-                        button.classList.toggle('mark-as-fav-button', !isFav);
-                        button.classList.toggle('mark-as-unfav-button', isFav);
-    
-                        // button.childNodes.forEach(node => {
-                        //     if (node.nodeType === Node.TEXT_NODE) {
-                        //         node.textContent = isFav ? 'Unmark as Favourite' : 'Mark as Favourite';
-                        //     }
-                        // });
-    
-                        button.setAttribute('data-action', isFav ? 'unfav' : 'fav');
-                        listItem.classList.toggle('fav', isFav);
-    
-                        return response.text();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
                     });
+                }
+
+                // Update the clicked button and list item
+                button.classList.toggle('mark-as-fav-button', !isFav);
+                button.classList.toggle('mark-as-unfav-button', isFav);
+                button.setAttribute('data-action', isFav ? 'unfav' : 'fav');
+                listItem.classList.toggle('fav', isFav);
+
+                // Update local data and save to server
+                setPredFavLocal(userId, predFavData);
+                schedulePredFavSave(userId, predFavData);
             });
         });
     }
     
-    handleFavButtons(); // Initialize the button handler
+    handleFavButtons();
 
 
 
@@ -205,85 +256,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 var nominationId = button.getAttribute('data-nomination-id');
                 var predictAction = button.getAttribute('data-action');
                 var listItem = button.closest('li');
-                var list = button.closest('ul'); // Scope to the parent list
+                var list = button.closest('ul');
     
                 if (!listItem || !list) {
                     console.error('No containing <li> or <ul> element found for button:', button);
                     return;
                 }
-    
-                var formData = new FormData();
-                formData.append('predict_nom_id', nominationId);
-                formData.append('predict_action', predictAction);
-    
-                fetch('https://oscarschecklist.com/', {
-                    method: 'POST',
-                    body: formData,
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
+
+                // Get local data
+                const predFavData = getPredFavLocal(userId);
+                const isPredict = predictAction === 'predict';
+
+                // Update local data
+                if (isPredict) {
+                    // Remove existing predict in same category (PHP will handle via category terms)
+                    // For now, just add to list
+                    if (!predFavData.predictions.includes(parseInt(nominationId))) {
+                        predFavData.predictions.push(parseInt(nominationId));
+                    }
+                } else {
+                    predFavData.predictions = predFavData.predictions.filter(id => id !== parseInt(nominationId));
+                }
+
+                // Save to local cache
+                setPredFavLocal(userId, predFavData);
+
+                // Update UI immediately
+                if (isPredict) {
+                    // Remove 'predict' from other list items in the same list
+                    list.querySelectorAll('li.predict').forEach(function (otherListItem) {
+                        if (otherListItem !== listItem) {
+                            var otherButton = otherListItem.querySelector('.mark-as-unpredict-button');
+                            if (otherButton) {
+                                otherButton.classList.remove('mark-as-unpredict-button');
+                                otherButton.classList.add('mark-as-predict-button');
+                                otherButton.setAttribute('data-action', 'predict');
+                                otherListItem.classList.remove('predict');
+                                
+                                // Remove from local data
+                                const otherNomId = parseInt(otherButton.getAttribute('data-nomination-id'));
+                                predFavData.predictions = predFavData.predictions.filter(id => id !== otherNomId);
+                            }
                         }
-    
-                        var ispredict = predictAction === 'predict';
-    
-                        if (ispredict) {
-                            // Remove 'predict' from any other list items in the same list
-                            list.querySelectorAll('li.predict').forEach(function (otherListItem) {
-                                if (otherListItem !== listItem) {
-                                    var otherButton = otherListItem.querySelector('.mark-as-unpredict-button');
-                                    if (otherButton) {
-                                        otherButton.classList.toggle('mark-as-predict-button', true);
-                                        otherButton.classList.toggle('mark-as-unpredict-button', false);
-                                        otherButton.setAttribute('data-action', 'predict');
-    
-                                        // Update button text
-                                        // otherButton.childNodes.forEach(node => {
-                                        //     if (node.nodeType === Node.TEXT_NODE) {
-                                        //         node.textContent = 'Mark as predictourite';
-                                        //     }
-                                        // });
-    
-                                        // Toggle the 'predict' class on the <li> element
-                                        otherListItem.classList.toggle('predict', false);
-    
-                                        // Simulate a POST request for the unpredictored item
-                                        var unpredictFormData = new FormData();
-                                        unpredictFormData.append('predict_nom_id', otherButton.getAttribute('data-nomination-id'));
-                                        unpredictFormData.append('predict_action', 'unpredict');
-    
-                                        fetch('https://oscarschecklist.com/', {
-                                            method: 'POST',
-                                            body: unpredictFormData,
-                                        }).catch(error => console.error('Error unpredicting:', error));
-                                    }
-                                }
-                            });
-                        }
-    
-                        // Update the clicked button and list item
-                        button.classList.toggle('mark-as-predict-button', !ispredict);
-                        button.classList.toggle('mark-as-unpredict-button', ispredict);
-    
-                        // button.childNodes.forEach(node => {
-                        //     if (node.nodeType === Node.TEXT_NODE) {
-                        //         node.textContent = ispredict ? 'Unmark as predictourite' : 'Mark as predictourite';
-                        //     }
-                        // });
-    
-                        button.setAttribute('data-action', ispredict ? 'unpredict' : 'predict');
-                        listItem.classList.toggle('predict', ispredict);
-    
-                        return response.text();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
                     });
+                }
+
+                // Update the clicked button and list item
+                button.classList.toggle('mark-as-predict-button', !isPredict);
+                button.classList.toggle('mark-as-unpredict-button', isPredict);
+                button.setAttribute('data-action', isPredict ? 'unpredict' : 'predict');
+                listItem.classList.toggle('predict', isPredict);
+
+                // Update local data and save to server
+                setPredFavLocal(userId, predFavData);
+                schedulePredFavSave(userId, predFavData);
             });
         });
     }
     
-    handlepredictButtons(); // Initialize the button handler
+    handlepredictButtons();
 
     
     
@@ -1558,9 +1589,47 @@ function setupWatchlistInteractions() {
 document.addEventListener('DOMContentLoaded', async function () {
     // First, sync the current user's data file (friends will sync after their list loads)
     const currentUserId = (window.OscarsChecklist && OscarsChecklist.userId) ? OscarsChecklist.userId : null;
+    
     if (currentUserId) {
         await syncUserFile(currentUserId);
-        await syncUserFile(currentUserId, '_pred_fav');
+    }
+    
+    // Load pred_fav data (from scoreboard for user 6, or locally for others)
+    if (currentUserId) {
+        let fetchUrl;
+        let fetchOptions = {};
+        
+        if (currentUserId === 6) {
+            // For user 6, fetch directly from scoreboard site
+            fetchUrl = 'https://scoreboard.oscarschecklist.com/wp-admin/admin-ajax.php';
+            fetchOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=oscars_pred_fav_get&user_id=' + currentUserId + '&shared_key=oscars_test_shared_key_2026'
+            };
+        } else {
+            // For other users, fetch from local endpoint
+            fetchUrl = '/wp-admin/admin-ajax.php?action=oscars_get_pred_fav_data&user_id=' + currentUserId;
+        }
+        
+        await fetch(fetchUrl, fetchOptions)
+            .then(response => response.json())
+            .then(data => {
+                // Scoreboard returns {success: true, data: {...}}, local returns data directly
+                let predFavData;
+                if (data.success && data.data) {
+                    predFavData = data.data;
+                } else if (data.username !== undefined || data.favourites !== undefined) {
+                    predFavData = data;
+                } else {
+                    return;
+                }
+                
+                if (predFavData) {
+                    setPredFavLocal(currentUserId, predFavData);
+                }
+            })
+            .catch(error => console.warn('Error loading pred/fav data:', error));
     }
     
     // Then apply user status (watched, favourites, predictions) from cache
@@ -1595,10 +1664,47 @@ document.addEventListener('friendsListLoaded', async function () {
     // Get friend IDs from the now-loaded DOM
     const friendIds = getUserFriendIdsFromDOM();
     
-    // Sync each friend's data file (both main and pred_fav)
+    // Sync each friend's data file (main file only, pred_fav will be loaded separately below)
     for (const userId of friendIds) {
         await syncUserFile(userId);
-        await syncUserFile(userId, '_pred_fav');
+    }
+    
+    // Load pred_fav for friends (from scoreboard for user 6, or locally for others)
+    for (const userId of friendIds) {
+        let fetchUrl;
+        let fetchOptions = {};
+        
+        if (userId === 6) {
+            // For user 6, fetch directly from scoreboard site
+            fetchUrl = 'https://scoreboard.oscarschecklist.com/wp-admin/admin-ajax.php';
+            fetchOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=oscars_pred_fav_get&user_id=' + userId + '&shared_key=oscars_test_shared_key_2026'
+            };
+        } else {
+            // For other users, fetch from local endpoint
+            fetchUrl = '/wp-admin/admin-ajax.php?action=oscars_get_pred_fav_data&user_id=' + userId;
+        }
+        
+        await fetch(fetchUrl, fetchOptions)
+            .then(response => response.json())
+            .then(data => {
+                // Scoreboard returns {success: true, data: {...}}, local returns data directly
+                let predFavData;
+                if (data.success && data.data) {
+                    predFavData = data.data;
+                } else if (data.username !== undefined || data.favourites !== undefined) {
+                    predFavData = data;
+                } else {
+                    return;
+                }
+                
+                if (predFavData) {
+                    localStorage.setItem(`userdata_${userId}_pred_fav`, JSON.stringify(predFavData));
+                }
+            })
+            .catch(error => console.warn(`Error loading pred_fav for user ${userId}:`, error));
     }
     
     // console.log('[UserDataSync] Friends data sync complete');
