@@ -533,30 +533,37 @@ document.addEventListener('DOMContentLoaded', function() {
             document.documentElement.style.setProperty('--total-categories-progress', `${totalCategoriesProgress}%`);
     
             // Conditionally set total progress bars
-                document.querySelector(".circular-progress-bar.films .total").innerHTML = totalUniqueFilms;
-                document.querySelector(".circular-progress-bar.films .progress").innerHTML = totalWatchedFilms;
-                document.querySelector(".circular-progress-bar.categories .total").innerHTML = totalTocItems;
-                document.querySelector(".circular-progress-bar.categories .progress").innerHTML = fullTocItems;
+            const filmsTotalEl = document.querySelector(".circular-progress-bar.films .total");
+            const filmsProgressEl = document.querySelector(".circular-progress-bar.films .progress");
+            const categoriesTotalEl = document.querySelector(".circular-progress-bar.categories .total");
+            const categoriesProgressEl = document.querySelector(".circular-progress-bar.categories .progress");
+            const filmsBarEl = document.querySelector(".circular-progress-bar.films");
+            const categoriesBarEl = document.querySelector(".circular-progress-bar.categories");
+            
+            if (filmsTotalEl) filmsTotalEl.innerHTML = totalUniqueFilms;
+            if (filmsProgressEl) filmsProgressEl.innerHTML = totalWatchedFilms;
+            if (categoriesTotalEl) categoriesTotalEl.innerHTML = totalTocItems;
+            if (categoriesProgressEl) categoriesProgressEl.innerHTML = fullTocItems;
     
+            if (filmsBarEl) {
                 if (totalUniqueFilms === totalWatchedFilms) {
-                    document.querySelector(".circular-progress-bar.films").classList.add("complete");
+                    filmsBarEl.classList.add("complete");
                 } else {
-                    document.querySelector(".circular-progress-bar.films").classList.remove("complete");
+                    filmsBarEl.classList.remove("complete");
                 }
+            }
+            if (categoriesBarEl) {
                 if (totalTocItems === fullTocItems) {
-                    document.querySelector(".circular-progress-bar.categories").classList.add("complete");
+                    categoriesBarEl.classList.add("complete");
                 } else {
-                    document.querySelector(".circular-progress-bar.categories").classList.remove("complete");
+                    categoriesBarEl.classList.remove("complete");
                 }
-    
-                // Simulate click on the first friend item
-                const firstFriendItem = friendItems[0];
-                if (firstFriendItem) {
-                    handleFriendItemClick(firstFriendItem, 0);
-                }
+            }
     
             // Reapply scroll event listener after updating TOC
-            handleScroll();
+            if (typeof handleScroll === 'function') {
+                handleScroll();
+            }
         }
     
         // Expose updateTOC globally
