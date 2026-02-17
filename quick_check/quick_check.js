@@ -217,12 +217,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectAllButton = document.querySelector('.select-all-categories');
     const deselectAllButton = document.querySelector('.deselect-all-categories');
     
-    console.log('Quick Check Filter: Elements found', {
-        filterButton: !!filterButton,
-        filterModal: !!filterModal,
-        filterCloseButton: !!filterCloseButton,
-        filterCategoriesContainer: !!filterCategoriesContainer
-    });
+    // console.log('Quick Check Filter: Elements found', {
+    //     filterButton: !!filterButton,
+    //     filterModal: !!filterModal,
+    //     filterCloseButton: !!filterCloseButton,
+    //     filterCategoriesContainer: !!filterCategoriesContainer
+    // });
     
     function populateFilterCategories() {
         if (!filterCategoriesContainer) {
