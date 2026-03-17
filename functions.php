@@ -801,6 +801,40 @@ function get_friends_list() {
 }
 add_shortcode( 'getfriendslist', 'get_friends_list' );
 
+function correct_predictions_shortcode() {
+    return '<div id="correct-predictions" style="display: none;">Correct Predictions: <span id="correct"></span> / <span id="total"></span></div>
+    <script>
+    document.addEventListener("watchedClassesApplied", function() {
+        var predictedItems = document.querySelectorAll("li.predict");
+        var correctPredictions = document.querySelectorAll("li.winner.predict");
+        var correctPredictionsDiv = document.getElementById("correct-predictions");
+        
+        if (correctPredictionsDiv && predictedItems.length > 0) {
+            correctPredictionsDiv.style.display = "";
+            document.getElementById("correct").textContent = correctPredictions.length;
+            document.getElementById("total").textContent = predictedItems.length;
+        }
+    });
+    </script>
+    <style>
+    div#correct-predictions {
+        background: var(--theme-palette-color-6);
+        color: white;
+        font-size: 1em;
+        text-align: center;
+        padding: 3px 8px 0;
+        display: flex;
+        gap: 3px;
+        border-left: 3px solid var(--theme-palette-color-1);
+        margin: 40px 0 30px;
+    }
+    span#correct {
+        margin-left: auto;
+    }
+    </style>';
+}
+add_shortcode( 'correctpredictions', 'correct_predictions_shortcode' );
+
 
 function oscars_year_dropdown_shortcode() {
     $output = '<select id="oscarsYearDropdown">';
