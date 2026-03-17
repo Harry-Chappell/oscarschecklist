@@ -13,41 +13,41 @@ if (!defined('ABSPATH')) {
 /**
  * Enqueue scoreboard styles and scripts
  */
-function scoreboard_enqueue_assets() {
-    // Check if we're on the scoreboard page or admin page - multiple conditions for reliability
-    $is_scoreboard_page = is_page_template('page-scoreboard.php') || 
-                          is_page_template('page-scoreboard-admin.php') ||
-                          is_page('scoreboard') || 
-                          is_page('scoreboard-admin') ||
-                          (is_page() && get_post_field('post_name') === 'scoreboard') ||
-                          (is_page() && get_post_field('post_name') === 'scoreboard-admin');
+// function scoreboard_enqueue_assets() {
+//     // Check if we're on the scoreboard page or admin page - multiple conditions for reliability
+//     $is_scoreboard_page = is_page_template('page-scoreboard.php') || 
+//                           is_page_template('page-scoreboard-admin.php') ||
+//                           is_page('scoreboard') || 
+//                           is_page('scoreboard-admin') ||
+//                           (is_page() && get_post_field('post_name') === 'scoreboard') ||
+//                           (is_page() && get_post_field('post_name') === 'scoreboard-admin');
     
-    if ($is_scoreboard_page) {
-        // Enqueue stylesheet
-        wp_enqueue_style(
-            'scoreboard-styles',
-            get_stylesheet_directory_uri() . '/scoreboard/style.css',
-            array(),
-            filemtime(get_stylesheet_directory() . '/scoreboard/style.css')
-        );
+//     if ($is_scoreboard_page) {
+//         // Enqueue stylesheet
+//         wp_enqueue_style(
+//             'scoreboard-styles',
+//             get_stylesheet_directory_uri() . '/scoreboard/style.css',
+//             array(),
+//             filemtime(get_stylesheet_directory() . '/scoreboard/style.css')
+//         );
         
-        // Enqueue script (vanilla JavaScript - no jQuery dependency)
-        wp_enqueue_script(
-            'scoreboard-scripts',
-            get_stylesheet_directory_uri() . '/scoreboard/scripts.js',
-            array(),
-            filemtime(get_stylesheet_directory() . '/scoreboard/scripts.js'),
-            true
-        );
+//         // Enqueue script (vanilla JavaScript - no jQuery dependency)
+//         wp_enqueue_script(
+//             'scoreboard-scripts',
+//             get_stylesheet_directory_uri() . '/scoreboard/scripts.js',
+//             array(),
+//             filemtime(get_stylesheet_directory() . '/scoreboard/scripts.js'),
+//             true
+//         );
         
-        // Pass data to JavaScript
-        wp_localize_script('scoreboard-scripts', 'scoreboardData', array(
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('scoreboard_nonce')
-        ));
-    }
-}
-add_action('wp_enqueue_scripts', 'scoreboard_enqueue_assets');
+//         // Pass data to JavaScript
+//         wp_localize_script('scoreboard-scripts', 'scoreboardData', array(
+//             'ajaxurl' => admin_url('admin-ajax.php'),
+//             'nonce' => wp_create_nonce('scoreboard_nonce')
+//         ));
+//     }
+// }
+// add_action('wp_enqueue_scripts', 'scoreboard_enqueue_assets');
 
 
 // Add your custom scoreboard functions below this line
@@ -499,6 +499,32 @@ function scoreboard_set_active_category() {
     ]);
 }
 add_action('wp_ajax_scoreboard_set_active_category', 'scoreboard_set_active_category');
+
+/**
+ * Get 2026 results data via AJAX (avoids load balancer file caching issues)
+ */
+function scoreboard_get_results_data() {
+    $file_path = ABSPATH . 'wp-content/uploads/2026-results.json';
+    
+    $data = [
+        'last_updated' => '',
+        'active_category' => '',
+        'past_categories' => [],
+        'winners' => []
+    ];
+    
+    if (file_exists($file_path)) {
+        $content = file_get_contents($file_path);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $data = array_merge($data, $decoded);
+        }
+    }
+    
+    wp_send_json_success($data);
+}
+add_action('wp_ajax_scoreboard_get_results_data', 'scoreboard_get_results_data');
+add_action('wp_ajax_nopriv_scoreboard_get_results_data', 'scoreboard_get_results_data');
 
 /**
  * Get current category display HTML

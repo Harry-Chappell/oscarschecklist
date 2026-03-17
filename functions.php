@@ -2283,5 +2283,471 @@ function oscars_test_get_message() {
     wp_send_json_success(['raw' => $raw !== false ? $raw : '']);
 }
 
+// === Live Winner Update Shortcode ===
+function live_winner_update_function_shortcode() {
+    $ajax_url = admin_url('admin-ajax.php');
+    $nonce = wp_create_nonce('live_winner_update');
+    $output = '
+    <style>
+    .live-winner-controls {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .live-winner-controls h3 {
+        color: #fff;
+        margin: 0 0 20px 0;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .live-winner-controls h3::before {
+        content: "🏆";
+        font-size: 24px;
+    }
+    .control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+    }
+    .control-row:last-child {
+        margin-bottom: 0;
+    }
+    .control-label {
+        color: #e0e0e0;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .control-label small {
+        display: block;
+        color: #888;
+        font-weight: 400;
+        margin-top: 4px;
+    }
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        width: 60px;
+        height: 32px;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #444;
+        border-radius: 32px;
+        transition: 0.3s;
+    }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 24px;
+        width: 24px;
+        left: 4px;
+        bottom: 4px;
+        background: white;
+        border-radius: 50%;
+        transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+        background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+        box-shadow: 0 0 20px rgba(0, 184, 148, 0.4);
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(28px);
+    }
+    /* Status Indicator */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-indicator.off {
+        background: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+    }
+    .status-indicator.on {
+        background: rgba(0, 184, 148, 0.2);
+        color: #00b894;
+    }
+    .status-indicator::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: none;
+    }
+    .status-indicator.on::before {
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+    }
+    /* Category Button Group */
+    .category-btn-group {
+        display: flex;
+        gap: 0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .category-btn {
+        background: #2d3748;
+        color: #a0aec0;
+        border: none;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .category-btn:first-child {
+        border-radius: 10px 0 0 10px;
+    }
+    .category-btn:last-child {
+        border-radius: 0 10px 10px 0;
+    }
+    .category-btn:hover:not(.active) {
+        background: #3d4a5c;
+        color: #e2e8f0;
+    }
+    .category-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+    }
+    .category-btn.active::before {
+        content: "✓ ";
+    }
+    /* Apply Now Button */
+    .apply-now-btn {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: #fff;
+        border: none;
+        padding: 14px 28px;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .apply-now-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(245, 87, 108, 0.5);
+    }
+    .apply-now-btn:active {
+        transform: translateY(0);
+    }
+    .apply-now-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .apply-now-btn::before {
+        content: "⚡";
+    }
+    .apply-now-btn.success {
+        background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+    }
+    .apply-now-btn.success::before {
+        content: "✓";
+    }
+    /* Winners Display */
+    #live-winners-container {
+        background: rgba(255,255,255,0.03);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+    }
+    .live-winners-last-updated {
+        color: #888;
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+    .live-winners-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .live-winners-list li {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    </style>
+    
+    <div class="live-winner-controls">
+        <h3>Live Winner Category Sync</h3>
+        
+        <div class="control-row">
+            <div class="control-label">
+                Auto-Apply Category
+                <small>When enabled, category is applied when winners update</small>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span class="status-indicator off" id="sync-status">Disabled</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="auto-apply-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="control-row">
+            <div class="control-label">
+                Category to Apply
+                <small>Select which category to assign to winners</small>
+            </div>
+            <div class="category-btn-group">
+                <button type="button" class="category-btn active" data-value="aa-test">aa-test</button>
+                <button type="button" class="category-btn" data-value="winner">winner</button>
+            </div>
+        </div>
+        
+        <div class="control-row">
+            <div class="control-label">
+                Manual Apply
+                <small>Apply category to current winners now</small>
+            </div>
+            <button type="button" class="apply-now-btn" id="apply-now-btn">Apply Now</button>
+        </div>
+        
+        <div id="live-winners-container" data-winners="[]" data-last-updated=""></div>
+    </div>';
+    
+    $output .= '<script>
+(function() {
+    const container = document.getElementById("live-winners-container");
+    const jsonUrl = "https://scoreboard.oscarschecklist.com/wp-content/uploads/2026-results.json";
+    const ajaxUrl = "' . esc_url($ajax_url) . '";
+    const nonce = "' . esc_js($nonce) . '";
+    const toggle = document.getElementById("auto-apply-toggle");
+    const categoryBtns = document.querySelectorAll(".category-btn");
+    const statusIndicator = document.getElementById("sync-status");
+    const applyNowBtn = document.getElementById("apply-now-btn");
+    let lastUpdated = "";
+    let autoApplyEnabled = false;
+    let selectedCategory = "aa-test";
+    let currentWinners = [];
+    
+    // Apply Now button handler
+    applyNowBtn.addEventListener("click", function() {
+        if (currentWinners.length === 0) {
+            alert("No winners to apply category to.");
+            return;
+        }
+        applyNowBtn.disabled = true;
+        applyNowBtn.textContent = "Applying...";
+        applyWinnerCategory(currentWinners, function(success) {
+            if (success) {
+                applyNowBtn.textContent = "Applied!";
+                applyNowBtn.classList.add("success");
+                setTimeout(function() {
+                    applyNowBtn.textContent = "Apply Now";
+                    applyNowBtn.classList.remove("success");
+                    applyNowBtn.disabled = false;
+                }, 2000);
+            } else {
+                applyNowBtn.textContent = "Failed - Try Again";
+                applyNowBtn.disabled = false;
+            }
+        });
+    });
+    
+    // Update status indicator
+    function updateStatus() {
+        if (autoApplyEnabled) {
+            statusIndicator.textContent = "Active";
+            statusIndicator.className = "status-indicator on";
+        } else {
+            statusIndicator.textContent = "Disabled";
+            statusIndicator.className = "status-indicator off";
+        }
+    }
+    
+    // Toggle handler
+    toggle.addEventListener("change", function() {
+        autoApplyEnabled = this.checked;
+        updateStatus();
+        console.log("Auto-apply " + (autoApplyEnabled ? "enabled" : "disabled"));
+    });
+    
+    // Category button handlers
+    categoryBtns.forEach(btn => {
+        btn.addEventListener("click", function() {
+            categoryBtns.forEach(b => b.classList.remove("active"));
+            this.classList.add("active");
+            selectedCategory = this.dataset.value;
+            console.log("Category selected: " + selectedCategory);
+        });
+    });
+    
+    function applyWinnerCategory(winners, callback) {
+        const category = selectedCategory;
+        const formData = new FormData();
+        formData.append("action", "apply_winner_category");
+        formData.append("nonce", nonce);
+        formData.append("winners", JSON.stringify(winners));
+        formData.append("category", category);
+        
+        fetch(ajaxUrl, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log("Winner category (" + category + ") applied:", result.data);
+                if (callback) callback(true);
+            } else {
+                console.error("Error applying category:", result.data);
+                if (callback) callback(false);
+            }
+        })
+        .catch(error => {
+            console.error("Error applying winner category:", error);
+            if (callback) callback(false);
+        });
+    }
+    
+    function fetchWinners() {
+        fetch(jsonUrl + "?t=" + Date.now())
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.winners) {
+                    const newLastUpdated = data.last_updated || "";
+                    
+                    // Store current winners for manual apply
+                    currentWinners = data.winners;
+                    
+                    // Check if last_updated changed and auto-apply is enabled
+                    if (autoApplyEnabled && lastUpdated !== "" && newLastUpdated !== lastUpdated) {
+                        console.log("Winners updated! Applying category...");
+                        applyWinnerCategory(data.winners);
+                    }
+                    
+                    lastUpdated = newLastUpdated;
+                    container.dataset.winners = JSON.stringify(data.winners);
+                    container.dataset.lastUpdated = newLastUpdated;
+                    container.innerHTML = "<div class=\"live-winners-last-updated\">Last updated: " + newLastUpdated + "</div>" +
+                        "<ul class=\"live-winners-list\">" + 
+                        data.winners.map(id => "<li>" + id + "</li>").join("") + 
+                        "</ul>";
+                    
+                    // Dispatch custom event for other scripts to listen to
+                    container.dispatchEvent(new CustomEvent("winnersUpdated", { 
+                        detail: { winners: data.winners, lastUpdated: newLastUpdated }
+                    }));
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching winners:", error);
+            });
+    }
+    
+    // Initial status
+    updateStatus();
+    
+    // Initial fetch
+    fetchWinners();
+    
+    // Poll every 10 seconds
+    setInterval(fetchWinners, 10000);
+})();
+</script>';
+    return $output;
+}
+add_shortcode('live_winner_update_function', 'live_winner_update_function_shortcode');
 
-
+// AJAX handler to apply winner category to nominations
+function apply_winner_category_ajax() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'live_winner_update')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+    
+    $winners_json = isset($_POST['winners']) ? sanitize_text_field($_POST['winners']) : '';
+    $winners = json_decode(stripslashes($winners_json), true);
+    $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : 'aa-test';
+    
+    // Validate category is one of the allowed values
+    if (!in_array($category, ['aa-test', 'winner'])) {
+        wp_send_json_error('Invalid category');
+        return;
+    }
+    
+    if (!is_array($winners) || empty($winners)) {
+        wp_send_json_error('No winners provided');
+        return;
+    }
+    
+    $updated = [];
+    $errors = [];
+    
+    foreach ($winners as $nomination_id) {
+        $nomination_id = intval($nomination_id);
+        
+        // Verify this is a valid nominations post
+        $post = get_post($nomination_id);
+        if (!$post || $post->post_type !== 'nominations') {
+            $errors[] = "ID $nomination_id is not a valid nomination";
+            continue;
+        }
+        
+        // Apply the selected category (term)
+        $result = wp_set_object_terms($nomination_id, $category, 'award-categories', true);
+        
+        if (is_wp_error($result)) {
+            $errors[] = "Failed to apply category to ID $nomination_id: " . $result->get_error_message();
+        } else {
+            $updated[] = $nomination_id;
+        }
+    }
+    
+    wp_send_json_success([
+        'updated' => $updated,
+        'errors' => $errors,
+        'category' => $category
+    ]);
+}
+add_action('wp_ajax_apply_winner_category', 'apply_winner_category_ajax');
+add_action('wp_ajax_nopriv_apply_winner_category', 'apply_winner_category_ajax');

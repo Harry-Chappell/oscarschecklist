@@ -936,10 +936,26 @@
             return;
         }
         
-        // Fetch the JSON file to get the active category
-        fetch('/wp-content/uploads/2026-results.json')
-            .then(response => response.json())
-            .then(data => {
+        // Fetch results data via AJAX (avoids load balancer file caching issues)
+        const formData = new FormData();
+        formData.append('action', 'scoreboard_get_results_data');
+        
+        fetch(scoreboardData.ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch results data: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(response => {
+                if (!response.success) {
+                    throw new Error('AJAX error: ' + (response.data || 'Unknown error'));
+                }
+                const data = response.data;
+                console.log('2026-results.json data:', data);
                 const activeCategory = data.active_category;
                 
                 // Handle current-category-container (admin page)

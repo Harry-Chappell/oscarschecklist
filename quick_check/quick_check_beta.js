@@ -311,14 +311,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (filterButton) {
-        console.log('Quick Check: Filter button found, attaching click handler');
+        // console.log('Quick Check: Filter button found, attaching click handler');
         filterButton.addEventListener('click', (e) => {
-            console.log('Quick Check: Filter button clicked');
+            // console.log('Quick Check: Filter button clicked');
             e.stopPropagation();
             populateFilterCategories();
             if (filterModal) {
                 filterModal.style.display = 'flex';
-                console.log('Quick Check: Filter modal opened');
+                // console.log('Quick Check: Filter modal opened');
             } else {
                 console.error('Quick Check: Filter modal not found!');
             }
